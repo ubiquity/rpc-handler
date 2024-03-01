@@ -1,11 +1,11 @@
 {
-  "name": "@keyrxng/web3-rpc-racer",
-  "version": "1.1.0",
+  "name": "@ubiquity/rpc-handler",
+  "version": "1.0.0",
   "description": "Uses Chainlist's RPC collection racing them returning the lowest latency RPC",
   "main": "dist/cjs/rpc-handler.js",
   "module": "dist/esm/rpc-handler.js",
   "types": "src/index.ts",
-  "author": "Keyrxng",
+  "author": "Ubiquity",
   "license": "MIT",
   "files": [
     "dist"
