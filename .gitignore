@@ -7,4 +7,5 @@ node_modules
 .pnp.cjs
 .pnp.loader.mjs
 .env
-static/dist
+dist
+

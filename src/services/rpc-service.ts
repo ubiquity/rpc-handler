@@ -1,7 +1,6 @@
 import { ValidBlockData } from "handler";
 import axios from "axios";
-
-import { StorageService } from "./StorageService";
+import { StorageService } from "./storage-service";
 
 export class RPCService {
   static async testRpcPerformance(
@@ -18,7 +17,6 @@ export class RPCService {
         await axios.post(rpcUrl, rpcBody, { headers: rpcHeader, cancelToken: new axios.CancelToken((c) => setTimeout(() => c("Request Timeout"), 500)) });
         const endTime = performance.now();
         latencies[`${rpcUrl}_${networkId}`] = endTime - startTime;
-        StorageService.setLatencies(env, latencies);
       } catch (error) {
         delete latencies[`${rpcUrl}_${networkId}`];
         delete runtimeRpcs[runtimeRpcs.indexOf(rpcUrl)];

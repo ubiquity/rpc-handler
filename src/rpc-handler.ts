@@ -1,9 +1,9 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { LOCAL_HOST, networkRpcs } from "./constants";
-import { HandlerInterface } from "handler";
+import { LOCAL_HOST, networkRpcs, tokens, networkIds, networkNames, networkCurrencies, networkExplorers } from "./constants";
+import { HandlerInterface, HandlerConstructorConfig } from "handler";
 
-import { RPCService } from "./services/RPCService";
-import { StorageService } from "./services/StorageService";
+import { RPCService } from "./services/rpc-service";
+import { StorageService } from "./services/storage-service";
 
 export class RPCHandler implements HandlerInterface {
   private static _instance: RPCHandler | null = null;
@@ -11,38 +11,47 @@ export class RPCHandler implements HandlerInterface {
   private _networkId: number;
   private _env: string = "node";
 
-  private _cacheRefreshCycles: number;
+  private _cacheRefreshCycles: number = 10;
   private _refreshLatencies: number = 0;
+  private _autoStorage: boolean = false;
 
   private _runtimeRpcs: string[] = [];
   private _latencies: Record<string | number, number> = {};
 
-  constructor(networkId: number, cacheRefreshCycles: number = 5) {
+  private _networkIds = networkIds;
+  private _tokens = tokens;
+  private _networkNames = networkNames;
+  private _networkCurrencies = networkCurrencies;
+  private _networkRpcs = networkRpcs;
+  private _networkExplorers = networkExplorers;
+
+  constructor(networkId: number, config?: HandlerConstructorConfig) {
     this._networkId = networkId;
     this._provider = new JsonRpcProvider(networkRpcs[networkId][0], networkId);
-    this._cacheRefreshCycles = cacheRefreshCycles;
-
-    this._initialize();
+    this._initialize(config);
   }
 
-  private _initialize() {
+  private _initialize(config?: HandlerConstructorConfig): void {
     this._env = typeof window === "undefined" ? "node" : "browser";
-    this._latencies = StorageService.getLatencies(this._env);
-    this._refreshLatencies = StorageService.getRefreshLatencies(this._env);
 
-    this.testRpcPerformance(this._networkId).catch(console.error);
+    if (config) {
+      this._updateConfig(config);
+    }
+
+    this.testRpcPerformance(this._networkId).catch((error) => {
+      console.log("Error in initializing RPCHandler: ", error);
+    });
   }
 
-  public static getInstance(networkId: number, cacheRefreshCycles?: number): RPCHandler {
+  public static getInstance(networkId: number, config?: HandlerConstructorConfig): RPCHandler {
     if (!RPCHandler._instance) {
-      RPCHandler._instance = new RPCHandler(networkId, cacheRefreshCycles);
+      RPCHandler._instance = new RPCHandler(networkId, config);
     }
     return RPCHandler._instance;
   }
   public clearInstance(): void {
     RPCHandler._instance = null;
   }
-
   public getProvider(): JsonRpcProvider {
     return this._provider;
   }
@@ -81,9 +90,14 @@ export class RPCHandler implements HandlerInterface {
         });
 
     await this._testRpcPerformance(networkId).then(() => {
-      const fastestRpcUrl = RPCService.findFastestRpc(this._latencies, this._networkId);
+      const fastestRpcUrl = RPCService.findFastestRpc(this._latencies, networkId);
       this._provider = new JsonRpcProvider(fastestRpcUrl, this._networkId);
     });
+
+    if (this._autoStorage) {
+      StorageService.setLatencies(this._env, this._latencies);
+      StorageService.setRefreshLatencies(this._env, this._refreshLatencies);
+    }
 
     return this._provider;
   }
@@ -106,8 +120,45 @@ export class RPCHandler implements HandlerInterface {
     this._runtimeRpcs = runtimeRpcs;
     this._latencies = latencies;
     this._refreshLatencies++;
+  }
 
-    StorageService.setLatencies(this._env, this._latencies);
-    StorageService.setRefreshLatencies(this._env, this._refreshLatencies);
+  private _updateConfig(config: HandlerConstructorConfig): void {
+    if (config.networkIds) {
+      this._networkIds = { ...this._networkIds, ...config.networkIds };
+    }
+
+    if (config.tokens) {
+      this._tokens = { ...this._tokens, ...config.tokens };
+    }
+
+    if (config.networkNames) {
+      this._networkNames = { ...this._networkNames, ...config.networkNames };
+    }
+
+    if (config.networkCurrencies) {
+      this._networkCurrencies = { ...this._networkCurrencies, ...config.networkCurrencies };
+    }
+
+    if (config.networkExplorers) {
+      this._networkExplorers = { ...this._networkExplorers, ...config.networkExplorers };
+    }
+
+    if (config.networkRpcs) {
+      this._networkRpcs = { ...this._networkRpcs, ...config.networkRpcs };
+    }
+
+    if (config.runtimeRpcs) {
+      this._runtimeRpcs = config.runtimeRpcs;
+    }
+
+    if (config.cacheRefreshCycles) {
+      this._cacheRefreshCycles = config.cacheRefreshCycles;
+    }
+
+    if (config.autoStorage) {
+      this._autoStorage = true;
+      this._latencies = StorageService.getLatencies(this._env);
+      this._refreshLatencies = StorageService.getRefreshLatencies(this._env);
+    }
   }
 }

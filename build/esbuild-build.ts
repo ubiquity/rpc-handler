@@ -1,7 +1,7 @@
 import esbuild from "esbuild";
 import chainlist from "../lib/chainlist/constants/extraRpcs";
 
-const typescriptEntries = ["rpc-handler.ts", "constants.ts", "handler.ts", "services/RPCService.ts", "services/StorageService.ts"];
+const typescriptEntries = ["rpc-handler.ts", "constants.ts", "handler.ts", "services/rpc-service.ts", "services/storage-service.ts"];
 export const entries = [...typescriptEntries];
 const extraRpcs: Record<string, string[]> = {};
 // this flattens all the rpcs into a single object, with key names that match the networkIds. The arrays are just of URLs per network ID.

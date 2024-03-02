@@ -1,5 +1,17 @@
-import { nftAddress, permit2Address, Tokens, networkCurrencies, networkExplorers, getNetworkName, networkNames, NetworkIds } from "./constants";
+import { nftAddress, permit2Address, tokens, networkCurrencies, networkExplorers, getNetworkName, networkNames, networkIds } from "./constants";
+import { HandlerConstructorConfig, HandlerInterface } from "./handler";
+export {
+  networkIds,
+  networkNames,
+  networkCurrencies,
+  networkExplorers,
+  tokens,
+  nftAddress,
+  permit2Address,
+  getNetworkName,
+  HandlerConstructorConfig,
+  HandlerInterface,
+};
 
 import { RPCHandler } from "./rpc-handler";
-
-export { RPCHandler, nftAddress, permit2Address, Tokens, networkCurrencies, networkExplorers, getNetworkName, networkNames, NetworkIds };
+export { RPCHandler };

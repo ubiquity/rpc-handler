@@ -1,12 +1,13 @@
-import { RPCService } from "../src/services/RPCService";
-import { StorageService } from "../src/services/StorageService";
+import { RPCService } from "../src/services/rpc-service";
+import { StorageService } from "../src/services/storage-service";
+
 import axios from "axios";
 
 jest.mock("axios", () => ({
   post: jest.fn(),
 }));
 
-jest.mock("../src/services/StorageService", () => ({
+jest.mock("../src/services/storage-service", () => ({
   StorageService: {
     setLatencies: jest.fn(),
   },
@@ -65,7 +66,7 @@ describe("RPCService", () => {
       rpcUrl3: 150,
     };
 
-    jest.spyOn(axios, "post").mockRejectedValueOnce(new Error("Error 1")).mockRejectedValueOnce(new Error("Error 2")).mockResolvedValueOnce();
+    jest.spyOn(axios, "post").mockRejectedValueOnce(new Error("Error 1")).mockRejectedValueOnce(new Error("Error 2")).mockResolvedValueOnce({ data: "data" });
 
     jest.spyOn(performance, "now").mockReturnValueOnce(100);
 

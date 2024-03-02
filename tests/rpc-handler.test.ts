@@ -1,11 +1,12 @@
 import { RPCHandler } from "../src/rpc-handler";
 import { JsonRpcProvider } from "@ethersproject/providers";
+import { testConfig } from "./constants/test-constants";
 
 jest.mock("@ethersproject/providers", () => ({
   JsonRpcProvider: jest.fn(),
 }));
 
-jest.mock("../src/services/StorageService", () => ({
+jest.mock("../src/services/storage-service", () => ({
   StorageService: {
     getLatencies: jest.fn(),
     setLatencies: jest.fn(),
@@ -14,7 +15,7 @@ jest.mock("../src/services/StorageService", () => ({
   },
 }));
 
-jest.mock("../src/services/RPCService", () => ({
+jest.mock("../src/services/rpc-service", () => ({
   RPCService: {
     testRpcPerformance: jest.fn(),
     findFastestRpc: jest.fn(),
@@ -42,9 +43,8 @@ describe("RPCHandler", () => {
   });
   it("should instantiate RPCHandler with the provided networkId and cacheRefreshCycles", () => {
     const networkId = 1;
-    const cacheRefreshCycles = 5;
 
-    const rpcHandler = new RPCHandler(networkId, cacheRefreshCycles);
+    const rpcHandler = new RPCHandler(networkId, testConfig);
 
     expect(rpcHandler).toBeInstanceOf(RPCHandler);
     expect(rpcHandler.getProvider()).toBeInstanceOf(JsonRpcProvider);
@@ -52,9 +52,8 @@ describe("RPCHandler", () => {
 
   it("should throw an error when failing to get a JsonRpcProvider", async () => {
     const networkId = 1;
-    const cacheRefreshCycles = 5;
 
-    const rpcHandler = new RPCHandler(networkId, cacheRefreshCycles);
+    const rpcHandler = new RPCHandler(networkId, testConfig);
 
     await expect(rpcHandler.testRpcPerformance(9999)).rejects.toThrow();
   });
@@ -62,7 +61,8 @@ describe("RPCHandler", () => {
 
 describe("Node env detection", () => {
   it("should detect a node environment", () => {
-    const rpcHandler = RPCHandler.getInstance(1);
+    const rpcHandler = RPCHandler.getInstance(1, testConfig);
+    // @ts-expect-error _env is private
     expect(rpcHandler._env).toBe("node");
   });
 });

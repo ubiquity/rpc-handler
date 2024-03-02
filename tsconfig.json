@@ -11,6 +11,6 @@
     "outDir": "./dist",
     "declaration": true
   },
-  "include": ["index.d.ts", "src/**/*"],
-  "exclude": ["node_modules", "build", "lib", "dist", "**/*.test.ts"]
+  "include": ["index.d.ts", "src/**/*", "tests/constants/*.ts"],
+  "exclude": ["node_modules", "build", "lib", "dist"]
 }
