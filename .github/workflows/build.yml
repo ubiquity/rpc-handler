@@ -27,7 +27,7 @@ jobs:
         run: |
           yarn
           yarn build
-  
+
       - name: Deploy to Cloudflare
         uses: ubiquity/cloudflare-deploy-action@main
         with:
