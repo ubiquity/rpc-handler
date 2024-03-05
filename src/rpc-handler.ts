@@ -33,8 +33,6 @@ export class RPCHandler implements HandlerInterface {
   public async getFastestRpcProvider(networkId: number): Promise<JsonRpcProvider> {
     if (networkId === 31337) {
       this._provider = new JsonRpcProvider(LOCAL_HOST, networkId);
-    } else if (networkId !== 31337 && this._provider?.connection.url.includes("localhost")) {
-      this._provider = await this.testRpcPerformance(networkId);
     } else {
       this._provider = await this.testRpcPerformance(networkId);
     }

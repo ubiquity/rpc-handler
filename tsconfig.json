@@ -9,8 +9,18 @@
     "baseUrl": ".",
     "paths": {},
     "outDir": "./dist",
-    "declaration": true
+    "declaration": true,
+    "resolveJsonModule": true
   },
-  "include": ["index.d.ts", "tests", "src/**/*"],
-  "exclude": ["node_modules", "build", "lib", "dist"]
+  "include": [
+    "index.d.ts",
+    "tests",
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "build",
+    "lib",
+    "dist"
+  ]
 }

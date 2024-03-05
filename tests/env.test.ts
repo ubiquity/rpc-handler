@@ -2,8 +2,10 @@ import { RPCHandler } from "../dist/cjs/src/rpc-handler";
 import { testConfig } from "./test-constants";
 
 describe("Browser env detection", () => {
+  // @ts-expect-error globalThis
   const windowMock: Window & typeof globalThis = {
     ...globalThis,
+    name: "Window",
   };
   Object.defineProperty(global, "window", {
     value: windowMock,
