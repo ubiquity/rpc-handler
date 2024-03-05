@@ -6,11 +6,11 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "paths": {},
     "outDir": "./dist",
     "declaration": true
   },
-  "include": ["index.d.ts", "src/**/*", "tests/constants/*.ts"],
+  "include": ["index.d.ts", "tests", "src/**/*"],
   "exclude": ["node_modules", "build", "lib", "dist"]
 }

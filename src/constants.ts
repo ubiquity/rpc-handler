@@ -7,7 +7,7 @@ export const networkIds: Record<string, number> = {
   Anvil: 31337,
 };
 
-type Token = {
+export type Token = {
   address: string;
   decimals: number;
 };
@@ -58,26 +58,10 @@ export const networkExplorers: Record<number, string> = {
   [networkIds.Anvil]: "https://gnosisscan.io",
 };
 
-// for tests
-if (typeof extraRpcs !== "object") {
-  const extraRpcs: Record<number, string[]> = {};
-
-  extraRpcs[100] = [
-    "https://rpc.gnosischain.com",
-    "https://xdai-archive.blockscout.com",
-    "https://gnosis-pokt.nodies.app",
-    "https://gnosis.drpc.org",
-    "https://endpoints.omniatech.io/v1/gnosis/mainnet/public",
-    "https://gnosis.publicnode.com",
-    "wss://gnosis.publicnode.com",
-    "https://rpc.tornadoeth.cash/gnosis",
-  ] as string[];
-}
-
 export const networkRpcs: Record<number, string[]> = {
-  [networkIds.Mainnet]: ["https://rpc-pay.ubq.fi/v1/mainnet", ...(extraRpcs[networkIds.Mainnet] || [])],
-  [networkIds.Goerli]: ["https://rpc-pay.ubq.fi/v1/goerli", ...(extraRpcs[networkIds.Goerli] || [])],
-  [networkIds.Gnosis]: ["https://rpc.ankr.com/gnosis", ...(extraRpcs[networkIds.Gnosis] || [])],
+  [networkIds.Mainnet]: [...(extraRpcs[networkIds.Mainnet] || [])],
+  [networkIds.Goerli]: [...(extraRpcs[networkIds.Goerli] || [])],
+  [networkIds.Gnosis]: [...(extraRpcs[networkIds.Gnosis] || [])],
   [networkIds.Anvil]: [LOCAL_HOST],
 };
 

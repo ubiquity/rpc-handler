@@ -6,7 +6,7 @@ This packages leverages [Chainlist's](https://github.com/DefiLlama/chainlist) ne
 
 - Returns the lowest latency provider for a given network ID
 - Drops bad endpoints from the list and creates a runtime/local storage cache
-- Can re-test the cached RPCs by calling `handler.getFastestRpcProvider()` optionally passing a network ID
+- Can re-test the cached RPCs by calling `handler.getFastestRpcProvider(networkId)`
 - Can be used in both the browser and Node.js
 - Fully configurable and extendable
 - Only uses endpoints which Chainlist report as tracking _no_ data (see [`extraRpcs.js`](https://github.com/DefiLlama/chainlist/blob/main/constants/extraRpcs.js))
@@ -21,63 +21,64 @@ yarn add @ubiquity/rpc-handler
 
 - Import the handler for your environment
 
-```typescript
-import { RPCHandler } from "@ubiquity/rpc-handler/dist/esm/rpc-handler";
-```
-
-- Instantiate the handler with your network ID
+###### Browser
 
 ```typescript
-const handler = new RPCHandler(100);
-```
+import { HandlerConstructorConfig } from "@ubiquity/rpc-handler/dist/esm/src/handler";
+import { RPCHandler } from "@ubiquity/rpc-handler/dist/esm/src/rpc-handler";
 
-###### or
-
-```typescript
-const handler = await RPCHandler.getInstance(1);
-```
-
-- Get the provider
-
-```typescript
-const provider = handler.getProvider();
-```
-
-- Re-test the cached RPCs
-
-```typescript
-const provider = handler.getFastestRpcProvider();
-```
-
-- Optionally, you can pass a custom config object to the constructor or `getInstance()` method
-
-```typescript
-import { networkIds, tokens, networkNames, networkCurrencies, networkRpcs, networkExplorers } from "@ubiquity/rpc-handler/dist/esm/constants";
-
-import { HandlerConstructorConfig } from "@ubiquity/rpc-handler/dist/esm/handler";
-
-const customConfig: HandlerConstructorConfig = {
-  cacheRefreshCycles: 10,
-  autoStorage: false,
-  runtimeRpcs: [],
-  networkIds: [],
-  tokens: [],
-  networkNames: [],
-  networkCurrencies: [],
-  networkRpcs: [],
-  networkExplorers: [],
+const config: HandlerConstructorConfig = {
+  autoStorage: true,
+  cacheRefreshCycles: 5,
 };
 
-const handler = new RPCHandler(100, customConfig);
+export function useHandler(networkId: number) {
+  // No RPCs are tested at this point
+  return new RPCHandler(networkId, config);
+}
 ```
 
-- The RPCs are tested on instantiation and the lowest latency provider is returned
-- You can re-test the cached RPCs by calling `handler.getFastestRpcProvider()` optionally passing a network ID
+```typescript
+import { useHandler } from "./rpc-handler";
+const handler = useHandler(networkId);
+
+// Now the RPCs are tested
+app.provider = handler.getFastestRpcProvider(networkId);
+```
+
+###### Node.js
+
+```typescript
+import { HandlerConstructorConfig } from "@ubiquity/rpc-handler/dist/cjs/src/handler";
+import { RPCHandler } from "@ubiquity/rpc-handler/dist/cjs/src/rpc-handler";
+
+const config: HandlerConstructorConfig = {
+  autoStorage: true,
+  cacheRefreshCycles: 5,
+};
+
+async function main() {
+  const networkId = 100;
+  const handler = new RPCHandler(networkId, config);
+  return await handler.getFastestRpcProvider(networkId);
+}
+
+main().then(console.log).catch(console.error);
+```
+
+#### Notes
+
+- The RPCs are not tested on instantiation, but are tested on each call to `handler.getFastestRpcProvider()` or `handler.testRpcPerformance()`
+
 - See the full [config](src\handler.ts) object (optionally passed in the constructor) for more options
+
 - Local storage is not enabled by default, but can be enabled by passing `autoStorage: true` in the config object
+
 - The `cacheRefreshCycles` is the number of roundtrips made before clearing the cache and re-testing all RPCs again
 
 ## Testing
+
+- In order to run the tests the package must first be built, this is required otherwise `networkRpcs` will be empty as the RPCs are injected at build time
 
 ```bash
 yarn test

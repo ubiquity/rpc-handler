@@ -1,4 +1,4 @@
-import { ValidBlockData } from "handler";
+import { ValidBlockData } from "../handler";
 import axios from "axios";
 import { StorageService } from "./storage-service";
 
@@ -11,25 +11,53 @@ export class RPCService {
     rpcBody: string,
     env: string
   ): Promise<{ latencies: Record<string, number>; runtimeRpcs: string[] }> {
-    const promises = runtimeRpcs.map(async (rpcUrl) => {
-      const startTime = performance.now();
-      try {
-        await axios.post(rpcUrl, rpcBody, { headers: rpcHeader, cancelToken: new axios.CancelToken((c) => setTimeout(() => c("Request Timeout"), 500)) });
-        const endTime = performance.now();
-        latencies[`${rpcUrl}_${networkId}`] = endTime - startTime;
-      } catch (error) {
-        delete latencies[`${rpcUrl}_${networkId}`];
-        delete runtimeRpcs[runtimeRpcs.indexOf(rpcUrl)];
-        StorageService.setLatencies(env, latencies);
+    const successfulPromises = runtimeRpcs.map(
+      (rpcUrl) =>
+        new Promise((resolve) => {
+          const startTime = performance.now();
+          axios
+            .post(rpcUrl, rpcBody, {
+              headers: rpcHeader,
+              cancelToken: new axios.CancelToken((c) => setTimeout(() => c("Request Timeout"), 500)),
+            })
+            .then(() => {
+              const endTime = performance.now();
+              resolve({
+                rpcUrl,
+                duration: endTime - startTime,
+                success: true,
+              });
+            })
+            .catch(() => {
+              resolve({ rpcUrl, success: false });
+            });
+        })
+    );
+    type PromiseResult = { success: boolean; rpcUrl: string; duration: number };
+
+    const fastest = (await Promise.race(successfulPromises)) as PromiseResult;
+
+    if (fastest.success) {
+      latencies[`${fastest.rpcUrl}_${networkId}`] = fastest.duration;
+    }
+
+    const allResults = await Promise.allSettled(successfulPromises);
+
+    allResults.forEach((result) => {
+      if (result.status === "fulfilled" && (result.value as PromiseResult).success) {
+        latencies[`${(result.value as PromiseResult).rpcUrl}_${networkId}`] = (result.value as PromiseResult).duration;
+      } else if (result.status === "fulfilled") {
+        const fulfilledResult = result.value as PromiseResult;
+        const index = runtimeRpcs.indexOf(fulfilledResult.rpcUrl);
+        if (index > -1) {
+          runtimeRpcs.splice(index, 1);
+        }
       }
     });
 
-    const { latencies: lats, runtimeRpcs: rpcs } = await this._raceUntilSuccess(promises, runtimeRpcs, latencies);
+    StorageService.setLatencies(env, latencies);
 
-    return {
-      latencies: lats,
-      runtimeRpcs: rpcs,
-    };
+    return { latencies, runtimeRpcs };
   }
 
   static findFastestRpc(latencies: Record<string, number>, networkId: number): string {
@@ -50,20 +78,6 @@ export class RPCService {
     } catch (error) {
       return "";
     }
-  }
-
-  static async _raceUntilSuccess(
-    promises: Promise<unknown>[],
-    runtimeRpcs: string[],
-    latencies: Record<string, number>
-  ): Promise<{ runtimeRpcs: string[]; latencies: Record<string, number> }> {
-    new Promise((resolve) => {
-      promises.forEach((promise: Promise<unknown>) => {
-        promise.then(resolve).catch(() => {});
-      });
-    }).catch(console.error);
-
-    return { runtimeRpcs, latencies };
   }
 
   static _verifyBlock(data: ValidBlockData): boolean {

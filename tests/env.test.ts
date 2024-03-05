@@ -1,5 +1,5 @@
-import { RPCHandler } from "../src/rpc-handler";
-import { testConfig } from "./constants/test-constants";
+import { RPCHandler } from "../dist/cjs/src/rpc-handler";
+import { testConfig } from "./test-constants";
 
 describe("Browser env detection", () => {
   const windowMock: Window & typeof globalThis = {
