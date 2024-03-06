@@ -30,29 +30,29 @@ export class RPCHandler implements HandlerInterface {
     this._initialize(config);
   }
 
-  public async getFastestRpcProvider(networkId: number): Promise<JsonRpcProvider> {
-    if (networkId === 31337) {
-      this._provider = new JsonRpcProvider(LOCAL_HOST, networkId);
+  public async getFastestRpcProvider(): Promise<JsonRpcProvider> {
+    if (this._networkId === 31337) {
+      this._provider = new JsonRpcProvider(LOCAL_HOST, this._networkId);
     } else {
-      this._provider = await this.testRpcPerformance(networkId);
+      this._provider = await this.testRpcPerformance();
     }
     return this._provider;
   }
 
-  public async testRpcPerformance(networkId: number): Promise<JsonRpcProvider> {
+  public async testRpcPerformance(): Promise<JsonRpcProvider> {
     const shouldRefreshRpcs =
-      Object.keys(this._latencies).filter((rpc) => rpc.endsWith(`_${networkId}`)).length <= 1 || this._refreshLatencies >= this._cacheRefreshCycles;
+      Object.keys(this._latencies).filter((rpc) => rpc.endsWith(`_${this._networkId}`)).length <= 1 || this._refreshLatencies >= this._cacheRefreshCycles;
 
     if (shouldRefreshRpcs) {
-      this._runtimeRpcs = networkRpcs[networkId];
+      this._runtimeRpcs = networkRpcs[this._networkId];
       this._refreshLatencies = 0;
     } else {
       this._runtimeRpcs = Object.keys(this._latencies).map((rpc) => {
-        if (rpc.includes("api_key") && rpc.endsWith(`_${networkId}`)) {
-          return rpc.replace(`_${networkId}`, "");
+        if (rpc.includes("api_key") && rpc.endsWith(`_${this._networkId}`)) {
+          return rpc.replace(`_${this._networkId}`, "");
         }
 
-        if ((networkId !== 31337 && rpc.includes("localhost")) || rpc.includes("127.0.0.1:8545")) {
+        if ((this._networkId !== 31337 && rpc.includes("localhost")) || rpc.includes("127.0.0.1:8545")) {
           return rpc;
         }
 
@@ -60,9 +60,9 @@ export class RPCHandler implements HandlerInterface {
       });
     }
 
-    await this._testRpcPerformance(networkId);
+    await this._testRpcPerformance();
 
-    this._provider = new JsonRpcProvider(RPCService.findFastestRpc(this._latencies, networkId), networkId);
+    this._provider = new JsonRpcProvider(RPCService.findFastestRpc(this._latencies, this._networkId), this._networkId);
 
     if (this._autoStorage) {
       StorageService.setLatencies(this._env, this._latencies);
@@ -141,9 +141,9 @@ export class RPCHandler implements HandlerInterface {
     return this._cacheRefreshCycles;
   }
 
-  private async _testRpcPerformance(networkId: number): Promise<void> {
+  private async _testRpcPerformance(): Promise<void> {
     const { latencies, runtimeRpcs } = await RPCService.testRpcPerformance(
-      networkId,
+      this._networkId,
       this._latencies,
       this._runtimeRpcs,
       { "Content-Type": "application/json" },

@@ -10,7 +10,7 @@ Object.keys(chainlist).forEach((networkId) => {
   const officialUrls = chainlist[networkId].rpcs.filter((rpc) => typeof rpc === "string");
   const extraUrls: string[] = chainlist[networkId].rpcs.filter((rpc) => rpc.url !== undefined && rpc.tracking === "none").map((rpc) => rpc.url);
 
-  extraRpcs[networkId] = [...officialUrls, ...extraUrls];
+  extraRpcs[networkId] = [...officialUrls, ...extraUrls].filter((rpc) => rpc.startsWith("https://"));
 });
 
 export const esBuildContext: esbuild.BuildOptions = {

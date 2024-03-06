@@ -1,5 +1,5 @@
 import { RPCHandler } from "../dist/cjs/src/rpc-handler";
-import { testConfig } from "./test-constants";
+import { testConfig } from "./constants-test";
 import { networkRpcs } from "../dist/cjs/src/constants";
 
 describe("RPCHandler", () => {
@@ -70,22 +70,19 @@ describe("RPCHandler", () => {
   });
 
   describe("getFastestRpcProvider", () => {
-    beforeAll(() => {
-      jest.setTimeout(30000);
-    });
-
     it("should have a valid connection url", async () => {
-      const provider = await rpcHandler.getFastestRpcProvider(networkId);
+      const provider = await rpcHandler.getFastestRpcProvider();
       expect(provider.connection.url).toMatch(/^http/);
     });
 
     it("should have correct chainId", async () => {
-      const provider = await rpcHandler.getFastestRpcProvider(networkId);
+      const provider = await rpcHandler.getFastestRpcProvider();
+      console.log("provider.network.chainId: ", provider.network.chainId);
       expect(provider.network.chainId).toBe(networkId);
     });
 
     it("should return the fastest RPC compared to the latencies", async () => {
-      const provider = await rpcHandler.getFastestRpcProvider(networkId);
+      const provider = await rpcHandler.getFastestRpcProvider();
       const fastestRpc = rpcHandler.findFastestRpc();
       const latencies = rpcHandler.getLatencies();
 
@@ -118,22 +115,19 @@ describe("RPCHandler", () => {
     });
 
     it("should have less runtime RPCs than network RPCs", async () => {
-      await rpcHandler.getFastestRpcProvider(networkId);
+      await rpcHandler.getFastestRpcProvider();
 
       const runtime = rpcHandler.getRuntimeRpcs();
 
       expect(runtime).not.toBe(networkRpcs[networkId]);
       expect(runtime.length).toBeLessThan(networkRpcs[networkId].length);
     });
-  });
 
-  describe("testRpcPerformance", () => {
-    beforeAll(() => {
-      jest.setTimeout(30000);
-    });
     it("should update latencies with correct format", async () => {
-      await rpcHandler.testRpcPerformance(networkId);
+      await rpcHandler.testRpcPerformance();
       const latencies = rpcHandler["_latencies"];
+
+      expect(Object.keys(latencies).length).toBeGreaterThan(0);
 
       Object.entries(latencies).forEach(([key, latency]) => {
         expect(key).toContain(`_${networkId}`);

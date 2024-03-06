@@ -1,5 +1,5 @@
 import { RPCHandler } from "../dist/cjs/src/rpc-handler";
-import { testConfig } from "./test-constants";
+import { testConfig } from "./constants-test";
 
 describe("Browser env detection", () => {
   // @ts-expect-error globalThis

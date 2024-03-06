@@ -19,6 +19,8 @@
     "**/*.js",
     "**/*.d.ts",
     "**/*.test.ts",
+    "**/*-test.ts",
+    "jest.config.ts",
     "knip.ts",
     "build",
     "./lib",

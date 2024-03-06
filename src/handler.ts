@@ -13,8 +13,8 @@ export type ValidBlockData = {
 export type HandlerInterface = {
   getProvider(): JsonRpcProvider | undefined;
   clearInstance(): void;
-  getFastestRpcProvider(networkId: number, autoStorage?: boolean): Promise<JsonRpcProvider | undefined>;
-  testRpcPerformance(networkId: number, autoStorage?: boolean): Promise<JsonRpcProvider | undefined>;
+  getFastestRpcProvider(): Promise<JsonRpcProvider | undefined>;
+  testRpcPerformance(): Promise<JsonRpcProvider | undefined>;
 };
 
 export type HandlerConstructorConfig = {

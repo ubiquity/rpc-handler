@@ -1,6 +1,7 @@
 import { ValidBlockData } from "../handler";
 import axios from "axios";
 import { StorageService } from "./storage-service";
+type PromiseResult = { success: boolean; rpcUrl: string; duration: number };
 
 export class RPCService {
   static async testRpcPerformance(
@@ -11,9 +12,9 @@ export class RPCService {
     rpcBody: string,
     env: string
   ): Promise<{ latencies: Record<string, number>; runtimeRpcs: string[] }> {
-    const successfulPromises = runtimeRpcs.map(
+    const successfulPromises = runtimeRpcs.map<Promise<PromiseResult>>(
       (rpcUrl) =>
-        new Promise((resolve) => {
+        new Promise<PromiseResult>((resolve) => {
           const startTime = performance.now();
           axios
             .post(rpcUrl, rpcBody, {
@@ -26,16 +27,15 @@ export class RPCService {
                 rpcUrl,
                 duration: endTime - startTime,
                 success: true,
-              });
+              } as PromiseResult);
             })
             .catch(() => {
-              resolve({ rpcUrl, success: false });
+              resolve({ rpcUrl, success: false, duration: 0 });
             });
         })
     );
-    type PromiseResult = { success: boolean; rpcUrl: string; duration: number };
 
-    const fastest = (await Promise.race(successfulPromises)) as PromiseResult;
+    const fastest = await Promise.race(successfulPromises);
 
     if (fastest.success) {
       latencies[`${fastest.rpcUrl}_${networkId}`] = fastest.duration;
@@ -56,6 +56,8 @@ export class RPCService {
     });
 
     StorageService.setLatencies(env, latencies);
+
+    console.log("Latencies: ", latencies);
 
     return { latencies, runtimeRpcs };
   }
