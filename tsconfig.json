@@ -14,12 +14,12 @@
   },
   "include": [
     "index.d.ts",
-    "tests",
     "src/**/*"
   ],
   "exclude": [
     "node_modules",
     "build",
+    "tests",
     "lib",
     "dist"
   ]

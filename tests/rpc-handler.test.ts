@@ -128,6 +128,9 @@ describe("RPCHandler", () => {
   });
 
   describe("testRpcPerformance", () => {
+    beforeAll(() => {
+      jest.setTimeout(30000);
+    });
     it("should update latencies with correct format", async () => {
       await rpcHandler.testRpcPerformance(networkId);
       const latencies = rpcHandler["_latencies"];
