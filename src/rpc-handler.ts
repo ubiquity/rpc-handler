@@ -1,5 +1,5 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { LOCAL_HOST, networkRpcs, tokens, networkIds, networkNames, networkCurrencies, networkExplorers, Token } from "./constants";
+import { LOCAL_HOST, networkRpcs, networkNames } from "./constants";
 import { HandlerInterface, HandlerConstructorConfig } from "./handler";
 
 import { RPCService } from "./services/rpc-service";
@@ -9,6 +9,7 @@ export class RPCHandler implements HandlerInterface {
   private static _instance: RPCHandler | null = null;
   private _provider: JsonRpcProvider | null = null;
   private _networkId: number;
+  private _networkName: string;
   private _env: string = "node";
 
   private _cacheRefreshCycles: number = 10;
@@ -16,26 +17,34 @@ export class RPCHandler implements HandlerInterface {
   private _autoStorage: boolean = false;
 
   private _runtimeRpcs: string[] = [];
-  private _latencies: Record<string | number, number> = {};
+  private _latencies: Record<string, number> = {};
 
-  private _networkIds = networkIds;
-  private _tokens = tokens;
-  private _networkNames = networkNames;
-  private _networkCurrencies = networkCurrencies;
-  private _networkRpcs = networkRpcs;
-  private _networkExplorers = networkExplorers;
+  private _networkRpcs: string[] = [];
 
-  constructor(networkId: number, config?: HandlerConstructorConfig) {
-    this._networkId = networkId;
+  constructor(config: HandlerConstructorConfig) {
+    this._networkId = config.networkId;
+    this._networkRpcs = networkRpcs[this._networkId];
+    this._networkName = networkNames[this._networkId];
     this._initialize(config);
   }
 
   public async getFastestRpcProvider(): Promise<JsonRpcProvider> {
     if (this._networkId === 31337) {
       this._provider = new JsonRpcProvider(LOCAL_HOST, this._networkId);
-    } else {
+    } else if (!this._provider) {
       this._provider = await this.testRpcPerformance();
     }
+
+    if (this._provider && this._provider?.connection.url.includes("localhost") && this._networkId !== 31337) {
+      /**
+       * The JsonRpcProvider is the culprit for it.
+       *  static defaultUrl(): string {
+       *    return "http:/\/localhost:8545";
+       *  }
+       */
+      this._provider = await this.testRpcPerformance();
+    }
+
     return this._provider;
   }
 
@@ -62,34 +71,36 @@ export class RPCHandler implements HandlerInterface {
 
     await this._testRpcPerformance();
 
-    this._provider = new JsonRpcProvider(RPCService.findFastestRpc(this._latencies, this._networkId), this._networkId);
+    const fastestRpcUrl = await RPCService.findFastestRpc(this._latencies, this._networkId);
+    const provider = new JsonRpcProvider(fastestRpcUrl, this._networkId);
+    this._provider = provider;
 
     if (this._autoStorage) {
       StorageService.setLatencies(this._env, this._latencies);
       StorageService.setRefreshLatencies(this._env, this._refreshLatencies);
     }
 
-    return this._provider;
-  }
+    if (!this._provider) {
+      throw new Error("Provider could not be initialized");
+    }
 
-  public findFastestRpc(): string {
-    return RPCService.findFastestRpc(this._latencies, this._networkId);
+    return this._provider;
   }
 
   public getProvider(): JsonRpcProvider {
     if (!this._provider) {
-      if (Object.keys(this._latencies).length > 0) {
-        this._provider = new JsonRpcProvider(RPCService.findFastestRpc(this._latencies, this._networkId), this._networkId);
-      } else {
-        throw new Error("Provider not initialized");
-      }
+      throw new Error("Provider is not initialized");
     }
     return this._provider;
   }
 
-  public static getInstance(networkId: number, config?: HandlerConstructorConfig): RPCHandler {
+  public static getInstance(config: HandlerConstructorConfig): RPCHandler {
     if (!RPCHandler._instance) {
-      RPCHandler._instance = new RPCHandler(networkId, config);
+      if (!config) {
+        throw new Error("Config is required to initialize RPCHandler");
+      }
+
+      RPCHandler._instance = new RPCHandler(config);
     }
     return RPCHandler._instance;
   }
@@ -105,31 +116,15 @@ export class RPCHandler implements HandlerInterface {
     return this._networkId;
   }
 
-  public getNetworkIds(): Record<string, number> {
-    return this._networkIds;
+  public getNetworkName(): string {
+    return this._networkName;
   }
 
-  public getTokens(): Record<number, Record<string, Token>> {
-    return this._tokens;
-  }
-
-  public getNetworkNames(): Record<string, string> {
-    return this._networkNames;
-  }
-
-  public getNetworkCurrencies(): Record<string, { symbol: string; decimals: number }> {
-    return this._networkCurrencies;
-  }
-
-  public getNetworkExplorers(): Record<string, string> {
-    return this._networkExplorers;
-  }
-
-  public getNetworkRpcs(): Record<string, string[]> {
+  public getNetworkRpcs(): string[] {
     return this._networkRpcs;
   }
 
-  public getLatencies(): Record<string | number, number> {
+  public getLatencies(): Record<string, number> {
     return this._latencies;
   }
 
@@ -161,28 +156,12 @@ export class RPCHandler implements HandlerInterface {
     this._refreshLatencies++;
   }
   private _updateConfig(config: HandlerConstructorConfig): void {
-    if (config.networkIds) {
-      this._networkIds = { ...this._networkIds, ...config.networkIds };
-    }
-
-    if (config.tokens) {
-      this._tokens = { ...this._tokens, ...config.tokens };
-    }
-
-    if (config.networkNames) {
-      this._networkNames = { ...this._networkNames, ...config.networkNames };
-    }
-
-    if (config.networkCurrencies) {
-      this._networkCurrencies = { ...this._networkCurrencies, ...config.networkCurrencies };
-    }
-
-    if (config.networkExplorers) {
-      this._networkExplorers = { ...this._networkExplorers, ...config.networkExplorers };
+    if (config.networkName) {
+      this._networkName = config.networkName;
     }
 
     if (config.networkRpcs) {
-      this._networkRpcs = { ...this._networkRpcs, ...config.networkRpcs };
+      this._networkRpcs = [...this._networkRpcs, ...config.networkRpcs];
     }
 
     if (config.runtimeRpcs) {
@@ -200,11 +179,8 @@ export class RPCHandler implements HandlerInterface {
     }
   }
 
-  private _initialize(config?: HandlerConstructorConfig): void {
+  private _initialize(config: HandlerConstructorConfig): void {
     this._env = typeof window === "undefined" ? "node" : "browser";
-
-    if (config) {
-      this._updateConfig(config);
-    }
+    this._updateConfig(config);
   }
 }

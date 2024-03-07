@@ -21,12 +21,12 @@
     "knip": "knip",
     "knip-ci": "knip --no-exit-code --reporter json",
     "prepare": "husky install",
-    "build:cjs": "tsc --emitDeclarationOnly --outDir dist/cjs",
-    "build:esm": "tsc --emitDeclarationOnly --outDir dist/esm",
+    "build:cjs": "tsc --emitDeclarationOnly --outDir dist/cjs/src",
+    "build:esm": "tsc --emitDeclarationOnly --outDir dist/esm/src",
     "build": "tsx build/esbuild-build.ts",
     "postbuild": "yarn build:cjs && yarn build:esm",
     "postinstall": "git submodule update --init --recursive",
-    "test": "jest --detectOpenHandles"
+    "test": "jest"
   },
   "keywords": [
     "typescript",
@@ -36,8 +36,7 @@
     "open-source"
   ],
   "dependencies": {
-    "@ethersproject/providers": "^5.7.2",
-    "axios": "^1.6.7"
+    "@ethersproject/providers": "5.7.2"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",

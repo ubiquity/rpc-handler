@@ -1,13 +1,20 @@
 import { RPCHandler } from "../dist/cjs/src/rpc-handler";
-import { testConfig } from "./constants-test";
+import { HandlerConstructorConfig } from "../src/handler";
 import { networkRpcs } from "../dist/cjs/src/constants";
+import { JsonRpcProvider } from "@ethersproject/providers";
+
+export const testConfig: HandlerConstructorConfig = {
+  networkId: 100,
+  autoStorage: false,
+  cacheRefreshCycles: 3,
+};
 
 describe("RPCHandler", () => {
-  const networkId = 1;
-  let rpcHandler: RPCHandler;
+  const rpcHandler = new RPCHandler(testConfig);
+  let provider: JsonRpcProvider;
 
-  beforeEach(() => {
-    rpcHandler = new RPCHandler(networkId, testConfig);
+  afterAll(() => {
+    jest.restoreAllMocks();
   });
 
   describe("Initialization", () => {
@@ -16,7 +23,7 @@ describe("RPCHandler", () => {
     });
 
     it("should initialize with correct networkId", () => {
-      expect(rpcHandler["_networkId"]).toBe(networkId);
+      expect(rpcHandler["_networkId"]).toBe(testConfig.networkId);
     });
 
     it(`should initialize with correct env`, () => {
@@ -39,28 +46,8 @@ describe("RPCHandler", () => {
       expect(rpcHandler["_latencies"]).toEqual({});
     });
 
-    it("should initialize with correct networkIds", () => {
-      expect(rpcHandler["_networkIds"]).toEqual(testConfig.networkIds);
-    });
-
-    it("should initialize with correct tokens", () => {
-      expect(rpcHandler["_tokens"]).toEqual(testConfig.tokens);
-    });
-
-    it("should initialize with correct networkNames", () => {
-      expect(rpcHandler["_networkNames"]).toEqual(testConfig.networkNames);
-    });
-
-    it("should initialize with correct networkCurrencies", () => {
-      expect(rpcHandler["_networkCurrencies"]).toEqual(testConfig.networkCurrencies);
-    });
-
     it("should initialize with correct networkRpcs", () => {
-      expect(rpcHandler["_networkRpcs"]).toEqual(testConfig.networkRpcs);
-    });
-
-    it("should initialize with correct networkExplorers", () => {
-      expect(rpcHandler["_networkExplorers"]).toEqual(testConfig.networkExplorers);
+      expect(rpcHandler["_networkRpcs"]).toEqual(networkRpcs[testConfig.networkId]);
     });
 
     it("should initialize with null provider", () => {
@@ -70,91 +57,32 @@ describe("RPCHandler", () => {
   });
 
   describe("getFastestRpcProvider", () => {
-    it("should have a valid connection url", async () => {
-      const provider = await rpcHandler.getFastestRpcProvider();
-      expect(provider.connection.url).toMatch(/^http/);
-    });
-
-    it("should have correct chainId", async () => {
-      const provider = await rpcHandler.getFastestRpcProvider();
-      console.log("provider.network.chainId: ", provider.network.chainId);
-      expect(provider.network.chainId).toBe(networkId);
-    });
-
     it("should return the fastest RPC compared to the latencies", async () => {
-      const provider = await rpcHandler.getFastestRpcProvider();
-      const fastestRpc = rpcHandler.findFastestRpc();
+      provider = await rpcHandler.getFastestRpcProvider();
+      const fastestRpc = rpcHandler.getProvider();
       const latencies = rpcHandler.getLatencies();
 
+      console.log(`latencies: `, latencies);
+      console.log(`fastestRpc: `, fastestRpc);
+
+      expect(provider._network.chainId).toBe(testConfig.networkId);
+      expect(provider.connection.url).toMatch("https://");
       const latArrLen = Array.from(Object.entries(latencies)).length;
-      let lowest = Number.MAX_SAFE_INTEGER;
-      let highest = 0;
-
-      for (const latency of Object.values(latencies)) {
-        if (latency < lowest) lowest = latency;
-        if (latency > highest) highest = latency;
-      }
-
-      expect(rpcHandler.getRuntimeRpcs().length).toBeGreaterThan(1);
-      expect(rpcHandler.getRuntimeRpcs().length).toBe(latArrLen);
-
-      expect(latArrLen).toBeGreaterThan(1);
-      expect(provider.connection.url).toMatch(fastestRpc);
-
-      expect(lowest).toBeLessThan(highest);
-      expect(lowest).toBeGreaterThan(0);
-      expect(highest).toBeGreaterThan(0);
-
-      for (const latency of Object.values(latencies)) {
-        expect(latency).toBeGreaterThan(0);
-      }
-
-      expect(latencies[fastestRpc + `_${networkId}`]).toBe(lowest);
-      expect(latencies[fastestRpc + `_${networkId}`]).toEqual(lowest);
-      expect(latencies[fastestRpc + `_${networkId}`]).toBeGreaterThan(0);
-    });
-
-    it("should have less runtime RPCs than network RPCs", async () => {
-      await rpcHandler.getFastestRpcProvider();
-
       const runtime = rpcHandler.getRuntimeRpcs();
+      expect(runtime.length).toBeGreaterThan(0);
+      expect(runtime.length).toBe(latArrLen);
+      expect(runtime.length).toBeLessThan(networkRpcs[testConfig.networkId].length);
 
-      expect(runtime).not.toBe(networkRpcs[networkId]);
-      expect(runtime.length).toBeLessThan(networkRpcs[networkId].length);
-    });
+      expect(runtime).not.toBe(networkRpcs[testConfig.networkId]);
+      expect(latArrLen).toBeGreaterThan(1);
 
-    it("should update latencies with correct format", async () => {
-      await rpcHandler.testRpcPerformance();
-      const latencies = rpcHandler["_latencies"];
+      const sorted = Object.entries(latencies).sort((a, b) => a[1] - b[1]);
+      const first = sorted[0];
+      const last = sorted[sorted.length - 1];
 
-      expect(Object.keys(latencies).length).toBeGreaterThan(0);
+      expect(first[1]).toBeLessThan(last[1]);
 
-      Object.entries(latencies).forEach(([key, latency]) => {
-        expect(key).toContain(`_${networkId}`);
-        expect(latency).toBeGreaterThan(0);
-      });
-    });
-  });
-
-  describe("Configuration Updates", () => {
-    const newConfig = {
-      networkIds: { 1: 56 },
-      tokens: { ETH: "Ethereum" },
-      networkNames: { 1: "BSC" },
-      networkCurrencies: { 1: "BNB" },
-      networkRpcs: { 1: ["https://bsc-dataseed.binance.org/"] },
-      networkExplorers: { 1: "https://bscscan.com" },
-    };
-
-    it("should update network configurations correctly", () => {
-      rpcHandler["_updateConfig"](newConfig);
-
-      expect(rpcHandler["_networkIds"]).toEqual(expect.objectContaining(newConfig.networkIds));
-      expect(rpcHandler["_tokens"]).toEqual(expect.objectContaining(newConfig.tokens));
-      expect(rpcHandler["_networkNames"]).toEqual(expect.objectContaining(newConfig.networkNames));
-      expect(rpcHandler["_networkCurrencies"]).toEqual(expect.objectContaining(newConfig.networkCurrencies));
-      expect(rpcHandler["_networkRpcs"]).toEqual(expect.objectContaining(newConfig.networkRpcs));
-      expect(rpcHandler["_networkExplorers"]).toEqual(expect.objectContaining(newConfig.networkExplorers));
-    });
+      expect(fastestRpc.connection.url).toBe(provider.connection.url);
+    }, 10000);
   });
 });

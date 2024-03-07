@@ -1,5 +1,6 @@
 import esbuild from "esbuild";
 import chainlist from "../lib/chainlist/constants/extraRpcs";
+import chainIDList from "../lib/chainlist/constants/chainIds.json";
 
 const typescriptEntries = ["src/rpc-handler.ts", "src/constants.ts", "src/handler.ts", "src/services/rpc-service.ts", "src/services/storage-service.ts"];
 export const entries = [...typescriptEntries];
@@ -19,7 +20,7 @@ export const esBuildContext: esbuild.BuildOptions = {
   minify: true,
 
   outdir: "dist",
-  define: createEnvDefines({ extraRpcs }),
+  define: createEnvDefines({ extraRpcs, chainIDList }),
 };
 
 esbuild

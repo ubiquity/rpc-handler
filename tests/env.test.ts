@@ -1,5 +1,5 @@
 import { RPCHandler } from "../dist/cjs/src/rpc-handler";
-import { testConfig } from "./constants-test";
+import { testConfig } from "./rpc-handler.test";
 
 describe("Browser env detection", () => {
   // @ts-expect-error globalThis
@@ -16,8 +16,22 @@ describe("Browser env detection", () => {
     // localStorage is not defined
     // proving that the test is not running in a browser environment
     // but has bypassed the env === browser check
+    jest.mock("../dist/cjs/src/rpc-handler", () => {
+      return {
+        _latencies: {
+          1: {
+            "http://localhost:8545": 100,
+          },
+        },
+        RPCHandler: jest.fn().mockImplementation(() => {
+          return {
+            getFastestRpcProvider: jest.fn(),
+          };
+        }),
+      };
+    });
     expect(() => {
-      RPCHandler.getInstance(1, {
+      RPCHandler.getInstance({
         ...testConfig,
         autoStorage: true,
       });

@@ -1,4 +1,5 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
+import { ChainId, networkCurrencies, networkExplorers, networkIds, networkNames, networkRpcs, tokens } from "./constants";
 
 export type ValidBlockData = {
   jsonrpc: string;
@@ -10,6 +11,16 @@ export type ValidBlockData = {
   };
 };
 
+export type Token = {
+  decimals: number;
+  address: string;
+};
+
+export type NativeToken = {
+  symbol: string;
+  decimals: number;
+};
+
 export type HandlerInterface = {
   getProvider(): JsonRpcProvider | undefined;
   clearInstance(): void;
@@ -18,34 +29,22 @@ export type HandlerInterface = {
 };
 
 export type HandlerConstructorConfig = {
-  networkIds?: {
-    [network: string]: number;
-  };
-  networkNames?: {
-    [network: number]: string;
-  };
-  networkCurrencies?: {
-    [network: number]: {
-      symbol: string;
-      decimals: number;
-    };
-  };
-  networkExplorers?: {
-    [network: number]: string;
-  };
-  networkRpcs?: {
-    [network: number]: string[];
-  };
-  tokens?: {
-    [network: number]: {
-      [token: string]: {
-        address: string;
-        decimals: number;
-      };
-    };
-  };
+  networkId: number;
+  networkName?: string;
+  networkRpcs?: string[];
   autoStorage?: boolean;
   cacheRefreshCycles?: number;
   runtimeRpcs?: string[];
-  latencies?: Record<string, number>;
+};
+
+export type NetworkRPCs = typeof networkRpcs;
+export type NetworkNames = typeof networkNames;
+export type NetworkCurrencies = typeof networkCurrencies;
+export type Tokens = typeof tokens;
+export type NetworkExplorers = typeof networkExplorers;
+export type NetworkIds = typeof networkIds;
+export type { ChainId };
+
+export type ChainNames<TChainID extends PropertyKey = ChainId> = {
+  [key in TChainID]: string;
 };

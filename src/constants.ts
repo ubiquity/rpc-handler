@@ -1,24 +1,35 @@
-import ChainIds from "../lib/chainlist/constants/chainIds.json";
+import { ChainNames, NativeToken, Token } from "./handler";
 
-export type ChainId<T extends string | number = number> = T extends keyof typeof ChainIds ? (typeof ChainIds)[T] : T;
-
-export type ChainNames<TChainID extends PropertyKey = ChainId> = {
-  [key in TChainID]: string;
-};
-
+export declare const chainIDList: Record<string, string>;
 export declare const extraRpcs: Record<ChainId, string[]>;
 
-export const networkIds: Record<ChainNames[keyof ChainNames], ChainId> = {
-  Mainnet: 1,
-  Goerli: 5,
-  Gnosis: 100,
-  Anvil: 31337,
-};
+export type ChainId<T extends string | number = number> = T extends keyof typeof chainIDList ? (typeof chainIDList)[T] : T;
 
-export type Token = {
-  address: string;
-  decimals: number;
-};
+export const permit2Address = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
+export const nftAddress = "0xAa1bfC0e51969415d64d6dE74f27CDa0587e645b";
+export const LOCAL_HOST = "http://127.0.0.1:8545";
+
+export const networkIds: Record<ChainNames[keyof ChainNames], ChainId> = Object.fromEntries(
+  Object.entries(chainIDList).map(([id, name]) => {
+    const chainId = parseInt(id);
+    const chain = name.charAt(0).toUpperCase() + name.slice(1);
+    return [chain, chainId];
+  })
+);
+
+export const networkNames: ChainNames = Object.fromEntries(
+  Object.entries(networkIds).map(([name, id]) => {
+    const chainName = name.charAt(0).toUpperCase() + name.slice(1);
+    return [id, chainName];
+  })
+);
+
+export const networkRpcs: Record<ChainId, string[]> = Object.fromEntries(
+  Object.entries(networkIds).map(([, value]) => {
+    const chainRpcs = extraRpcs[value] || [];
+    return [value, chainRpcs];
+  })
+);
 
 export const tokens: Record<ChainId, Record<string, Token>> = {
   [networkIds.Mainnet]: {
@@ -35,24 +46,12 @@ export const tokens: Record<ChainId, Record<string, Token>> = {
   },
 };
 
-export const networkCurrencies: Record<ChainId, { symbol: string; decimals: number }> = {
+export const networkCurrencies: Record<ChainId, NativeToken> = {
   [networkIds.Mainnet]: { symbol: "ETH", decimals: 18 },
   [networkIds.Goerli]: { symbol: "GoerliETH", decimals: 18 },
   [networkIds.Gnosis]: { symbol: "XDAI", decimals: 18 },
   [networkIds.Anvil]: { symbol: "XDAI", decimals: 18 },
 };
-
-export function getNetworkName(networkId?: number) {
-  const networkName = networkNames[networkId as keyof typeof networkNames];
-  if (!networkName) {
-    console.error(`Unknown network ID: ${networkId}`);
-  }
-  return networkName ?? "Unknown Network";
-}
-
-export const permit2Address = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
-export const nftAddress = "0xAa1bfC0e51969415d64d6dE74f27CDa0587e645b";
-export const LOCAL_HOST = "http://127.0.0.1:8545";
 
 export const networkExplorers: Record<ChainId, string> = {
   [networkIds.Mainnet]: "https://etherscan.io",
@@ -61,16 +60,10 @@ export const networkExplorers: Record<ChainId, string> = {
   [networkIds.Anvil]: "https://gnosisscan.io",
 };
 
-export const networkRpcs: Record<ChainId, string[]> = {
-  [networkIds.Mainnet]: [...(extraRpcs[networkIds.Mainnet] || [])],
-  [networkIds.Goerli]: [...(extraRpcs[networkIds.Goerli] || [])],
-  [networkIds.Gnosis]: [...(extraRpcs[networkIds.Gnosis] || [])],
-  [networkIds.Anvil]: [LOCAL_HOST],
-};
-
-export const networkNames: ChainNames = {
-  [networkIds.Mainnet]: "Ethereum Mainnet",
-  [networkIds.Goerli]: "Goerli Testnet",
-  [networkIds.Gnosis]: "Gnosis Chain",
-  [networkIds.Anvil]: LOCAL_HOST,
-};
+export function getNetworkName(networkId?: number) {
+  const networkName = networkNames[networkId ?? 0];
+  if (!networkName) {
+    console.error(`Unknown network ID: ${networkId}`);
+  }
+  return networkName ?? "Unknown Network";
+}
