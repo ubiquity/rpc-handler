@@ -14,7 +14,7 @@ This packages leverages [Chainlist's](https://github.com/DefiLlama/chainlist) ne
 ## Installation
 
 ```bash
-yarn add @ubiquity/rpc-handler
+yarn add @ubiquitydao/rpc-handler
 ```
 
 ## Usage
