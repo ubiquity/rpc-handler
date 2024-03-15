@@ -1,6 +1,6 @@
 {
   "name": "@keyrxng/rpc-handler",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Uses Chainlist's RPC collection racing them returning the lowest latency RPC",
   "main": "dist/cjs/rpc-handler.js",
   "module": "dist/esm/rpc-handler.js",

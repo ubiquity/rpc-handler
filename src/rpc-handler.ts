@@ -37,7 +37,8 @@ export class RPCHandler implements HandlerInterface {
 
     if (this._provider && this._provider?.connection.url.includes("localhost") && this._networkId !== 31337) {
       /**
-       * The JsonRpcProvider is the culprit for it.
+       * The JsonRpcProvider defaults erroneously to localhost:8545
+       * this is a fix for that
        *  static defaultUrl(): string {
        *    return "http:/\/localhost:8545";
        *  }
