@@ -1,0 +1,29 @@
+name: publish-package
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - development # change this to main
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/release-please-action@v3
+        with:
+          release-type: node
+          package-name: @keyrxng/rpc-handler
+          default-branch: development
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20.10.0'
+          registry-url: https://registry.npmjs.org/
+      - run: |
+          yarn install --immutable --immutable-cache --check-cache
+          yarn build
+          yarn pack
+          yarn publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}

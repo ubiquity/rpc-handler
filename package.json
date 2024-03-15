@@ -1,5 +1,5 @@
 {
-  "name": "@ubiquitydao/rpc-handler",
+  "name": "@keyrxng/rpc-handler",
   "version": "1.0.0",
   "description": "Uses Chainlist's RPC collection racing them returning the lowest latency RPC",
   "main": "dist/cjs/rpc-handler.js",
