@@ -13,12 +13,12 @@ jobs:
       - uses: google-github-actions/release-please-action@v3
         with:
           release-type: node
-          package-name: @keyrxng/rpc-handler
+          package-name: "@keyrxng/rpc-handler"
           default-branch: development
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '20.10.0'
+          node-version: "20.10.0"
           registry-url: https://registry.npmjs.org/
       - run: |
           yarn install --immutable --immutable-cache --check-cache
