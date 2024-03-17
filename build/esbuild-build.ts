@@ -1,8 +1,10 @@
 import esbuild from "esbuild";
 import chainlist from "../lib/chainlist/constants/extraRpcs";
 import chainIDList from "../lib/chainlist/constants/chainIds.json";
+import path from "path";
+import * as fs from "fs";
 
-const typescriptEntries = ["src/rpc-handler.ts", "src/constants.ts", "src/handler.ts", "src/services/rpc-service.ts", "src/services/storage-service.ts"];
+const typescriptEntries = ["src/handler/rpc-handler.ts", "src/types/constants.ts", "src/types/handler.ts"];
 export const entries = [...typescriptEntries];
 const extraRpcs: Record<string, string[]> = {};
 // this flattens all the rpcs into a single object, with key names that match the networkIds. The arrays are just of URLs per network ID.
@@ -23,37 +25,66 @@ export const esBuildContext: esbuild.BuildOptions = {
   define: createEnvDefines({ extraRpcs, chainIDList }),
 };
 
-esbuild
-  .build({
-    ...esBuildContext,
-    tsconfig: "tsconfig.node.json",
-    platform: "node",
-    outdir: "dist/cjs/src",
-    format: "cjs",
-  })
-  .then(() => {
-    console.log("Node.js esbuild complete");
-  })
-  .catch((err) => {
+async function main() {
+  try {
+    await buildForEnvironments();
+    await buildIndex();
+  } catch (err) {
     console.error(err);
     process.exit(1);
+  }
+}
+
+main();
+
+async function buildForEnvironments() {
+  ensureDistDir();
+
+  await esbuild
+    .build({
+      ...esBuildContext,
+      tsconfig: "tsconfig.node.json",
+      platform: "node",
+      outdir: "dist/cjs/src",
+      format: "cjs",
+    })
+    .then(() => {
+      console.log("Node.js esbuild complete");
+    })
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
+
+  esbuild
+    .build({
+      ...esBuildContext,
+      tsconfig: "tsconfig.web.json",
+      platform: "browser",
+      outdir: "dist/esm/src",
+      format: "esm",
+    })
+    .then(() => {
+      console.log("Frontend esbuild complete");
+    })
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
+}
+
+async function buildIndex() {
+  await esbuild.build({
+    entryPoints: ["index.ts"],
+    bundle: true,
+    platform: "neutral",
+    format: "cjs",
+    outfile: "dist/index.js",
+    define: createEnvDefines({ extraRpcs, chainIDList }),
   });
 
-esbuild
-  .build({
-    ...esBuildContext,
-    tsconfig: "tsconfig.web.json",
-    platform: "browser",
-    outdir: "dist/esm/src",
-    format: "esm",
-  })
-  .then(() => {
-    console.log("Frontend esbuild complete");
-  })
-  .catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
+  console.log("Index build complete.");
+}
 
 function createEnvDefines(generatedAtBuild: Record<string, unknown>): Record<string, string> {
   const defines: Record<string, string> = {};
@@ -63,4 +94,11 @@ function createEnvDefines(generatedAtBuild: Record<string, unknown>): Record<str
   });
 
   return defines;
+}
+
+function ensureDistDir() {
+  const distPath = path.resolve(__dirname, "dist");
+  if (!fs.existsSync(distPath)) {
+    fs.mkdirSync(distPath, { recursive: true });
+  }
 }

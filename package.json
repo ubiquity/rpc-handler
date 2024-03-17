@@ -21,10 +21,9 @@
     "knip": "knip",
     "knip-ci": "knip --no-exit-code --reporter json",
     "prepare": "husky install",
-    "build:cjs": "tsc --emitDeclarationOnly --outDir dist/cjs/src",
-    "build:esm": "tsc --emitDeclarationOnly --outDir dist/esm/src",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist/types",
     "build": "tsx build/esbuild-build.ts",
-    "postbuild": "yarn build:cjs && yarn build:esm",
+    "postbuild": "yarn build:types",
     "postinstall": "git submodule update --init --recursive",
     "test": "jest"
   },
