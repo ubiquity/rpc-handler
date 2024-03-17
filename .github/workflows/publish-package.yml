@@ -26,4 +26,4 @@ jobs:
           yarn pack
           yarn publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+          NPM_ACCESS_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
