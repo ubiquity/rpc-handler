@@ -35,6 +35,7 @@ export type HandlerConstructorConfig = {
   autoStorage?: boolean;
   cacheRefreshCycles?: number;
   runtimeRpcs?: string[];
+  rpcTimeout?: number;
 };
 
 export type NetworkRPCs = typeof networkRpcs;

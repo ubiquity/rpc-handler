@@ -1,10 +1,10 @@
 {
-  "name": "@keyrxng/rpc-handler",
-  "version": "1.0.1",
+  "name": "@ubiquitydao/rpc-handler",
+  "version": "1.0.0",
   "description": "Uses Chainlist's RPC collection racing them returning the lowest latency RPC",
-  "main": "dist/cjs/rpc-handler.js",
-  "module": "dist/esm/rpc-handler.js",
-  "types": "src/index.ts",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/index.d.ts",
   "author": "Ubiquity",
   "license": "MIT",
   "files": [
@@ -21,11 +21,12 @@
     "knip": "knip",
     "knip-ci": "knip --no-exit-code --reporter json",
     "prepare": "husky install",
-    "build:types": "tsc --emitDeclarationOnly --outDir dist/types",
-    "build": "tsx build/esbuild-build.ts",
+    "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist && rm -rf dist/src",
+    "build:tests": "tsx build/tests-esbuild-build.ts && tsc --emitDeclarationOnly --declaration --project tsconfig.tests.json",
+    "build": "rm -rf dist && tsx build/esbuild-build.ts",
     "postbuild": "yarn build:types",
     "postinstall": "git submodule update --init --recursive",
-    "test": "jest"
+    "test": "rm -rf dist && yarn build:tests && jest"
   },
   "keywords": [
     "typescript",
@@ -35,7 +36,8 @@
     "open-source"
   ],
   "dependencies": {
-    "@ethersproject/providers": "5.7.2"
+    "@ethersproject/providers": "5.7.2",
+    "axios": "^1.6.8"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",

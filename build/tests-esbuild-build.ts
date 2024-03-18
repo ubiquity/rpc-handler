@@ -4,7 +4,7 @@ import chainIDList from "../lib/chainlist/constants/chainIds.json";
 import path from "path";
 import * as fs from "fs";
 
-const typescriptEntries = ["index.ts"];
+const typescriptEntries = ["tests/mocks/rpc-service.ts", "tests/mocks/rpc-handler.ts", "tests/mocks/constants.ts", "tests/mocks/handler.ts"];
 export const entries = [...typescriptEntries];
 const extraRpcs: Record<string, string[]> = {};
 // this flattens all the rpcs into a single object, with key names that match the networkIds. The arrays are just of URLs per network ID.
@@ -42,29 +42,13 @@ async function buildForEnvironments() {
   await esbuild
     .build({
       ...esBuildContext,
-      tsconfig: "tsconfig.node.json",
+      tsconfig: "tsconfig.tests.json",
       platform: "node",
-      outdir: "dist/cjs",
+      outdir: "dist/tests/mocks",
       format: "cjs",
     })
     .then(() => {
       console.log("Node.js esbuild complete");
-    })
-    .catch((err) => {
-      console.error(err);
-      process.exit(1);
-    });
-
-  esbuild
-    .build({
-      ...esBuildContext,
-      tsconfig: "tsconfig.web.json",
-      platform: "browser",
-      outdir: "dist/esm",
-      format: "esm",
-    })
-    .then(() => {
-      console.log("Frontend esbuild complete");
     })
     .catch((err) => {
       console.error(err);

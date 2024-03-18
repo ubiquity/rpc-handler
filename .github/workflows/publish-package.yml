@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - development # change this to main
+      - main
 
 jobs:
   release-please:
@@ -15,8 +15,8 @@ jobs:
           release-type: node
           package-name: "@keyrxng/rpc-handler"
           default-branch: development
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20.10.0"
           registry-url: https://registry.npmjs.org/

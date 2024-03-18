@@ -12,6 +12,6 @@
     "declaration": true,
     "resolveJsonModule": true
   },
-  "include": ["index.ts"],
-  "exclude": ["node_modules", "build", "tests/**/*.test.ts", "lib", "dist", "jest.config.ts"]
+  "include": ["index.ts", "tests/**/*.ts"],
+  "exclude": ["node_modules", "build", "tests/**/*.test.ts", "tests/script-test.ts", "lib", "dist", "jest.config.ts"]
 }
