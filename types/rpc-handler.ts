@@ -2,8 +2,8 @@ import { JsonRpcProvider } from "@ethersproject/providers";
 import { LOCAL_HOST, networkRpcs, networkNames } from "./constants";
 import { HandlerInterface, HandlerConstructorConfig } from "./handler";
 
-import { RPCService } from "./services/rpc-service";
-import { StorageService } from "./services/storage-service";
+import { RPCService } from "../src/services/rpc-service";
+import { StorageService } from "../src/services/storage-service";
 
 export class RPCHandler implements HandlerInterface {
   private static _instance: RPCHandler | null = null;
@@ -12,6 +12,7 @@ export class RPCHandler implements HandlerInterface {
   private _networkName: string;
   private _env: string = "node";
 
+  private _rpcTimeout: number = Number.MAX_VALUE; // ms
   private _cacheRefreshCycles: number = 10;
   private _refreshLatencies: number = 0;
   private _autoStorage: boolean = false;
@@ -37,7 +38,8 @@ export class RPCHandler implements HandlerInterface {
 
     if (this._provider && this._provider?.connection.url.includes("localhost") && this._networkId !== 31337) {
       /**
-       * The JsonRpcProvider is the culprit for it.
+       * The JsonRpcProvider defaults erroneously to localhost:8545
+       * this is a fix for that
        *  static defaultUrl(): string {
        *    return "http:/\/localhost:8545";
        *  }
@@ -50,28 +52,25 @@ export class RPCHandler implements HandlerInterface {
 
   public async testRpcPerformance(): Promise<JsonRpcProvider> {
     const shouldRefreshRpcs =
-      Object.keys(this._latencies).filter((rpc) => rpc.endsWith(`_${this._networkId}`)).length <= 1 || this._refreshLatencies >= this._cacheRefreshCycles;
+      Object.keys(this._latencies).filter((rpc) => rpc.startsWith(`${this._networkId}__`)).length <= 1 || this._refreshLatencies >= this._cacheRefreshCycles;
 
     if (shouldRefreshRpcs) {
       this._runtimeRpcs = networkRpcs[this._networkId];
       this._refreshLatencies = 0;
     } else {
       this._runtimeRpcs = Object.keys(this._latencies).map((rpc) => {
-        if (rpc.includes("api_key") && rpc.endsWith(`_${this._networkId}`)) {
-          return rpc.replace(`_${this._networkId}`, "");
-        }
-
-        if ((this._networkId !== 31337 && rpc.includes("localhost")) || rpc.includes("127.0.0.1:8545")) {
-          return rpc;
-        }
-
-        return rpc.split("_")[0];
+        return rpc.split("__")[1];
       });
     }
 
     await this._testRpcPerformance();
 
     const fastestRpcUrl = await RPCService.findFastestRpc(this._latencies, this._networkId);
+
+    if (!fastestRpcUrl) {
+      throw new Error("Failed to find fastest RPC");
+    }
+
     const provider = new JsonRpcProvider(fastestRpcUrl, this._networkId);
     this._provider = provider;
 
@@ -148,12 +147,15 @@ export class RPCHandler implements HandlerInterface {
         params: ["latest", false],
         id: 1,
       }),
-      this._env
+      this._rpcTimeout
     );
 
     this._runtimeRpcs = runtimeRpcs;
     this._latencies = latencies;
     this._refreshLatencies++;
+
+    StorageService.setLatencies(this._env, this._latencies);
+    StorageService.setRefreshLatencies(this._env, this._refreshLatencies);
   }
   private _updateConfig(config: HandlerConstructorConfig): void {
     if (config.networkName) {
@@ -172,9 +174,13 @@ export class RPCHandler implements HandlerInterface {
       this._cacheRefreshCycles = config.cacheRefreshCycles;
     }
 
+    if (config.rpcTimeout) {
+      this._rpcTimeout = config.rpcTimeout;
+    }
+
     if (config.autoStorage) {
       this._autoStorage = true;
-      this._latencies = StorageService.getLatencies(this._env);
+      this._latencies = StorageService.getLatencies(this._env, this._networkId);
       this._refreshLatencies = StorageService.getRefreshLatencies(this._env);
     }
   }
