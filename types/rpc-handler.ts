@@ -12,7 +12,7 @@ export class RPCHandler implements HandlerInterface {
   private _networkName: string;
   private _env: string = "node";
 
-  private _rpcTimeout: number = 999999; // ms
+  private _rpcTimeout: number = Number.MAX_VALUE; // ms
   private _cacheRefreshCycles: number = 10;
   private _refreshLatencies: number = 0;
   private _autoStorage: boolean = false;
