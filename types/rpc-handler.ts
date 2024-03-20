@@ -52,22 +52,14 @@ export class RPCHandler implements HandlerInterface {
 
   public async testRpcPerformance(): Promise<JsonRpcProvider> {
     const shouldRefreshRpcs =
-      Object.keys(this._latencies).filter((rpc) => rpc.endsWith(`_${this._networkId}_`)).length <= 1 || this._refreshLatencies >= this._cacheRefreshCycles;
+      Object.keys(this._latencies).filter((rpc) => rpc.startsWith(`${this._networkId}__`)).length <= 1 || this._refreshLatencies >= this._cacheRefreshCycles;
 
     if (shouldRefreshRpcs) {
       this._runtimeRpcs = networkRpcs[this._networkId];
       this._refreshLatencies = 0;
     } else {
       this._runtimeRpcs = Object.keys(this._latencies).map((rpc) => {
-        if (rpc.includes("api_key") && rpc.endsWith(`_${this._networkId}_`)) {
-          return rpc.replace(`_${this._networkId}_`, "");
-        }
-
-        if ((this._networkId !== 31337 && rpc.includes("localhost")) || rpc.includes("127.0.0.1:8545")) {
-          return rpc;
-        }
-
-        return rpc.split("_")[0];
+        return rpc.split("__")[1];
       });
     }
 

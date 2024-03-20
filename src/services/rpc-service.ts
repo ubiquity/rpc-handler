@@ -40,14 +40,14 @@ export class RPCService {
     const fastest = await Promise.race(successfulPromises);
 
     if (fastest.success) {
-      latencies[`${fastest.rpcUrl}_${networkId}_`] = fastest.duration;
+      latencies[`${networkId}__${fastest.rpcUrl}`] = fastest.duration;
     }
 
     const allResults = await Promise.allSettled(successfulPromises);
 
     allResults.forEach((result) => {
       if (result.status === "fulfilled" && (result.value as PromiseResult).success) {
-        latencies[`${(result.value as PromiseResult).rpcUrl}_${networkId}_`] = (result.value as PromiseResult).duration;
+        latencies[`${networkId}__${(result.value as PromiseResult).rpcUrl}`] = (result.value as PromiseResult).duration;
       } else if (result.status === "fulfilled") {
         const fulfilledResult = result.value as PromiseResult;
         const index = runtimeRpcs.indexOf(fulfilledResult.rpcUrl);
@@ -62,18 +62,18 @@ export class RPCService {
   static async findFastestRpc(latencies: Record<string, number>, networkId: number): Promise<string | null> {
     try {
       const validLatencies: Record<string, number> = Object.entries(latencies)
-        .filter(([key]) => key.endsWith(`_${networkId}_`))
+        .filter(([key]) => key.startsWith(`${networkId}__`))
         .reduce(
           (acc, [key, value]) => {
             acc[key] = value;
             return acc;
           },
           {} as Record<string, number>
-        ); // Add index signature for validLatencies object
+        );
 
       return Object.keys(validLatencies)
         .reduce((a, b) => (validLatencies[a] < validLatencies[b] ? a : b))
-        .split("_")[0];
+        .split("__")[1];
     } catch (error) {
       console.error("[RPCService] Failed to find fastest RPC");
       return null;

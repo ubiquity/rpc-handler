@@ -14,6 +14,7 @@ export type ValidBlockData = {
 export type Token = {
   decimals: number;
   address: string;
+  symbol: string;
 };
 
 export type NativeToken = {
@@ -22,20 +23,20 @@ export type NativeToken = {
 };
 
 export type HandlerInterface = {
-  getProvider(): JsonRpcProvider | undefined;
+  getProvider(): JsonRpcProvider | null;
   clearInstance(): void;
-  getFastestRpcProvider(): Promise<JsonRpcProvider | undefined>;
-  testRpcPerformance(): Promise<JsonRpcProvider | undefined>;
+  getFastestRpcProvider(): Promise<JsonRpcProvider | null>;
+  testRpcPerformance(): Promise<JsonRpcProvider | null>;
 };
 
 export type HandlerConstructorConfig = {
   networkId: number;
-  networkName?: string;
-  networkRpcs?: string[];
-  autoStorage?: boolean;
-  cacheRefreshCycles?: number;
-  runtimeRpcs?: string[];
-  rpcTimeout?: number;
+  networkName: string | null;
+  networkRpcs: string[] | null;
+  autoStorage: boolean | null;
+  cacheRefreshCycles: number | null;
+  runtimeRpcs: string[] | null;
+  rpcTimeout: number | null;
 };
 
 export type NetworkRPCs = typeof networkRpcs;

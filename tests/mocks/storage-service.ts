@@ -3,7 +3,7 @@ export class StorageService {
     if (env === "browser") {
       const latencies: Record<string, number> = JSON.parse(localStorage.getItem("rpcLatencies") || "{}");
       return Object.keys(latencies).reduce((acc: Record<string, number>, key) => {
-        if (key.endsWith(`_${networkId}_`)) {
+        if (key.startsWith(`${networkId}__`)) {
           acc[key] = latencies[key];
         }
         return acc;
