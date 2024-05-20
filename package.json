@@ -1,5 +1,5 @@
 {
-  "name": "@ubiquitydao/rpc-handler",
+  "name": "@ubiquity-dao/rpc-handler",
   "version": "1.0.0",
   "description": "Uses Chainlist's RPC collection racing them returning the lowest latency RPC",
   "main": "dist/cjs/rpc-handler.js",
@@ -36,7 +36,8 @@
     "open-source"
   ],
   "dependencies": {
-    "@ethersproject/providers": "5.7.2"
+    "@ethersproject/providers": "5.7.2",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
@@ -49,6 +50,7 @@
     "@cspell/dict-typescript": "^3.1.2",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.19",
+    "@types/node-fetch": "^2.6.11",
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
     "cspell": "^8.4.0",
@@ -82,5 +84,6 @@
     "extends": [
       "@commitlint/config-conventional"
     ]
-  }
+  },
+  "packageManager": "yarn@4.2.2"
 }
