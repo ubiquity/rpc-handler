@@ -5,7 +5,7 @@ const config: KnipConfig = {
   project: ["src/**/*.ts"],
   ignore: ["src/types/config.ts"],
   ignoreExportsUsedInFile: true,
-  ignoreDependencies: ["ts-node", "eslint-config-prettier", "eslint-plugin-prettier"],
+  ignoreDependencies: ["ts-node", "eslint-config-prettier", "eslint-plugin-prettier", "@commitlint/cli", "@types/jest"],
   jest: {
     config: ["jest.config.ts"],
     entry: ["tests/*.ts"],
