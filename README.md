@@ -1,4 +1,4 @@
-# `@ubiquity/rpc-handler`
+# `@ubiquity-dao/rpc-handler`
 
 This packages leverages [Chainlist's](https://github.com/DefiLlama/chainlist) network RPC list to return the lowest latency provider from the list for any given network ID.
 
@@ -14,7 +14,7 @@ This packages leverages [Chainlist's](https://github.com/DefiLlama/chainlist) ne
 ## Installation
 
 ```bash
-yarn add @ubiquitydao/rpc-handler
+yarn add @ubiquity-dao/rpc-handler
 ```
 
 ## Usage
@@ -24,8 +24,8 @@ yarn add @ubiquitydao/rpc-handler
 ###### Browser
 
 ```typescript
-import { HandlerConstructorConfig } from "@ubiquity/rpc-handler/dist/esm/src/handler";
-import { RPCHandler } from "@ubiquity/rpc-handler/dist/esm/src/rpc-handler";
+import { HandlerConstructorConfig } from "@ubiquity-dao/rpc-handler/dist/esm/src/handler";
+import { RPCHandler } from "@ubiquity-dao/rpc-handler/dist/esm/src/rpc-handler";
 
 export function useHandler(networkId: number) {
   const config: HandlerConstructorConfig = {
@@ -49,8 +49,8 @@ app.provider = await handler.getFastestRpcProvider();
 ###### Node.js
 
 ```typescript
-import { HandlerConstructorConfig } from "@ubiquity/rpc-handler/dist/cjs/src/handler";
-import { RPCHandler } from "@ubiquity/rpc-handler/dist/cjs/src/rpc-handler";
+import { HandlerConstructorConfig } from "@ubiquity-dao/rpc-handler/dist/cjs/src/handler";
+import { RPCHandler } from "@ubiquity-dao/rpc-handler/dist/cjs/src/rpc-handler";
 
 const config: HandlerConstructorConfig = {
   networkId: 100;

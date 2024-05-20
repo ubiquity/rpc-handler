@@ -1,4 +1,4 @@
-name: publish-package
+name: Publish Package
 
 on:
   workflow_dispatch:
@@ -7,23 +7,31 @@ on:
       - main
 
 jobs:
-  release-please:
+  publish-package:
     runs-on: ubuntu-latest
     steps:
-      - uses: google-github-actions/release-please-action@v4
+      - name: Checkout repository code
+        uses: actions/checkout@v4
         with:
-          release-type: node
-          package-name: "@ubiquitydao/rpc-handler"
-          default-branch: main
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+          fetch-depth: 0
+
+      # needed to use yarn v4
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Install Node
+        uses: actions/setup-node@v4
         with:
           node-version: "20.10.0"
           registry-url: https://registry.npmjs.org/
-      - run: |
-          yarn install --immutable --immutable-cache --check-cache
+
+      - name: Build
+        run: |
+          yarn install --immutable --check-cache
           yarn build
           yarn pack
-          yarn publish --access public
+
+      - name: Publish
+        run: npm publish --access public
         env:
-          NPM_ACCESS_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
