@@ -1,5 +1,12 @@
-import { HandlerConstructorConfig, RPCHandler } from "../dist/";
-import getRPCHandler from "../dist/index.js";
+import getRPCHandler, { HandlerConstructorConfig, RPCHandler } from "../dist/";
+
+/**
+ * This script is meant to test the `yarn build` build output
+ * while the jest tests work under the `yarn test` build output.
+ *
+ * Both have different esbuild configurations, this is to ensure that the
+ * library works in both scenarios.
+ */
 
 (async () => {
   // a hook that loads the correct module based on the environment
@@ -9,6 +16,11 @@ import getRPCHandler from "../dist/index.js";
   const config: HandlerConstructorConfig = {
     networkId: 1,
     rpcTimeout: 1500,
+    autoStorage: false,
+    cacheRefreshCycles: 10,
+    networkName: null,
+    networkRpcs: null,
+    runtimeRpcs: null,
   };
 
   const handler: RPCHandler = new RPCHandler(config);

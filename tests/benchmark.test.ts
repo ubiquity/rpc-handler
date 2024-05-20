@@ -1,6 +1,5 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { HandlerConstructorConfig } from "../dist/tests/mocks/handler";
-import { RPCHandler } from "../dist/tests/mocks/rpc-handler";
+import { RPCHandler, HandlerConstructorConfig } from "../dist";
 
 export const testConfig: HandlerConstructorConfig = {
   networkId: 1,
