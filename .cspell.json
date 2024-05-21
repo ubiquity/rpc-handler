@@ -8,5 +8,5 @@
   "dictionaries": ["typescript", "node", "software-terms"],
   "import": ["@cspell/dict-typescript/cspell-ext.json", "@cspell/dict-node/cspell-ext.json", "@cspell/dict-software-terms"],
   "ignoreRegExpList": ["[0-9a-fA-F]{6}"],
-  "ignoreWords": ["Rpcs", "ethersproject", "publicnode", "WXDAI", "XDAI", "chainlist", "Knip"]
+  "ignoreWords": ["Rpcs", "ethersproject", "publicnode", "WXDAI", "XDAI", "chainlist", "Knip", "LOCALSTORAGE"]
 }

@@ -1,23 +1,38 @@
-import { HandlerConstructorConfig } from "../dist/cjs/src/handler";
-import { RPCHandler } from "../dist/cjs/src/rpc-handler";
+import getRPCHandler, { HandlerConstructorConfig, RPCHandler } from "../dist/";
 
-const config: HandlerConstructorConfig = {
-  networkId: 100,
-  autoStorage: false,
-};
+/**
+ * This script is meant to test the `yarn build` build output
+ * while the jest tests work under the `yarn test` build output.
+ *
+ * Both have different esbuild configurations, this is to ensure that the
+ * library works in both scenarios.
+ */
 
-async function main() {
-  const handler = new RPCHandler(config);
-  const provider = await handler.getFastestRpcProvider();
-  console.trace(provider);
+(async () => {
+  // a hook that loads the correct module based on the environment
+  // not required but a good to have if main/module entry is causing issues
+  const RPCHandler = await getRPCHandler();
 
-  if (!provider) {
-    console.error("Provider not available");
-    return;
-  } else {
-    console.log("Provider available");
-    console.log("Block number:", (await provider.getBlockNumber()).toString());
-  }
-}
+  const config: HandlerConstructorConfig = {
+    networkId: 1,
+    rpcTimeout: 1500,
+    autoStorage: false,
+    cacheRefreshCycles: 10,
+    networkName: null,
+    networkRpcs: null,
+    runtimeRpcs: null,
+  };
 
-main();
+  const handler: RPCHandler = new RPCHandler(config);
+
+  await handler.getFastestRpcProvider();
+
+  const latencies = handler.getLatencies();
+
+  const provider = handler.getFastestRpcProvider();
+
+  console.log(provider);
+  console.log("=====================================");
+  console.log(latencies);
+  process.exit(0);
+})().catch(console.error);
