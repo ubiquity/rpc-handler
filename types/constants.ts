@@ -31,17 +31,19 @@ export const networkRpcs: Record<ChainId, string[]> = Object.fromEntries(
   })
 );
 
-export const tokens: Record<ChainId, Record<string, Token>> = {
+export const tokens: Record<ChainId, Record<Token["symbol"], Token>> = {
   [networkIds.Mainnet]: {
     DAI: {
       address: "0x6b175474e89094c44da98b954eedeac495271d0f",
       decimals: 18,
+      symbol: "DAI",
     },
   },
   [networkIds.Gnosis]: {
     WXDAI: {
       address: "0xe91d153e0b41518a2ce8dd3d7944fa863463a97d",
       decimals: 18,
+      symbol: "WXDAI",
     },
   },
 };

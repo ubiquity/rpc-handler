@@ -1,8 +1,11 @@
 name: Run Jest testing suite
 on:
-  workflow_dispatch:
-  pull_request_target:
+  push:
+    branches:
+      - development
+  pull_request:
     types: [opened, synchronize]
+  workflow_dispatch:
 
 env:
   NODE_ENV: "test"
@@ -12,16 +15,23 @@ jobs:
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
+      # needed to use yarn v4
+      - name: Enable corepack
+        run: corepack enable
       - uses: actions/setup-node@v4
         with:
           node-version: "20.10.0"
       - uses: actions/checkout@master
         with:
           fetch-depth: 0
+
+      - name: Install dependencies
+        run: yarn install
+
       - name: Build & Run test suite
         run: |
-          yarn && yarn build 
           yarn test | tee ./coverage.txt && exit ${PIPESTATUS[0]}
+          
       - name: Jest Coverage Comment
         # Ensures this step is run even on previous step failure (e.g. test failed)
         if: always()
