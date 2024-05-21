@@ -1,11 +1,11 @@
 import type { KnipConfig } from "knip";
 
 const config: KnipConfig = {
-  entry: ["src/index.ts"],
+  entry: ["src/index.ts", "src/services/*.ts"],
   project: ["src/**/*.ts"],
   ignore: ["src/types/config.ts"],
   ignoreExportsUsedInFile: true,
-  ignoreDependencies: ["ts-node", "eslint-config-prettier", "eslint-plugin-prettier", "@commitlint/cli", "@types/jest"],
+  ignoreDependencies: ["ts-node", "node-fetch", "eslint-config-prettier", "eslint-plugin-prettier", "@types/jest", "@types/node-fetch"],
   jest: {
     config: ["jest.config.ts"],
     entry: ["tests/*.ts"],
