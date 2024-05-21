@@ -1,4 +1,4 @@
-import { RPCHandler } from "../dist/cjs/src/rpc-handler";
+import { RPCHandler } from "../dist";
 import { testConfig } from "./rpc-handler.test";
 
 describe("Browser env detection", () => {
@@ -7,34 +7,20 @@ describe("Browser env detection", () => {
     ...globalThis,
     name: "Window",
   };
+
   Object.defineProperty(global, "window", {
     value: windowMock,
+    configurable: true,
   });
 
-  it("should detect a browser environment", () => {
-    // This will fail with the following error:
-    // localStorage is not defined
-    // proving that the test is not running in a browser environment
-    // but has bypassed the env === browser check
-    jest.mock("../dist/cjs/src/rpc-handler", () => {
-      return {
-        _latencies: {
-          1: {
-            "http://localhost:8545": 100,
-          },
-        },
-        RPCHandler: jest.fn().mockImplementation(() => {
-          return {
-            getFastestRpcProvider: jest.fn(),
-          };
-        }),
-      };
-    });
-    expect(() => {
-      RPCHandler.getInstance({
-        ...testConfig,
-        autoStorage: true,
-      });
-    }).toThrow("localStorage is not defined");
+  it("should detect a browser env", () => {
+    const rpcHandler = new RPCHandler(testConfig);
+    expect(rpcHandler["_env"]).toBe("browser");
+
+    // @ts-expect-error globalThis
+    delete global.window;
+
+    const rpcHandler2 = new RPCHandler(testConfig);
+    expect(rpcHandler2["_env"]).toBe("node");
   });
 });
