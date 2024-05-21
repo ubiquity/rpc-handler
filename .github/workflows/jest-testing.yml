@@ -2,7 +2,7 @@ name: Run Jest testing suite
 on:
   push:
     branches:
-      - main
+      - development
   pull_request:
     types: [opened, synchronize]
   workflow_dispatch:
