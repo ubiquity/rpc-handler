@@ -16,8 +16,9 @@ export const testConfig: HandlerConstructorConfig = {
   proxySettings: {
     retryCount: 3,
     retryDelay: 500,
-    logTier: "error",
+    logTier: "info",
     logger: new PrettyLogs(),
+    strictLogs: true,
   },
 };
 
@@ -32,7 +33,7 @@ describe("RPCHandler", () => {
     rpcHandler = new RPCHandler(testConfig);
   });
 
-  describe("Initialization", () => {
+  describe.only("Initialization", () => {
     it("should be instance of RPCHandler", () => {
       expect(rpcHandler).toBeInstanceOf(RPCHandler);
     });

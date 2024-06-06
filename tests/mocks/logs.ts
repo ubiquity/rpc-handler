@@ -29,7 +29,11 @@ export class PrettyLogs {
   };
 
   public log(type: PrettyLogsWithOk, message: string, metadata?: Metadata) {
-    this._logWithStack(type, message, metadata);
+    for (const key of Object.keys(this.levels) as (keyof typeof this.levels)[]) {
+      if (this.levels[key] > this.levels[type]) {
+        this[key](message, metadata);
+      }
+    }
   }
 
   public fatal(message: string, metadata?: Metadata) {
@@ -66,10 +70,7 @@ export class PrettyLogs {
 
   private _logWithStack(type: PrettyLogsWithOk, message: string, metaData?: Metadata | string) {
     if (typeof metaData === "string") {
-      this._log(type, `${message} - ${metaData}`);
-      return;
-    } else if (metaData && typeof metaData === "object" && !(metaData.error || metaData?.stack)) {
-      this._log(type, `${message} ${!this._isEmpty(metaData) ? JSON.stringify(metaData, null, 2) : ""}`);
+      this._log(type, metaData);
       return;
     }
 
@@ -86,20 +87,18 @@ export class PrettyLogs {
         }
       }
 
-      const newMetadata = { ...metadata };
-      delete newMetadata.message;
-      delete newMetadata.name;
+      const newMetadata = { ...metadata, message };
       delete newMetadata.stack;
 
       if (!this._isEmpty(newMetadata)) {
         this._log(type, newMetadata);
       }
 
-      if (stack && typeof stack == "string") {
+      if (typeof stack == "string") {
         const prettyStack = this._formatStackTrace(stack, 1);
         const colorizedStack = this._colorizeText(prettyStack, COLORS.dim);
         this._log(type, colorizedStack);
-      } else if (stack && Array.isArray(stack)) {
+      } else if (stack) {
         const prettyStack = this._formatStackTrace((stack as unknown as string[]).join("\n"), 1);
         const colorizedStack = this._colorizeText(prettyStack, COLORS.dim);
         this._log(type, colorizedStack);
