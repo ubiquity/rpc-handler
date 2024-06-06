@@ -47,7 +47,53 @@ export class RPCHandler implements HandlerInterface {
       this._provider = await this.testRpcPerformance();
     }
 
-    return this._provider;
+    return this.createProviderProxy(this._provider, this);
+  }
+
+  createProviderProxy(provider: JsonRpcProvider, handler: RPCHandler): JsonRpcProvider {
+    return new Proxy(provider, {
+      get: function (target: JsonRpcProvider, prop: keyof JsonRpcProvider) {
+        if (typeof target[prop] === "function") {
+          return async function (...args: unknown[]) {
+            // first attempt at the call, if it fails we don't care about the error
+            try {
+              return await (target[prop] as (...args: unknown[]) => Promise<unknown>)(...args);
+            } catch {
+              //
+            }
+
+            const latencies: Record<string, number> = handler.getLatencies();
+            const sortedLatencies = Object.entries(latencies).sort((a, b) => a[1] - b[1]);
+
+            let loops = 3;
+
+            let lastError: Error | unknown | null = null;
+
+            while (loops > 0) {
+              for (const [rpc] of sortedLatencies) {
+                console.log(`[PROXY] Connected to: ${rpc}`);
+                try {
+                  // we do not want to change the app.provider as it is the proxy itself
+                  const newProvider = new JsonRpcProvider(rpc.split("__")[1]);
+                  return await (newProvider[prop] as (...args: unknown[]) => Promise<unknown>)(...args);
+                } catch (e) {
+                  console.error("[PROXY] Provider Error -> retrying with new provider");
+                  lastError = e;
+                }
+              }
+              loops--;
+            }
+
+            if (lastError instanceof Error) {
+              console.error(lastError);
+            } else {
+              console.error("Unknown error", lastError);
+            }
+          };
+        }
+        return target[prop];
+      },
+    });
   }
 
   public async testRpcPerformance(): Promise<JsonRpcProvider> {
@@ -103,6 +149,7 @@ export class RPCHandler implements HandlerInterface {
     }
     return RPCHandler._instance;
   }
+
   public clearInstance(): void {
     RPCHandler._instance = null;
   }
@@ -157,6 +204,7 @@ export class RPCHandler implements HandlerInterface {
     StorageService.setLatencies(this._env, this._latencies);
     StorageService.setRefreshLatencies(this._env, this._refreshLatencies);
   }
+
   private _updateConfig(config: HandlerConstructorConfig): void {
     if (config.networkName) {
       this._networkName = config.networkName;
