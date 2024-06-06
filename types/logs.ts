@@ -65,45 +65,44 @@ export class PrettyLogs {
   }
 
   private _logWithStack(type: PrettyLogsWithOk, message: string, metaData?: Metadata | string) {
-    if (typeof metaData === "string") {
+    if (!metaData) {
+      this._log(type, message);
+      return;
+    } else if (typeof metaData === "string") {
       this._log(type, `${message} - ${metaData}`);
       return;
-    } else if (metaData && typeof metaData === "object" && !(metaData.error || metaData?.stack)) {
+    } else if (typeof metaData === "object" && !(metaData.error || metaData?.stack)) {
       this._log(type, `${message} ${!this._isEmpty(metaData) ? JSON.stringify(metaData, null, 2) : ""}`);
       return;
     }
 
     const metadata = metaData as MetadataInterface | undefined;
 
-    if (metadata) {
-      let stack = metadata?.error?.stack || metadata?.stack;
-      if (!stack && this.levels[type] >= this.levels.error) {
-        // generate and remove the top four lines of the stack trace
-        const stackTrace = this.getStackTrace();
-        if (stackTrace) {
-          stackTrace.splice(0, 4);
-          stack = stackTrace.filter((line) => line.includes(".ts:")).join("\n");
-        }
-      }
+    let stack = metadata?.error?.stack || metadata?.stack;
+    // generate and remove the top four lines of the stack trace
+    const stackTrace = this.getStackTrace();
+    if (stackTrace) {
+      stackTrace.splice(0, 4);
+      stack = stackTrace.filter((line) => line.includes(".ts:")).join("\n");
+    }
 
-      const newMetadata = { ...metadata };
-      delete newMetadata.message;
-      delete newMetadata.name;
-      delete newMetadata.stack;
+    const newMetadata = { ...metadata };
+    delete newMetadata.message;
+    delete newMetadata.name;
+    delete newMetadata.stack;
 
-      if (!this._isEmpty(newMetadata)) {
-        this._log(type, newMetadata);
-      }
+    if (!this._isEmpty(newMetadata)) {
+      this._log(type, newMetadata);
+    }
 
-      if (stack && typeof stack == "string") {
-        const prettyStack = this._formatStackTrace(stack, 1);
-        const colorizedStack = this._colorizeText(prettyStack, COLORS.dim);
-        this._log(type, colorizedStack);
-      } else if (stack && Array.isArray(stack)) {
-        const prettyStack = this._formatStackTrace((stack as unknown as string[]).join("\n"), 1);
-        const colorizedStack = this._colorizeText(prettyStack, COLORS.dim);
-        this._log(type, colorizedStack);
-      }
+    if (stack && typeof stack == "string") {
+      const prettyStack = this._formatStackTrace(stack, 1);
+      const colorizedStack = this._colorizeText(prettyStack, COLORS.dim);
+      this._log(type, colorizedStack);
+    } else if (stack && Array.isArray(stack)) {
+      const prettyStack = this._formatStackTrace((stack as unknown as string[]).join("\n"), 1);
+      const colorizedStack = this._colorizeText(prettyStack, COLORS.dim);
+      this._log(type, colorizedStack);
     }
   }
 
