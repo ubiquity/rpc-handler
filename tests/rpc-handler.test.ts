@@ -10,12 +10,12 @@ export const testConfig: HandlerConstructorConfig = {
   cacheRefreshCycles: 3,
   networkName: null,
   networkRpcs: null,
-  rpcTimeout: 1500,
+  rpcTimeout: 300,
   runtimeRpcs: null,
   tracking: "yes",
   proxySettings: {
     retryCount: 3,
-    retryDelay: 500,
+    retryDelay: 10,
     logTier: "info",
     logger: new PrettyLogs(),
     strictLogs: true,
@@ -26,14 +26,22 @@ describe("RPCHandler", () => {
   let provider: JsonRpcProvider;
   let rpcHandler: RPCHandler;
 
-  beforeEach(async () => {
-    jest.resetAllMocks();
+  afterAll(() => {
     jest.clearAllMocks();
+    jest.clearAllTimers();
+    jest.resetAllMocks();
+    jest.resetModules();
+  });
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.clearAllTimers();
+    jest.resetAllMocks();
     jest.resetModules();
     rpcHandler = new RPCHandler(testConfig);
   });
 
-  describe.only("Initialization", () => {
+  describe("Initialization", () => {
     it("should be instance of RPCHandler", () => {
       expect(rpcHandler).toBeInstanceOf(RPCHandler);
     });
@@ -68,7 +76,6 @@ describe("RPCHandler", () => {
 
   describe("getFastestRpcProvider", () => {
     it("should return the fastest RPC compared to the latencies", async () => {
-      await rpcHandler.testRpcPerformance();
       provider = await rpcHandler.getFastestRpcProvider();
       const fastestRpc = rpcHandler.getProvider();
       const latencies = rpcHandler.getLatencies();
@@ -92,7 +99,7 @@ describe("RPCHandler", () => {
         expect(first[1]).toBeLessThan(last[1]);
       }
       expect(fastestRpc.connection.url).toBe(provider.connection.url);
-    }, 10000);
+    });
   });
 
   describe("RPC tracking config option", () => {
