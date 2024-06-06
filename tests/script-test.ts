@@ -25,7 +25,6 @@ import getRPCHandler, { HandlerConstructorConfig, RPCHandler, networkIds, networ
       retryCount: 3,
       retryDelay: 500,
       logTier: "info",
-      appName: "[RPC Provider Proxy]",
     },
   };
 

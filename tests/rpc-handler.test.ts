@@ -2,6 +2,7 @@ import { JsonRpcProvider } from "@ethersproject/providers";
 import { networkRpcs } from "../types/constants";
 import { RPCHandler } from "../types/rpc-handler";
 import { HandlerConstructorConfig, getRpcUrls, Rpc, Tracking } from "../types/handler";
+import { PrettyLogs } from "../types/logs";
 
 export const testConfig: HandlerConstructorConfig = {
   networkId: "100",
@@ -15,7 +16,8 @@ export const testConfig: HandlerConstructorConfig = {
   proxySettings: {
     retryCount: 3,
     retryDelay: 500,
-    logTier: "info",
+    logTier: "error",
+    logger: new PrettyLogs(),
   },
 };
 

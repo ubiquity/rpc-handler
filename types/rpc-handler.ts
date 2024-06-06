@@ -4,6 +4,7 @@ import { HandlerInterface, HandlerConstructorConfig, NetworkId, NetworkName, Rpc
 
 import { RPCService } from "../src/services/rpc-service";
 import { StorageService } from "../src/services/storage-service";
+import { Metadata, PrettyLogs, PrettyLogsWithOk } from "./logs";
 
 export class RPCHandler implements HandlerInterface {
   private static _instance: RPCHandler | null = null;
@@ -26,6 +27,7 @@ export class RPCHandler implements HandlerInterface {
     retryCount: 3,
     retryDelay: 500,
     logTier: "error",
+    logger: new PrettyLogs(),
   };
 
   constructor(config: HandlerConstructorConfig) {
@@ -67,7 +69,7 @@ export class RPCHandler implements HandlerInterface {
             try {
               return await (target[prop] as (...args: unknown[]) => Promise<unknown>)(...args);
             } catch (e) {
-              self.log("warn", `Failed to call ${prop} on provider, retrying with new provider`, e);
+              self.log("info", `Failed to call provider method ${prop}, retrying...`, self.metadataMaker(e, prop as string, args));
             }
 
             const latencies: Record<string, number> = handler.getLatencies();
@@ -81,11 +83,10 @@ export class RPCHandler implements HandlerInterface {
               for (const [rpc] of sortedLatencies) {
                 self.log("info", `Connected to: ${rpc}`);
                 try {
-                  // we do not want to change the app.provider as it is the proxy itself
                   const newProvider = new JsonRpcProvider(rpc.split("__")[1]);
                   return await (newProvider[prop] as (...args: unknown[]) => Promise<unknown>)(...args);
                 } catch (e) {
-                  self.log("warn", `Failed to call ${prop} on provider, retrying with new provider`, e);
+                  self.log("info", `Failed to call provider method ${prop}`, self.metadataMaker(e, prop as string, args));
                   lastError = e;
 
                   await new Promise((resolve) => setTimeout(resolve, self._proxySettings.retryDelay));
@@ -94,12 +95,30 @@ export class RPCHandler implements HandlerInterface {
               loops--;
             }
 
-            self.log("error", "Failed to call provider method", lastError);
+            self.log("fatal", "Failed to call provider method", self.metadataMaker(lastError, prop as string, args));
           };
         }
         return target[prop];
       },
     });
+  }
+
+  metadataMaker(error: Error | unknown, method: string, args: unknown[]): Metadata {
+    const err = error instanceof Error ? error : undefined;
+    if (err) {
+      return {
+        error: err,
+        method,
+        args,
+        networkId: this._networkId,
+      };
+    } else {
+      return {
+        method,
+        args,
+        networkId: this._networkId,
+      };
+    }
   }
 
   public async testRpcPerformance(): Promise<JsonRpcProvider> {
@@ -211,29 +230,28 @@ export class RPCHandler implements HandlerInterface {
     StorageService.setRefreshLatencies(this._env, this._refreshLatencies);
   }
 
-  log(tier: "info" | "warn" | "error", message: string, obj?: unknown): void {
-    if (this._proxySettings.logFunction) {
-      return this._proxySettings.logFunction(message, obj);
-    }
-
-    const proxyTier = this._proxySettings.logTier;
-
+  log(tier: PrettyLogsWithOk, message: string, obj?: Metadata): void {
     switch (tier) {
-      case "info":
-        if (proxyTier === "info") {
-          console.info(`${this._proxySettings.appName} ${message}`, obj);
-        }
+      case "fatal":
+        this._proxySettings.logger.fatal(message, obj);
         break;
-      case "warn":
-        if (proxyTier === "warn") {
-          console.warn(`${this._proxySettings.appName} ${message}`, obj);
-        }
+      case "ok":
+        this._proxySettings.logger.ok(message, obj);
         break;
       case "error":
-        if (proxyTier === "error") {
-          console.error(`${this._proxySettings.appName} ${message}`, obj);
-        }
+        this._proxySettings.logger.error(message, obj);
         break;
+      case "info":
+        this._proxySettings.logger.info(message, obj);
+        break;
+      case "debug":
+        this._proxySettings.logger.debug(message, obj);
+        break;
+      case "verbose":
+        this._proxySettings.logger.verbose(message, obj);
+        break;
+      default:
+        this._proxySettings.logger.error("Invalid log tier");
     }
   }
 

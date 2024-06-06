@@ -1,6 +1,15 @@
 import util from "util";
-type PrettyLogsWithOk = "ok" | (typeof LOG_LEVEL)[keyof typeof LOG_LEVEL];
-type Colors = (typeof COLOURS)[keyof typeof COLOURS];
+export type PrettyLogsWithOk = "ok" | (typeof LOG_LEVEL)[keyof typeof LOG_LEVEL];
+type Colors = (typeof COLORS)[keyof typeof COLORS];
+export interface MetadataInterface {
+  error?: { stack?: string };
+  stack?: string;
+  message?: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
+export type Metadata = (MetadataInterface & unknown) | string;
 
 export class PrettyLogs {
   constructor() {
@@ -11,6 +20,7 @@ export class PrettyLogs {
     this.debug = this.debug.bind(this);
     this.verbose = this.verbose.bind(this);
   }
+
   public fatal(message: string, metadata?: Metadata) {
     this._logWithStack(LOG_LEVEL.FATAL, message, metadata);
   }
@@ -35,12 +45,15 @@ export class PrettyLogs {
     this._logWithStack(LOG_LEVEL.VERBOSE, message, metadata);
   }
 
-  private _logWithStack(type: PrettyLogsWithOk, message: string, metadata?: Metadata | string) {
+  private _logWithStack(type: PrettyLogsWithOk, message: string, metaData?: Metadata | string) {
     this._log(type, message);
-    if (typeof metadata === "string") {
-      this._log(type, metadata);
+    if (typeof metaData === "string") {
+      this._log(type, metaData);
       return;
     }
+
+    const metadata = metaData as MetadataInterface | undefined;
+
     if (metadata) {
       let stack = metadata?.error?.stack || metadata?.stack;
       if (!stack) {
@@ -62,11 +75,11 @@ export class PrettyLogs {
 
       if (typeof stack == "string") {
         const prettyStack = this._formatStackTrace(stack, 1);
-        const colorizedStack = this._colorizeText(prettyStack, COLOURS.dim);
+        const colorizedStack = this._colorizeText(prettyStack, COLORS.dim);
         this._log(type, colorizedStack);
       } else if (stack) {
         const prettyStack = this._formatStackTrace((stack as unknown as string[]).join("\n"), 1);
-        const colorizedStack = this._colorizeText(prettyStack, COLOURS.dim);
+        const colorizedStack = this._colorizeText(prettyStack, COLORS.dim);
         this._log(type, colorizedStack);
       } else {
         throw new Error("Stack is null");
@@ -78,7 +91,7 @@ export class PrettyLogs {
     if (!color) {
       throw new Error(`Invalid color: ${color}`);
     }
-    return color.concat(text).concat(COLOURS.reset);
+    return color.concat(text).concat(COLORS.reset);
   }
 
   private _formatStackTrace(stack: string, linesToRemove = 0, prefix = ""): string {
@@ -125,12 +138,12 @@ export class PrettyLogs {
     const fullLogString = logString;
 
     const colorMap: Record<PrettyLogsWithOk, [keyof typeof console, Colors]> = {
-      fatal: ["error", COLOURS.fgRed],
-      ok: ["log", COLOURS.fgGreen],
-      error: ["warn", COLOURS.fgYellow],
-      info: ["info", COLOURS.dim],
-      debug: ["debug", COLOURS.fgMagenta],
-      verbose: ["debug", COLOURS.dim],
+      fatal: ["error", COLORS.fgRed],
+      ok: ["log", COLORS.fgGreen],
+      error: ["warn", COLORS.fgYellow],
+      info: ["info", COLORS.dim],
+      debug: ["debug", COLORS.fgMagenta],
+      verbose: ["debug", COLORS.dim],
     };
 
     const _console = console[colorMap[type][0] as keyof typeof console] as (...args: string[]) => void;
@@ -141,15 +154,8 @@ export class PrettyLogs {
     }
   }
 }
-interface Metadata {
-  error?: { stack?: string };
-  stack?: string;
-  message?: string;
-  name?: string;
-  [key: string]: unknown;
-}
 
-const COLOURS = {
+const COLORS = {
   reset: "\x1b[0m",
   bright: "\x1b[1m",
   dim: "\x1b[2m",
