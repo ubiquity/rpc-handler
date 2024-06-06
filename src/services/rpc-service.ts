@@ -14,28 +14,38 @@ export class RPCService {
     const instance = axios.create({
       timeout: rpcTimeout,
       headers: rpcHeader,
-      cancelToken: new axios.CancelToken((c) => setTimeout(() => c("Request Timeout"), rpcTimeout)),
+    });
+
+    const timeoutPromise = new Promise((resolve) => {
+      const timeoutId = setTimeout(() => resolve({ success: false, duration: 0 }), rpcTimeout);
+      timeoutId.unref();
     });
 
     const successfulPromises = runtimeRpcs.map<Promise<PromiseResult>>(
       (rpcUrl) =>
         new Promise<PromiseResult>((resolve) => {
           const startTime = performance.now();
-          instance
-            .post(rpcUrl, rpcBody)
+          Promise.race([instance.post(rpcUrl, rpcBody), timeoutPromise])
             .then(() => {
-              const endTime = performance.now();
               resolve({
                 rpcUrl,
-                duration: endTime - startTime,
+                duration: performance.now() - startTime,
                 success: true,
               });
             })
             .catch(() => {
               resolve({ rpcUrl, success: false, duration: 0 });
+            })
+            .finally(() => {
+              resolve({
+                rpcUrl,
+                duration: performance.now() - startTime,
+                success: true,
+              });
             });
         })
     );
+
     const fastest = await Promise.race(successfulPromises);
 
     if (fastest.success) {
@@ -45,10 +55,10 @@ export class RPCService {
     const allResults = await Promise.allSettled(successfulPromises);
 
     allResults.forEach((result) => {
-      if (result.status === "fulfilled" && (result.value as PromiseResult).success) {
-        latencies[`${networkId}__${(result.value as PromiseResult).rpcUrl}`] = (result.value as PromiseResult).duration;
+      if (result.status === "fulfilled" && result.value.success) {
+        latencies[`${networkId}__${result.value.rpcUrl}`] = result.value.duration;
       } else if (result.status === "fulfilled") {
-        const fulfilledResult = result.value as PromiseResult;
+        const fulfilledResult = result.value;
         const index = runtimeRpcs.indexOf(fulfilledResult.rpcUrl);
         if (index > -1) {
           runtimeRpcs.splice(index, 1);
@@ -59,6 +69,9 @@ export class RPCService {
     return { latencies, runtimeRpcs };
   }
   static async findFastestRpc(latencies: Record<string, number>, networkId: NetworkId): Promise<string | null> {
+    if (Object.keys(latencies).length === 0) {
+      throw new Error("[RPCService] No latencies found");
+    }
     try {
       const validLatencies: Record<string, number> = Object.entries(latencies)
         .filter(([key]) => key.startsWith(`${networkId}__`))
@@ -74,7 +87,7 @@ export class RPCService {
         .reduce((a, b) => (validLatencies[a] < validLatencies[b] ? a : b))
         .split("__")[1];
     } catch (error) {
-      console.error("[RPCService] Failed to find fastest RPC");
+      console.error("[RPCService] Failed to find fastest RPC", error);
       return null;
     }
   }
