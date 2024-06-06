@@ -38,6 +38,16 @@ export type HandlerInterface = {
   testRpcPerformance(): Promise<JsonRpcProvider | null>;
 };
 
+type ModuleName = "[RPCHandler Provider Proxy] -> ";
+
+type ProxySettings = {
+  retryCount: number;
+  retryDelay: number;
+  logTier: "info" | "warn" | "error";
+  appName?: ModuleName & string;
+  logFunction?: (message: string, obj: unknown) => void;
+};
+
 export type HandlerConstructorConfig = {
   networkId: NetworkId;
   networkName: NetworkName | null;
@@ -47,6 +57,7 @@ export type HandlerConstructorConfig = {
   runtimeRpcs: string[] | null;
   rpcTimeout: number | null;
   tracking?: Tracking;
+  proxySettings: ProxySettings;
 };
 
 export type NetworkRPCs = typeof networkRpcs;

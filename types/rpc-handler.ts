@@ -22,6 +22,12 @@ export class RPCHandler implements HandlerInterface {
 
   private _networkRpcs: Rpc[];
 
+  private _proxySettings: HandlerConstructorConfig["proxySettings"] = {
+    retryCount: 3,
+    retryDelay: 500,
+    logTier: "error",
+  };
+
   constructor(config: HandlerConstructorConfig) {
     this._networkId = config.networkId;
     this._networkRpcs = this._filterRpcs(networkRpcs[this._networkId].rpcs, config.tracking || "yes");
@@ -51,44 +57,44 @@ export class RPCHandler implements HandlerInterface {
   }
 
   createProviderProxy(provider: JsonRpcProvider, handler: RPCHandler): JsonRpcProvider {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this; // retaining context of "this" in the proxy
+
     return new Proxy(provider, {
       get: function (target: JsonRpcProvider, prop: keyof JsonRpcProvider) {
         if (typeof target[prop] === "function") {
           return async function (...args: unknown[]) {
-            // first attempt at the call, if it fails we don't care about the error
             try {
               return await (target[prop] as (...args: unknown[]) => Promise<unknown>)(...args);
-            } catch {
-              //
+            } catch (e) {
+              self.log("warn", `Failed to call ${prop} on provider, retrying with new provider`, e);
             }
 
             const latencies: Record<string, number> = handler.getLatencies();
             const sortedLatencies = Object.entries(latencies).sort((a, b) => a[1] - b[1]);
 
-            let loops = 3;
+            let loops = self._proxySettings.retryCount;
 
             let lastError: Error | unknown | null = null;
 
             while (loops > 0) {
               for (const [rpc] of sortedLatencies) {
-                console.log(`[PROXY] Connected to: ${rpc}`);
+                self.log("info", `Connected to: ${rpc}`);
                 try {
                   // we do not want to change the app.provider as it is the proxy itself
                   const newProvider = new JsonRpcProvider(rpc.split("__")[1]);
                   return await (newProvider[prop] as (...args: unknown[]) => Promise<unknown>)(...args);
                 } catch (e) {
-                  console.error("[PROXY] Provider Error -> retrying with new provider");
+                  self.log("warn", `Failed to call ${prop} on provider, retrying with new provider`, e);
                   lastError = e;
+
+                  await new Promise((resolve) => setTimeout(resolve, self._proxySettings.retryDelay));
                 }
               }
               loops--;
             }
 
-            if (lastError instanceof Error) {
-              console.error(lastError);
-            } else {
-              console.error("Unknown error", lastError);
-            }
+            self.log("error", "Failed to call provider method", lastError);
           };
         }
         return target[prop];
@@ -205,7 +211,37 @@ export class RPCHandler implements HandlerInterface {
     StorageService.setRefreshLatencies(this._env, this._refreshLatencies);
   }
 
+  log(tier: "info" | "warn" | "error", message: string, obj?: unknown): void {
+    if (this._proxySettings.logFunction) {
+      return this._proxySettings.logFunction(message, obj);
+    }
+
+    const proxyTier = this._proxySettings.logTier;
+
+    switch (tier) {
+      case "info":
+        if (proxyTier === "info") {
+          console.info(`${this._proxySettings.appName} ${message}`, obj);
+        }
+        break;
+      case "warn":
+        if (proxyTier === "warn") {
+          console.warn(`${this._proxySettings.appName} ${message}`, obj);
+        }
+        break;
+      case "error":
+        if (proxyTier === "error") {
+          console.error(`${this._proxySettings.appName} ${message}`, obj);
+        }
+        break;
+    }
+  }
+
   private _updateConfig(config: HandlerConstructorConfig): void {
+    if (config.proxySettings) {
+      this._proxySettings = config.proxySettings;
+    }
+
     if (config.networkName) {
       this._networkName = config.networkName;
     }

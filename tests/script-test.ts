@@ -21,6 +21,12 @@ import getRPCHandler, { HandlerConstructorConfig, RPCHandler, networkIds, networ
     networkName: null,
     networkRpcs: null,
     runtimeRpcs: null,
+    proxySettings: {
+      retryCount: 3,
+      retryDelay: 500,
+      logTier: "info",
+      appName: "[RPC Provider Proxy]",
+    },
   };
 
   const handler: RPCHandler = new RPCHandler(config);
