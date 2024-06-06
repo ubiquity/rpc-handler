@@ -1,10 +1,9 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { LOCAL_HOST, networkRpcs, networkIds } from "./constants";
 import { HandlerInterface, HandlerConstructorConfig, NetworkId, NetworkName, Rpc, Tracking, getRpcUrls } from "./handler";
-
-import { RPCService } from "../src/services/rpc-service";
-import { StorageService } from "../src/services/storage-service";
 import { Metadata, PrettyLogs, PrettyLogsWithOk } from "./logs";
+import { RPCService } from "./rpc-service";
+import { StorageService } from "./storage-service";
 
 const NO_RPCS_AVAILABLE = "No RPCs available";
 

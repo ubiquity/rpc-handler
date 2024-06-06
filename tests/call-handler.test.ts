@@ -1,6 +1,6 @@
 import { expect, jest } from "@jest/globals";
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { HandlerConstructorConfig, RPCHandler, networkRpcs, PrettyLogs } from "../dist";
+import { HandlerConstructorConfig, RPCHandler, PrettyLogs } from "../dist";
 import { testConfig } from "./rpc-handler.test";
 
 const nonceBitmapData = {

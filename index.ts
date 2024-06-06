@@ -39,6 +39,8 @@ import {
 
 import { RPCHandler } from "./types/rpc-handler";
 import { PrettyLogs } from "./types/logs";
+import { StorageService } from "./types/storage-service";
+import { RPCService } from "./types/rpc-service";
 
 export { LOCAL_HOST, getNetworkName, getNetworkId, networkCurrencies, networkExplorers, networkIds, networkNames, networkRpcs, nftAddress, permit2Address };
 
@@ -54,4 +56,4 @@ export type {
   Token,
   ValidBlockData,
 };
-export { RPCHandler, PrettyLogs };
+export { RPCHandler, PrettyLogs, StorageService, RPCService };

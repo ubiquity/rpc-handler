@@ -44,6 +44,7 @@ type ModuleName = "[RPCHandler Provider Proxy] -> ";
 type ProxySettings = {
   retryCount: number;
   retryDelay: number;
+  // eslint-disable-next-line @typescript-eslint/ban-types
   logTier: (PrettyLogsWithOk & {}) | null;
   logger: PrettyLogs | null;
   strictLogs: boolean;
