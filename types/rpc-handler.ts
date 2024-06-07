@@ -25,8 +25,9 @@ export class RPCHandler implements HandlerInterface {
   private _networkRpcs: Rpc[];
 
   private _proxySettings: HandlerConstructorConfig["proxySettings"] = {
+    disabled: false,
     retryCount: 3,
-    retryDelay: 500,
+    retryDelay: 100,
     logTier: "ok",
     logger: new PrettyLogs(),
     strictLogs: true,
@@ -62,32 +63,55 @@ export class RPCHandler implements HandlerInterface {
     }
 
     this._provider = this.createProviderProxy(fastest, this);
-    this.log("ok", `[${this._proxySettings.moduleName}] Provider initialized: `, { provider: this._provider?.connection.url });
-    this.log("info", `[${this._proxySettings.moduleName}]`, { latencies: this._latencies });
+    this.log("ok", `[${this.proxySettings.moduleName}] Provider initialized: `, { provider: this._provider?.connection.url });
+    this.log("info", `[${this.proxySettings.moduleName}]`, { latencies: this._latencies });
 
     return this._provider;
   }
 
+  get proxySettings(): HandlerConstructorConfig["proxySettings"] {
+    return this._proxySettings;
+  }
+
+  set proxySettings(value: HandlerConstructorConfig["proxySettings"]) {
+    this._proxySettings = value;
+  }
+
+  /**
+   * Creates a Proxy around the JsonRpcProvider to handle retries and logging
+   *
+   * If proxySettings.disabled, it will return the provider as is and
+   * any retry or RPC reselection logic will be down to the user to implement
+   */
   createProviderProxy(provider: JsonRpcProvider, handler: RPCHandler): JsonRpcProvider {
+    /**
+     * It is not recommended to disable this feature
+     * unless you are handling retries and RPC reselection yourself
+     */
+    if (this.proxySettings.disabled) return provider;
+
     return new Proxy(provider, {
       get: function (target: JsonRpcProvider, prop: keyof JsonRpcProvider) {
+        // if it's not a function, return the property
+        if (typeof target[prop] !== "function") {
+          return target[prop];
+        }
+
         if (typeof target[prop] === "function") {
-          // eslint-disable-next-line sonarjs/cognitive-complexity
+          // eslint-disable-next-line sonarjs/cognitive-complexity -- 16/15 is acceptable
           return async function (...args: unknown[]) {
             try {
+              // responses are the value result of the method call if they are successful
               const response = (await (target[prop] as (...args: unknown[]) => Promise<unknown>)(...args)) as unknown;
               handler.log("info", `Successfully called provider method ${prop}`, handler.metadataMaker(response, prop as string, args));
               return response;
             } catch (e) {
+              // first attempt with currently connected provider
               handler.log("error", `Failed to call provider method ${prop}, retrying...`, handler.metadataMaker(e, prop as string, args));
             }
 
             const latencies: Record<string, number> = handler.getLatencies();
             const sortedLatencies = Object.entries(latencies).sort((a, b) => a[1] - b[1]);
-
-            let loops = handler._proxySettings.retryCount;
-
-            let newProvider: JsonRpcProvider;
 
             if (!sortedLatencies.length) {
               throw handler.log(
@@ -98,6 +122,11 @@ export class RPCHandler implements HandlerInterface {
             }
 
             handler.log("info", `Current provider failed, retrying with next fastest provider...`, handler.metadataMaker({}, prop, args));
+
+            // how many times we'll loop the whole list of RPCs
+            let loops = handler._proxySettings.retryCount;
+
+            let newProvider: JsonRpcProvider;
 
             while (loops > 0) {
               for (const [rpc] of sortedLatencies) {
@@ -114,9 +143,11 @@ export class RPCHandler implements HandlerInterface {
 
                   if (response) {
                     handler.log("info", `Successfully called provider method ${prop}`, handler.metadataMaker(response, prop as string, args, { rpc }));
+                    handler._provider = newProvider;
                     return response;
                   }
                 } catch (e) {
+                  // last loop throw error
                   if (loops === 1) {
                     handler.log(
                       "fatal",
@@ -128,6 +159,7 @@ export class RPCHandler implements HandlerInterface {
                     handler.log("debug", `Retrying in ${handler._proxySettings.retryDelay}ms...`);
                     handler.log("debug", `Call number: ${handler._proxySettings.retryCount - loops + 1}`);
 
+                    // delays here should be kept rather small
                     await new Promise((resolve) => setTimeout(resolve, handler._proxySettings.retryDelay));
                   }
                 }
@@ -136,29 +168,16 @@ export class RPCHandler implements HandlerInterface {
             }
           };
         }
-        return target[prop];
+
+        return target[prop]; // just in case
       },
     });
   }
 
-  metadataMaker(error: Error | unknown, method: string, args: unknown[], obj?: unknown[] | unknown): Metadata {
-    const err = error instanceof Error ? error : undefined;
-    if (err) {
-      return {
-        error: err,
-        method,
-        args,
-        obj,
-      };
-    } else {
-      return {
-        method,
-        args,
-        obj,
-      };
-    }
-  }
-
+  /**
+   * runtimeRpcs are prefixed with the networkId so
+   * they need to be stripped before being used
+   */
   populateRuntimeFromNetwork(networkRpcs: string[]) {
     return networkRpcs.map((rpc) => {
       if (rpc.startsWith(`${this._networkId}__`)) {
@@ -175,10 +194,13 @@ export class RPCHandler implements HandlerInterface {
 
     if (shouldRefreshRpcs) {
       this._runtimeRpcs = getRpcUrls(this._networkRpcs);
+      // either the latencies are empty or we've reached the refresh cycle
       this._refreshLatencies = 0;
     } else if (this._latencies && Object.keys(this._latencies).length > 0) {
+      // if we have latencies, we'll use them to populate the runtimeRpcs
       this._runtimeRpcs = this.populateRuntimeFromNetwork(Object.keys(this._latencies));
     } else if (this._runtimeRpcs.length === 0) {
+      // if we have no latencies and no runtimeRpcs, we'll populate the runtimeRpcs from the networkRpcs
       this._runtimeRpcs = getRpcUrls(this._networkRpcs);
     }
 
@@ -304,25 +326,47 @@ export class RPCHandler implements HandlerInterface {
     StorageService.setRefreshLatencies(this._env, this._refreshLatencies);
   }
 
+  // creates metadata for logging
+  metadataMaker(error: Error | unknown, method: string, args: unknown[], obj?: unknown[] | unknown): Metadata {
+    const err = error instanceof Error ? error : undefined;
+    if (err) {
+      return {
+        error: err,
+        method,
+        args,
+        obj,
+      };
+    } else {
+      return {
+        method,
+        args,
+        obj,
+      };
+    }
+  }
+
   log(tier: PrettyLogsWithOk, message: string, obj?: Metadata): void {
     if (!this._proxySettings?.logger) {
-      this._proxySettings.logger = new PrettyLogs();
+      this.proxySettings.logger = new PrettyLogs();
     }
 
     let logTier = this._proxySettings?.logTier;
 
     if (!logTier) {
-      this._proxySettings.logTier = "error";
-      logTier = this._proxySettings.logTier;
-      this._proxySettings.logger.log("error", "Log tier is not set, defaulting to error");
+      this.proxySettings.logTier = "ok";
+      logTier = this.proxySettings.logTier;
+    } else if (logTier === "none") {
+      return;
     }
 
-    const isStrict = this._proxySettings.strictLogs;
+    const isStrict = this.proxySettings.strictLogs;
 
     if (isStrict && logTier === tier) {
-      this._proxySettings.logger[tier](message, obj);
+      // if strictLogs is true, only log the tier specified
+      this.proxySettings.logger?.[tier](message, obj);
     } else if (logTier === "verbose" || !isStrict) {
-      this._proxySettings.logger.log(tier, message, obj);
+      // if strictLogs is false or tier is "verbose" log all logs
+      this.proxySettings.logger?.log(tier, message, obj);
     }
   }
 
@@ -332,8 +376,9 @@ export class RPCHandler implements HandlerInterface {
         ...this._proxySettings,
         ...config.proxySettings,
         // ensuring the logger is not null
-        logger: config.proxySettings.logger || this._proxySettings.logger,
-        logTier: config.proxySettings.logTier || this._proxySettings.logTier,
+        logger: config.proxySettings.logger || this.proxySettings.logger,
+        // ensuring the logTier is not null
+        logTier: config.proxySettings.logTier || this.proxySettings.logTier,
       };
     }
 

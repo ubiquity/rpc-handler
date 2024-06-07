@@ -10,7 +10,17 @@ export interface MetadataInterface {
 
 export type Metadata = (MetadataInterface & unknown) | string;
 
-export class PrettyLogs {
+export interface LogInterface {
+  log: (type: PrettyLogsWithOk, message: string, metadata?: Metadata) => void;
+  ok: (message: string, metadata?: Metadata) => void;
+  info: (message: string, metadata?: Metadata) => void;
+  error: (message: string, metadata?: Metadata) => void;
+  fatal: (message: string, metadata?: Metadata) => void;
+  debug: (message: string, metadata?: Metadata) => void;
+  verbose: (message: string, metadata?: Metadata) => void;
+}
+
+export class PrettyLogs implements LogInterface {
   constructor() {
     this.ok = this.ok.bind(this);
     this.info = this.info.bind(this);
@@ -19,14 +29,6 @@ export class PrettyLogs {
     this.debug = this.debug.bind(this);
     this.verbose = this.verbose.bind(this);
   }
-  levels = {
-    ok: 1,
-    info: 2,
-    error: 3,
-    fatal: 4,
-    debug: 5,
-    verbose: 6,
-  };
 
   public log(type: PrettyLogsWithOk, message: string, metadata?: Metadata) {
     this._logWithStack(type, message, metadata);
@@ -135,6 +137,7 @@ export class PrettyLogs {
       info: "›",
       debug: "››",
       verbose: "💬",
+      none: "",
     };
 
     const symbol = defaultSymbols[type];
@@ -164,6 +167,7 @@ export class PrettyLogs {
       info: ["info", COLORS.dim],
       debug: ["debug", COLORS.fgMagenta],
       verbose: ["debug", COLORS.dim],
+      none: ["log", COLORS.reset],
     };
 
     const _console = console[colorMap[type][0] as keyof typeof console] as (...args: string[]) => void;
@@ -209,4 +213,5 @@ export const LOG_LEVEL = {
   INFO: "info",
   VERBOSE: "verbose",
   DEBUG: "debug",
+  NONE: "none",
 } as const;
