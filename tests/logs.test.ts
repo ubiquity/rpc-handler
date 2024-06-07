@@ -8,12 +8,16 @@ const nonceBitmapData = {
 };
 
 const rpcList = ["http://127.0.0.1:8545"];
-
 const ansiEscapeCodes = /\x1b\[\d+m|\s/g;
 
 const INITIALIZED = `✓[RPCHandler] Provider initialized: {"provider": "http://127.0.0.1:8545" }`;
-const BLOCK_NUMBER_CALL = `💬[RPCHandler] Successfully called provider method send { "method": "send", "args": [ "eth_blockNumber", [] ] }`;
-
+const BLOCK_NUMBER_CALL = `💬[RPCHandler] Successfully called provider method send ${JSON.stringify({
+  method: "send",
+  args: ["eth_blockNumber", []],
+  metadata: {
+    rpc: "http://127.0.0.1:8545",
+  },
+})}`;
 const DEBUG_RETRY_IN_20 = `›› [RPCHandler] Retrying in 20ms...`;
 const DEBUG_CALL_NUMBER = `›› [RPCHandler] Call number: `;
 const DEBUG_CONNECT_TO = `›› [RPCHandler] Connected to: 31337__http://127.0.0.1:8545`;
@@ -50,6 +54,9 @@ const NULL_ARG_TX_CALL_RETRY = `⚠${JSON.stringify({
   },
   method: "send",
   args: ["eth_call", [null, null, null, "latest"]],
+  metadata: {
+    rpc: "http://127.0.0.1:8545",
+  },
 })}`;
 
 const NONCE_BITMAP_ETH_CALL = `💬 [RPCHandler] Successfully called provider method send ${JSON.stringify({
@@ -61,8 +68,12 @@ const NONCE_BITMAP_ETH_CALL = `💬 [RPCHandler] Successfully called provider me
         to: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
         data: "0x4fe02b44000000000000000000000000d9530f3fbbea11bed01dc09e79318f2f20223716001fd097bcb5a1759ce02c0a671386a0bbbfa8216559e5855698a9d4de4cddea",
       },
+      "latest",
     ],
   ],
+  metadata: {
+    rpc: "http://127.0.0.1:8545",
+  },
 })}`;
 
 describe("Logs", () => {
@@ -186,7 +197,7 @@ describe("Logs", () => {
     expect(errorSpy).toBeCalledTimes(0);
     expect(consoleSpy).toBeCalledTimes(0);
     expect(debugSpy).toBeCalledTimes(0);
-    expect(warnSpy).toBeCalledTimes(2);
+    expect(warnSpy).toBeCalledTimes(4);
 
     const cleanWarnStrings = cleanSpyLogs(warnSpy);
     expect(cleanWarnStrings).toEqual(expect.arrayContaining([cleanLogString(NULL_ARG_TX_CALL_RETRY), cleanLogString(NULL_ARG_TX_CALL_RETRY)]));
@@ -216,7 +227,7 @@ describe("Logs", () => {
     const cleanDebugStrings = cleanSpyLogs(debugSpy);
     const cleanErrorStrings = cleanSpyLogs(errorSpy);
 
-    expect(errorSpy).toBeCalledTimes(2);
+    expect(errorSpy).toBeCalledTimes(4);
     expect(consoleSpy).toBeCalledTimes(0);
     expect(debugSpy).toBeCalledTimes(0);
 
@@ -293,8 +304,8 @@ describe("Logs", () => {
     provider = await handler.getFastestRpcProvider();
 
     try {
-      // this call will always fail, and bad rpcs are filtered out
-      // so it retries 4 times then fails
+      // this call will always fail and bad rpcs are filtered out
+      // so it retries 5 times then fails
       const response = await provider.send("eth_call", [null, null, null, "latest"]);
       expect(response).toBeDefined();
       expect(response).toBe("0x" + "00".repeat(32));
@@ -327,7 +338,9 @@ describe("Logs", () => {
     console.log("CLEARED");
     console.log("CLEARED");
 
-    await provider.send("eth_call", [nonceBitmapData]);
+    const res = await provider.send("eth_call", [nonceBitmapData, "latest"]);
+    expect(res).toBeDefined();
+    expect(res).toBe("0x" + "00".repeat(32));
 
     const cleanWarnStrings = cleanSpyLogs(warnSpy);
     expect(cleanWarnStrings).toEqual(expect.arrayContaining([cleanLogString(NULL_ARG_TX_CALL_RETRY)]));
