@@ -12,6 +12,18 @@
     "declaration": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*", "types/*.ts", "index.ts"],
-  "exclude": ["node_modules", "tests/**/*.ts", "tests/*.ts", "build", "lib", "dist", "jest.config.ts"]
+  "include": [
+    "src/**/*",
+    "types/*.ts",
+    "index.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "tests/**/*.ts",
+    "tests/*.ts",
+    "build",
+    "lib",
+    "dist",
+    "jest.config.ts"
+  ]
 }

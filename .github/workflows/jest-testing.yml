@@ -25,10 +25,31 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
       - name: Install dependencies
         run: yarn install
 
-      - name: Build & Run test suite
+      - name: Build
+        run: yarn build
+
+      - name: Start Anvil
+        run: yarn test:anvil &
+
+      - name: Wait for Anvil
+        run: |
+          for i in {1..30}
+          do
+            if curl -s http://localhost:8545; then
+              break
+            fi
+            sleep 1
+          done || exit 1
+
+      - name: Run test suite
         run: |
           yarn test | tee ./coverage.txt && exit ${PIPESTATUS[0]}
 

@@ -20,6 +20,7 @@ const rpcList = [
   "http://127.0.0.1:81",
   "http://127.0.0.1:8545",
 ];
+const txHashRegex = new RegExp("0x[0-9a-f]{64}");
 
 describe("Call Handler", () => {
   afterAll(() => {
@@ -56,10 +57,9 @@ describe("Call Handler", () => {
     });
   });
 
-  describe("Success cases", () => {
+  describe("Write ops cases", () => {
     let provider: JsonRpcProvider;
     let handler: RPCHandler;
-    const txHashRegex = new RegExp("0x[0-9a-f]{64}");
 
     const mods: HandlerConstructorConfig = {
       runtimeRpcs: rpcList,
@@ -172,8 +172,36 @@ describe("Call Handler", () => {
       }
 
       expect(thrownError).toBeInstanceOf(Error);
+      expect((thrownError as Error).message).toContain("invalid type: null");
       expect(newHandler["_runtimeRpcs"].length).toBe(1);
       expect(newHandler["_runtimeRpcs"][0]).toBe("http://127.0.0.1:8545");
+    });
+
+    it("should return a standard JsonRpcProvider if proxySettings.disabled", async () => {
+      const newHandler = new RPCHandler({ ...mods, proxySettings: { ...mods.proxySettings, disabled: true, strictLogs: false, logTier: "error" } });
+      const newProvider = await newHandler.getFastestRpcProvider();
+
+      const txData = {
+        gas: "0x1f4f8",
+        from: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        to: "0x000000000022d473030f116ddee9f6b43ac78ba3",
+        data: "0x4fe02b4400000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c800d2429b6ec3b99c749d9629667197d4af1dd7ab825c27adf3477c79e9e5ac22",
+      };
+
+      const txHash = await newProvider.send("eth_sendTransaction", [txData]);
+      expect(txHash).toBeDefined();
+      expect(txHash).toMatch(txHashRegex);
+
+      let thrownError: Error | unknown = null;
+
+      try {
+        await newProvider.send("eth_call", [null, null, null]);
+      } catch (err) {
+        thrownError = err;
+      }
+
+      expect(thrownError).toBeInstanceOf(Error);
+      expect((thrownError as Error).message).toContain("invalid type: null");
     });
   });
 });

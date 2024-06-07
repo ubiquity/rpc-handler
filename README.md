@@ -71,13 +71,19 @@ app.provider = await handler.getFastestRpcProvider();
 
 ## Testing
 
-1. In terminal A run the following command:
+1. Build the package:
 
 ```bash
-anvil
+yarn build
 ```
 
-2. In terminal B run the following command:
+2. In terminal A run the following command to start a local Anvil instance:
+
+```bash
+yarn test:anvil
+```
+
+3. In terminal B run the following command to run the tests:
 
 ```bash
 yarn test
