@@ -16,20 +16,17 @@ export class RPCService {
       headers: rpcHeader,
     });
 
-    const timeoutPromise = new Promise((resolve) => {
-      const timeoutId = setTimeout(() => resolve({ success: false, duration: 0 }), rpcTimeout);
-      timeoutId.unref();
-    });
-
     const successfulPromises = runtimeRpcs.map<Promise<PromiseResult>>(
       (rpcUrl) =>
         new Promise<PromiseResult>((resolve) => {
           const startTime = performance.now();
-          Promise.race([instance.post(rpcUrl, rpcBody), timeoutPromise])
+          instance
+            .post(rpcUrl, rpcBody)
             .then(() => {
+              const endTime = performance.now();
               resolve({
                 rpcUrl,
-                duration: performance.now() - startTime,
+                duration: endTime - startTime,
                 success: true,
               });
             })

@@ -171,7 +171,7 @@ export class PrettyLogs implements LogInterface {
     };
 
     const _console = console[colorMap[type][0] as keyof typeof console] as (...args: string[]) => void;
-    if (typeof _console === "function") {
+    if (typeof _console === "function" && fullLogString.length > 0) {
       _console(this._colorizeText(fullLogString, colorMap[type][1]));
     } else {
       throw new Error(fullLogString);
