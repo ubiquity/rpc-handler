@@ -28,7 +28,7 @@ import { RPCHandler, HandlerConstructorConfig } from "@ubiquity-dao/rpc-handler/
 
 export function useHandler(networkId: number) {
   const config: HandlerConstructorConfig = {
-    networkId: 1;
+    networkId: 100; // your chosen networkId
     networkName:  null; // will default using the networkRpcs
     networkRpcs:  null; // e.g "https://mainnet.infura.io/..."
     runtimeRpcs:  null; // e.g "<networkId>__https://mainnet.infura.io/..." > "1__https://mainnet.infura.io/..."
@@ -39,11 +39,11 @@ export function useHandler(networkId: number) {
     proxySettings: {
       retryCount: 3; // how many times we'll loop the list of RPCs retrying the request before failing
       retryDelay: 100; // (ms) how long we'll wait before moving to the next RPC, best to keep this low
-      logTier: "ok"|"info"|"error"|"debug"|"fatal"|"verbose"; // set to "none" for no logs, null will default to "error", "verbose" will log all
-      logger: PrettyLogs | LogInterface | null; // null will default to PrettyLogs
-      strictLogs: boolean; // true, only the specified logTier will be logged and false all wll be logged.
-      moduleName?: ModuleName | string; // this is the prefix for the logs
-      disabled?: boolean; // this will disable the proxy, requiring you to handle retry logic etc yourself
+      logTier: "ok"; // |"info"|"error"|"debug"|"fatal"|"verbose"; set to "none" for no logs, null will default to "error", "verbose" will log all
+      logger: null; // null will default to PrettyLogs
+      strictLogs: true; // true, only the specified logTier will be logged and false all wll be logged.
+      moduleName?: "[UBQ RPC Handler];" // Can be omitted. this is the prefix for the logs.
+      disabled?: false; // Can be omitted. this will disable the proxy, requiring you to handle retry logic etc yourself. 
     }
   };
   // No RPCs are tested at this point
