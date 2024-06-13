@@ -37,6 +37,8 @@ export type HandlerConstructorConfig = {
   cacheRefreshCycles: number | null;
   runtimeRpcs: string[] | null;
   rpcTimeout: number | null;
+  tracking: "yes" | "limited" | "none";
+  protocol: "all" | "https" | "wss";
 };
 
 export type NetworkRPCs = typeof networkRpcs;

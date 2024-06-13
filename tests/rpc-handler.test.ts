@@ -10,6 +10,8 @@ export const testConfig: HandlerConstructorConfig = {
   networkRpcs: null,
   rpcTimeout: 1500,
   runtimeRpcs: null,
+  tracking: "yes",
+  protocol: "all",
 };
 
 describe("RPCHandler", () => {
