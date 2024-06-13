@@ -1,4 +1,4 @@
-import { ValidBlockData } from "./handler";
+import { ValidBlockData } from "../../types/handler";
 type PromiseResult = { success: boolean; rpcUrl: string; duration: number };
 
 export class RPCService {

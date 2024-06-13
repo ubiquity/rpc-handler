@@ -4,7 +4,7 @@ import chainIDList from "../lib/chainlist/constants/chainIds.json";
 import path from "path";
 import * as fs from "fs";
 
-const typescriptEntries = ["tests/mocks/rpc-service.ts", "tests/mocks/rpc-handler.ts", "tests/mocks/handler.ts"];
+const typescriptEntries = ["tests/mocks/rpc-service.ts", "tests/mocks/rpc-handler.ts"];
 export const entries = [...typescriptEntries];
 const extraRpcs: Record<string, string[]> = {};
 // this flattens all the rpcs into a single object, with key names that match the networkIds. The arrays are just of URLs per network ID.

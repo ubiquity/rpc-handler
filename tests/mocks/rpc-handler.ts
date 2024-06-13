@@ -1,6 +1,6 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { LOCAL_HOST, networkRpcs, networkNames } from "../../types/constants";
-import { HandlerInterface, HandlerConstructorConfig } from "./handler";
+import { HandlerInterface, HandlerConstructorConfig } from "../../types/handler";
 
 import { RPCService } from "./rpc-service";
 import { StorageService } from "./storage-service";
