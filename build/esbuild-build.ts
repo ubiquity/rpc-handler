@@ -3,17 +3,11 @@ import chainlist from "../lib/chainlist/constants/extraRpcs";
 import chainIDList from "../lib/chainlist/constants/chainIds.json";
 import path from "path";
 import * as fs from "fs";
+import { prepareExtraRpcs } from "./shared";
 
 const typescriptEntries = ["index.ts"];
 export const entries = [...typescriptEntries];
-const extraRpcs: Record<string, string[]> = {};
-
-// this flattens all the rpcs into a single object, with key names that match the networkIds. The arrays are just of URLs per network ID.
-Object.keys(chainlist).forEach((networkId) => {
-  const officialUrls = chainlist[networkId].rpcs.filter((rpc) => typeof rpc === "string");
-  const extraUrls: string[] = chainlist[networkId].rpcs.filter((rpc) => rpc.url !== undefined && rpc.tracking === "none").map((rpc) => rpc.url);
-  extraRpcs[networkId] = [...officialUrls, ...extraUrls].filter((rpc) => rpc.startsWith("https://"));
-});
+const extraRpcs: Record<string, string[]> = prepareExtraRpcs(chainlist);
 
 export const esBuildContext: esbuild.BuildOptions = {
   entryPoints: entries,
