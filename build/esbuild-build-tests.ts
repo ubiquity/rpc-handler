@@ -5,7 +5,7 @@ import path from "path";
 import * as fs from "fs";
 import { createEnvDefines, prepareBuildOptions, prepareExtraRpcs } from "./shared";
 
-const typescriptEntries = ["tests/mocks/rpc-service.ts", "tests/mocks/rpc-handler.ts"];
+const typescriptEntries = ["tests/mocks/rpc-handler.ts"];
 export const entries = [...typescriptEntries];
 const extraRpcs: Record<string, string[]> = prepareExtraRpcs(chainlist);
 

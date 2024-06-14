@@ -2,7 +2,7 @@ import { JsonRpcProvider } from "@ethersproject/providers";
 import { LOCAL_HOST, networkRpcs, networkNames, networkRpcsOriginal } from "../../types/constants";
 import { HandlerInterface, HandlerConstructorConfig } from "../../types/handler";
 
-import { RPCService } from "./rpc-service";
+import { RPCService } from "../../src/services/rpc-service";
 import { StorageService } from "./storage-service";
 import { RpcType, getRpcUrls } from "../../types/shared";
 
