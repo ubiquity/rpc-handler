@@ -56,7 +56,7 @@ export class RPCHandler implements HandlerInterface {
       Object.keys(this._latencies).filter((rpc) => rpc.startsWith(`${this._networkId}__`)).length <= 1 || this._refreshLatencies >= this._cacheRefreshCycles;
 
     if (shouldRefreshRpcs) {
-      this._runtimeRpcs = getRpcUrls(networkRpcsOriginal[this._networkId]);
+      this._runtimeRpcs = getRpcUrls(this._networkRpcs);
       this._refreshLatencies = 0;
     } else {
       this._runtimeRpcs = Object.keys(this._latencies).map((rpc) => {
