@@ -1,3 +1,5 @@
+import chainlist from "../lib/chainlist/constants/extraRpcs";
+
 export function prepareExtraRpcs(chainlist) {
   const extraRpcs: Record<string, string[]> = {};
   // this flattens all the rpcs into a single object, with key names that match the networkIds. The arrays are just of URLs per network ID.
@@ -15,7 +17,7 @@ export function prepareBuildOptions(entries, extraRpcs, chainIDList) {
     bundle: true,
 
     outdir: "dist",
-    define: createEnvDefines({ extraRpcs, chainIDList }),
+    define: createEnvDefines({ extraRpcs, chainIDList, extraRpcsOriginal: chainlist }),
   };
 }
 

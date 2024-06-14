@@ -64,7 +64,7 @@ async function buildIndex() {
     bundle: true,
     format: "cjs",
     outfile: "dist/index.js",
-    define: createEnvDefines({ extraRpcs, chainIDList }),
+    define: createEnvDefines({ extraRpcs, chainIDList, extraRpcsOriginal: chainlist }),
   });
 
   console.log("Index build complete.");

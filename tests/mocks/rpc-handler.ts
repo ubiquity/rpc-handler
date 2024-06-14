@@ -1,9 +1,10 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { LOCAL_HOST, networkRpcs, networkNames } from "../../types/constants";
+import { LOCAL_HOST, networkRpcs, networkNames, networkRpcsOriginal } from "../../types/constants";
 import { HandlerInterface, HandlerConstructorConfig } from "../../types/handler";
 
 import { RPCService } from "./rpc-service";
 import { StorageService } from "./storage-service";
+import { RpcType, getRpcUrls } from "../../types/shared";
 
 export class RPCHandler implements HandlerInterface {
   private static _instance: RPCHandler | null = null;
@@ -18,10 +19,10 @@ export class RPCHandler implements HandlerInterface {
   private _autoStorage: boolean = false;
   private _runtimeRpcs: string[] = [];
   private _latencies: Record<string, number> = {};
-  private _networkRpcs: string[] = [];
+  private _networkRpcs: RpcType[] = [];
   constructor(config: HandlerConstructorConfig) {
     this._networkId = config.networkId;
-    this._networkRpcs = networkRpcs[this._networkId];
+    this._networkRpcs = networkRpcsOriginal[this._networkId];
     this._networkName = networkNames[this._networkId];
     this._initialize(config);
   }
@@ -50,7 +51,7 @@ export class RPCHandler implements HandlerInterface {
       Object.keys(this._latencies).filter((rpc) => rpc.startsWith(`${this._networkId}__`)).length <= 1 || this._refreshLatencies >= this._cacheRefreshCycles;
 
     if (shouldRefreshRpcs) {
-      this._runtimeRpcs = networkRpcs[this._networkId];
+      this._runtimeRpcs = getRpcUrls(networkRpcs[this._networkId]);
       this._refreshLatencies = 0;
     } else {
       this._runtimeRpcs = Object.keys(this._latencies).map((rpc) => {
@@ -96,7 +97,7 @@ export class RPCHandler implements HandlerInterface {
   public clearInstance(): void {
     RPCHandler._instance = null;
   }
-  public getRuntimeRpcs(): string[] {
+  public getRuntimeRpcs(): RpcType[] {
     return this._runtimeRpcs;
   }
   public getNetworkId(): number {
@@ -105,7 +106,7 @@ export class RPCHandler implements HandlerInterface {
   public getNetworkName(): string {
     return this._networkName;
   }
-  public getNetworkRpcs(): string[] {
+  public getNetworkRpcs(): RpcType[] {
     return this._networkRpcs;
   }
   public getLatencies(): Record<string, number> {

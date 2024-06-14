@@ -1,6 +1,7 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { RPCHandler, networkRpcs } from "../dist";
+import { networkRpcsOriginal, RPCHandler } from "../dist";
 import { HandlerConstructorConfig } from "../types/handler";
+import { getRpcUrls } from "../types/shared";
 
 export const testConfig: HandlerConstructorConfig = {
   networkId: 100,
@@ -46,7 +47,7 @@ describe("RPCHandler", () => {
       expect(rpcHandler["_latencies"]).toEqual({});
     });
     it("should initialize with correct networkRpcs", () => {
-      expect(rpcHandler["_networkRpcs"]).toEqual(networkRpcs[testConfig.networkId]);
+      expect(rpcHandler["_networkRpcs"]).toEqual(networkRpcsOriginal[testConfig.networkId]);
     });
     it("should initialize with null provider", () => {
       const provider = rpcHandler["_provider"];
@@ -71,8 +72,9 @@ describe("RPCHandler", () => {
       const latArrLen = Array.from(Object.entries(latencies)).length;
       const runtime = rpcHandler.getRuntimeRpcs();
       expect(runtime.length).toBeGreaterThan(0);
+
       expect(runtime.length).toBe(latArrLen);
-      expect(runtime.length).toBeLessThanOrEqual(networkRpcs[testConfig.networkId].length);
+      expect(runtime.length).toBeLessThanOrEqual(getRpcUrls(networkRpcsOriginal[testConfig.networkId]).length);
 
       expect(latArrLen).toBeGreaterThan(1);
 
