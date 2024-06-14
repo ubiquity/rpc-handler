@@ -1,5 +1,6 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { ChainId, networkCurrencies, networkExplorers, networkIds, networkNames, networkRpcs, networkRpcsOriginal, tokens } from "./constants";
+import { RpcType } from "./shared";
 
 export type ValidBlockData = {
   jsonrpc: string;
@@ -32,7 +33,7 @@ export type HandlerInterface = {
 export type HandlerConstructorConfig = {
   networkId: number;
   networkName: string | null;
-  networkRpcs: string[] | null;
+  networkRpcs: RpcType[] | null;
   autoStorage: boolean | null;
   cacheRefreshCycles: number | null;
   runtimeRpcs: string[] | null;
