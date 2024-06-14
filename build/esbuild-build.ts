@@ -3,19 +3,13 @@ import chainlist from "../lib/chainlist/constants/extraRpcs";
 import chainIDList from "../lib/chainlist/constants/chainIds.json";
 import path from "path";
 import * as fs from "fs";
-import { prepareExtraRpcs } from "./shared";
+import { createEnvDefines, prepareBuildOptions, prepareExtraRpcs } from "./shared";
 
 const typescriptEntries = ["index.ts"];
 export const entries = [...typescriptEntries];
 const extraRpcs: Record<string, string[]> = prepareExtraRpcs(chainlist);
 
-export const esBuildContext: esbuild.BuildOptions = {
-  entryPoints: entries,
-  bundle: true,
-
-  outdir: "dist",
-  define: createEnvDefines({ extraRpcs, chainIDList }),
-};
+export const esBuildContext: esbuild.BuildOptions = prepareBuildOptions(entries, extraRpcs, chainIDList);
 
 async function main() {
   try {
@@ -74,15 +68,6 @@ async function buildIndex() {
   });
 
   console.log("Index build complete.");
-}
-
-function createEnvDefines(generatedAtBuild: Record<string, unknown>): Record<string, string> {
-  const defines: Record<string, string> = {};
-  Object.keys(generatedAtBuild).forEach((key) => {
-    defines[key] = JSON.stringify(generatedAtBuild[key]);
-  });
-
-  return defines;
 }
 
 function ensureDistDir() {
