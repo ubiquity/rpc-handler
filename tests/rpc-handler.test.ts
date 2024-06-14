@@ -85,4 +85,19 @@ describe("RPCHandler", () => {
       expect(fastestRpc.connection.url).toBe(provider.connection.url);
     }, 10000);
   });
+
+  describe("Config Options", () => {
+    it("should return rpcs with no tracking", async () => {
+      const noTrackingRpcs = networkRpcsOriginal[testConfig.networkId].filter((rpc) => {
+        return typeof rpc != "string" && rpc.tracking == "none";
+      });
+
+      const noTrackingConfig = { ...testConfig };
+      noTrackingConfig.tracking = "none";
+      const handler = new RPCHandler(noTrackingConfig);
+      await handler.testRpcPerformance();
+      const runtime = handler.getRuntimeRpcs();
+      expect(runtime.length).toBeLessThanOrEqual(noTrackingRpcs.length);
+    }, 10000);
+  });
 });

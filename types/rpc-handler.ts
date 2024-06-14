@@ -4,7 +4,7 @@ import { HandlerInterface, HandlerConstructorConfig } from "./handler";
 
 import { RPCService } from "../src/services/rpc-service";
 import { StorageService } from "../src/services/storage-service";
-import { RpcType, getRpcUrls } from "./shared";
+import { Protocol, RpcType, Tracking, getRpcUrls } from "./shared";
 
 export class RPCHandler implements HandlerInterface {
   private static _instance: RPCHandler | null = null;
@@ -25,9 +25,38 @@ export class RPCHandler implements HandlerInterface {
 
   constructor(config: HandlerConstructorConfig) {
     this._networkId = config.networkId;
-    this._networkRpcs = networkRpcsOriginal[this._networkId];
+    this._networkRpcs = this.filterNetworks(networkRpcsOriginal[this._networkId], config.tracking, config.protocol);
     this._networkName = networkNames[this._networkId];
     this._initialize(config);
+  }
+
+  public filterNetworks(networks: RpcType[], tracking: Tracking, protocol: Protocol) {
+    const trackingFilteredRpc = networks.filter((rpc) => {
+      if (tracking == "yes") {
+        return true;
+      } else if (tracking == "limited" && typeof rpc != "string") {
+        return rpc.tracking == "limited" || rpc.tracking == "none";
+      } else if (tracking == "none" && typeof rpc != "string") {
+        return rpc.tracking == "none";
+      }
+      return false;
+    });
+
+    const fullyFilteredRpcs = trackingFilteredRpc.filter((rpc) => {
+      if (protocol == "all") {
+        return true;
+      }
+
+      const url = typeof rpc == "string" ? rpc : rpc.url;
+      if (protocol == "https") {
+        return url.indexOf("https") === 0;
+      } else if (protocol == "wss") {
+        return url.indexOf("wss") === 0;
+      }
+      return false;
+    });
+
+    return fullyFilteredRpcs;
   }
 
   public async getFastestRpcProvider(): Promise<JsonRpcProvider> {
