@@ -1,7 +1,7 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { networkRpcsOriginal, RPCHandler } from "../dist";
 import { HandlerConstructorConfig } from "../types/handler";
-import { getRpcUrls, RpcDetailed } from "../types/shared";
+import { getRpcUrls, RpcDetailed, RpcType, Tracking } from "../types/shared";
 
 export const testConfig: HandlerConstructorConfig = {
   networkId: 100,
@@ -86,23 +86,41 @@ describe("RPCHandler", () => {
     }, 10000);
   });
 
-  describe.only("Config Options", () => {
-    it("should return rpcs with no tracking", async () => {
-      const noTrackingRpcs = networkRpcsOriginal[testConfig.networkId].filter((rpc) => {
+  describe("RPC tracking config option", () => {
+    const filterFunctions = {
+      none: function (rpc: RpcType) {
         return typeof rpc != "string" && rpc.tracking == "none";
-      });
+      },
+      limited: function (rpc: RpcType) {
+        return typeof rpc != "string" && ["none", "limited"].includes(rpc.tracking);
+      },
+      yes: function (rpc: RpcType) {
+        return true;
+      },
+    };
 
-      const noTrackingUrls = noTrackingRpcs.map((rpc) => {
-        return (rpc as RpcDetailed).url;
-      });
+    for (const [trackingOption, filterFunction] of Object.entries(filterFunctions)) {
+      it(`should return correct rpcs with tracking=${trackingOption}`, async () => {
+        const filteredRpcs = networkRpcsOriginal[testConfig.networkId].filter((rpc) => {
+          return filterFunction(rpc);
+        });
 
-      const noTrackingConfig = { ...testConfig };
-      noTrackingConfig.tracking = "none";
-      const handler = new RPCHandler(noTrackingConfig);
-      await handler.testRpcPerformance();
-      const runtime = handler.getRuntimeRpcs();
-      expect(runtime.length).toBeLessThanOrEqual(noTrackingUrls.length);
-      expect(noTrackingUrls).toEqual(expect.arrayContaining(runtime));
-    }, 10000);
+        const urls = filteredRpcs.map((rpc) => {
+          if (typeof rpc == "string") return rpc;
+
+          return (rpc as RpcDetailed).url;
+        });
+
+        const rpcHandlerConfig = { ...testConfig };
+        rpcHandlerConfig.tracking = trackingOption as Tracking;
+        const handler = new RPCHandler(rpcHandlerConfig);
+        await handler.testRpcPerformance();
+        const runtime = handler.getRuntimeRpcs();
+        expect(runtime.length).toBeLessThanOrEqual(urls.length);
+
+        // expect runtime to be the subset of urls
+        expect(urls).toEqual(expect.arrayContaining(runtime));
+      }, 10000);
+    }
   });
 });
