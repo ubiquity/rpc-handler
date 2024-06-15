@@ -45,17 +45,12 @@ export type NetworkCurrencies = typeof networkCurrencies;
 export type NetworkExplorers = typeof networkExplorers;
 
 export type ChainIds = {
-  -readonly [Key in keyof typeof CHAINS_IDS]: typeof CHAINS_IDS[Key]
-}
+  -readonly [Key in keyof typeof CHAINS_IDS]: (typeof CHAINS_IDS)[Key];
+};
 export type ChainNames = {
-  -readonly [Key in keyof typeof NETWORKS]: typeof NETWORKS[Key]
-}
+  -readonly [Key in keyof typeof NETWORKS]: (typeof NETWORKS)[Key];
+};
 
-export type ChainName = ChainIds[keyof ChainIds] |
-  "anvil" |
-  "hardhat"
+export type ChainName = ChainIds[keyof ChainIds] | "anvil" | "hardhat";
 
-export type ChainId = ChainNames[keyof ChainNames] |
-  31337 |
-  1337
-
+export type ChainId = ChainNames[keyof ChainNames] | 31337 | 1337;

@@ -67,6 +67,7 @@ yarn test
 ```
 
 - This below will only work after `yarn build` has been run and will fail under test conditions
+
 ```bash
 npx tsx tests/script-test.ts
 ```

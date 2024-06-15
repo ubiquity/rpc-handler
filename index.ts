@@ -23,7 +23,7 @@ import {
   Token,
   ValidBlockData,
   ChainIds,
-  ChainName
+  ChainName,
 } from "./types/handler";
 
 import {
@@ -41,18 +41,7 @@ import {
 
 import { RPCHandler } from "./types/rpc-handler";
 
-export {
-  LOCAL_HOST,
-  getNetworkName,
-  getNetworkId,
-  networkCurrencies,
-  networkExplorers,
-  networkIds,
-  networkNames,
-  networkRpcs,
-  nftAddress,
-  permit2Address,
-};
+export { LOCAL_HOST, getNetworkName, getNetworkId, networkCurrencies, networkExplorers, networkIds, networkNames, networkRpcs, nftAddress, permit2Address };
 
 export type {
   ChainId,

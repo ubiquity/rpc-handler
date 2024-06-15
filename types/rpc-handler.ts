@@ -1,5 +1,5 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { LOCAL_HOST, networkRpcs, networkNames, networkIds } from "./constants";
+import { LOCAL_HOST, networkRpcs, networkIds } from "./constants";
 import { HandlerInterface, HandlerConstructorConfig, ChainId, ChainName } from "./handler";
 
 import { RPCService } from "../src/services/rpc-service";

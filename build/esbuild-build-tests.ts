@@ -5,7 +5,6 @@ import * as fs from "fs";
 const typescriptEntries = ["tests/mocks/rpc-service.ts", "tests/mocks/rpc-handler.ts", "tests/mocks/handler.ts"];
 export const entries = [...typescriptEntries];
 
-
 export const esBuildContext: esbuild.BuildOptions = {
   entryPoints: entries,
   bundle: true,
