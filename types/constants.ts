@@ -21,8 +21,41 @@ export const networkCurrencies: Partial<Record<ChainId, NativeToken>> = {
 export const networkExplorers: Partial<Record<ChainId, string>> = {
   [networkNames.ethereum]: "https://etherscan.io",
   [networkNames.xdai]: "https://gnosisscan.io",
-  // [networkNames.Goerli]: "https://goerli.etherscan.io",
-  // [networkNames.Anvil]: "https://gnosisscan.io",
+  [networkNames.binance]: "https://bscscan.com",
+  [80002]: "https://amoy.polygonscan.com/",
+  [11155111]: "https://sepolia.etherscan.io/",
+  [23888]: "https://testnet.blastscan.io/",
+  [41]: "https://testnet.teloscan.io/",
+  [10200]: "https://gnosis-chiado.blockscout.com/",
+  [4002]: "https://testnet.ftmscan.com/",
+  [97]: "https://testnet.bscscan.com/",
+  [420]: "https://goerli-optimism.etherscan.io/",
+  [11155420]: "https://sepolia-optimism.etherscan.io/",
+  [10]: "https://optimism.blockscout.com/",
+  [42161]: "https://arbiscan.io/",
+  [25]: "https://cronoscan.com/",
+  [42220]: "https://celoscan.io/",
+  [167009]: "https://explorer.hekla.taiko.xyz/",
+  [167000]: "https://taikoscan.io/",
+  [84532]: "https://sepolia.basescan.org/",
+  [84531]: "https://goerli.basescan.org/",
+
+
+
+
+
+
+
+
+
+
+
+
+
+  [31337]: "N/A",
+
+
+
 };
 
 export function getNetworkName(networkId: ChainId) {
