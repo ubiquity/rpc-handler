@@ -1,5 +1,6 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { ChainId, networkCurrencies, networkExplorers, networkIds, networkNames, networkRpcs, tokens } from "../../types/constants";
+import { networkCurrencies, networkExplorers, networkRpcs } from "../../types/constants";
+import { chainIds, networks } from "../../types/dynamic";
 
 export type ValidBlockData = {
   jsonrpc: string;
@@ -10,23 +11,28 @@ export type ValidBlockData = {
     hash: string;
   };
 };
+
 export type Token = {
   decimals: number;
   address: string;
+  symbol: string;
 };
+
 export type NativeToken = {
   symbol: string;
   decimals: number;
 };
+
 export type HandlerInterface = {
-  getProvider(): JsonRpcProvider | undefined;
+  getProvider(): JsonRpcProvider | null;
   clearInstance(): void;
-  getFastestRpcProvider(): Promise<JsonRpcProvider | undefined>;
-  testRpcPerformance(): Promise<JsonRpcProvider | undefined>;
+  getFastestRpcProvider(): Promise<JsonRpcProvider | null>;
+  testRpcPerformance(): Promise<JsonRpcProvider | null>;
 };
+
 export type HandlerConstructorConfig = {
-  networkId: number;
-  networkName: string | null;
+  networkId: ChainId;
+  networkName: ChainName | null;
   networkRpcs: string[] | null;
   autoStorage: boolean | null;
   cacheRefreshCycles: number | null;
@@ -35,12 +41,16 @@ export type HandlerConstructorConfig = {
 };
 
 export type NetworkRPCs = typeof networkRpcs;
-export type NetworkNames = typeof networkNames;
 export type NetworkCurrencies = typeof networkCurrencies;
-export type Tokens = typeof tokens;
 export type NetworkExplorers = typeof networkExplorers;
-export type NetworkIds = typeof networkIds;
-export type { ChainId };
-export type ChainNames<TChainID extends PropertyKey = ChainId> = {
-  [key in TChainID]: string;
-};
+
+export type ChainIds = {
+  -readonly [Key in keyof typeof chainIds]: typeof chainIds[Key]
+}
+export type ChainNames = {
+  -readonly [Key in keyof typeof networks]: typeof networks[Key]
+}
+
+export type ChainName = ChainIds[keyof ChainIds] | (string & {})
+export type ChainId = ChainNames[keyof ChainNames] | (number & {})
+

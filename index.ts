@@ -19,18 +19,15 @@ import {
   NativeToken,
   NetworkCurrencies,
   NetworkExplorers,
-  NetworkIds,
-  NetworkNames,
   NetworkRPCs,
   Token,
-  Tokens,
   ValidBlockData,
+  ChainIds,
+  ChainName
 } from "./types/handler";
 
 import {
   LOCAL_HOST,
-  chainIDList,
-  extraRpcs,
   getNetworkName,
   networkCurrencies,
   networkExplorers,
@@ -39,16 +36,15 @@ import {
   networkRpcs,
   nftAddress,
   permit2Address,
-  tokens,
+  getNetworkId,
 } from "./types/constants";
 
 import { RPCHandler } from "./types/rpc-handler";
 
 export {
   LOCAL_HOST,
-  chainIDList,
-  extraRpcs,
   getNetworkName,
+  getNetworkId,
   networkCurrencies,
   networkExplorers,
   networkIds,
@@ -56,22 +52,20 @@ export {
   networkRpcs,
   nftAddress,
   permit2Address,
-  tokens,
 };
 
 export type {
   ChainId,
+  ChainIds,
+  ChainName,
   ChainNames,
   HandlerConstructorConfig,
   HandlerInterface,
   NativeToken,
   NetworkCurrencies,
   NetworkExplorers,
-  NetworkIds,
-  NetworkNames,
   NetworkRPCs,
   Token,
-  Tokens,
   ValidBlockData,
 };
 export { RPCHandler };

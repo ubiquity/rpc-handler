@@ -1,5 +1,6 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { ChainId, networkCurrencies, networkExplorers, networkIds, networkNames, networkRpcs, tokens } from "./constants";
+import { networkCurrencies, networkExplorers, networkRpcs } from "./constants";
+import { chainIds, networks } from "./dynamic";
 
 export type ValidBlockData = {
   jsonrpc: string;
@@ -30,8 +31,8 @@ export type HandlerInterface = {
 };
 
 export type HandlerConstructorConfig = {
-  networkId: number;
-  networkName: string | null;
+  networkId: ChainId;
+  networkName: ChainName | null;
   networkRpcs: string[] | null;
   autoStorage: boolean | null;
   cacheRefreshCycles: number | null;
@@ -40,13 +41,16 @@ export type HandlerConstructorConfig = {
 };
 
 export type NetworkRPCs = typeof networkRpcs;
-export type NetworkNames = typeof networkNames;
 export type NetworkCurrencies = typeof networkCurrencies;
-export type Tokens = typeof tokens;
 export type NetworkExplorers = typeof networkExplorers;
-export type NetworkIds = typeof networkIds;
-export type { ChainId };
 
-export type ChainNames<TChainID extends PropertyKey = ChainId> = {
-  [key in TChainID]: string;
-};
+export type ChainIds = {
+  -readonly [Key in keyof typeof chainIds]: typeof chainIds[Key]
+}
+export type ChainNames = {
+  -readonly [Key in keyof typeof networks]: typeof networks[Key]
+}
+
+export type ChainName = ChainIds[keyof ChainIds] | (string & {})
+export type ChainId = ChainNames[keyof ChainNames] | (string & {})
+

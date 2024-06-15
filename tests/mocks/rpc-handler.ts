@@ -1,15 +1,16 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { LOCAL_HOST, networkRpcs, networkNames } from "../../types/constants";
+import { LOCAL_HOST, networkRpcs, networkIds } from "../../types/constants";
 import { HandlerInterface, HandlerConstructorConfig } from "./handler";
 
 import { RPCService } from "./rpc-service";
 import { StorageService } from "./storage-service";
+import { ChainId, ChainName } from "../../types/handler";
 
 export class RPCHandler implements HandlerInterface {
   private static _instance: RPCHandler | null = null;
   private _provider: JsonRpcProvider | null = null;
-  private _networkId: number;
-  private _networkName: string;
+  private _networkId: ChainId;
+  private _networkName: ChainName;
   private _env: string = "node";
 
   private _rpcTimeout: number = 999999; // ms
@@ -22,7 +23,7 @@ export class RPCHandler implements HandlerInterface {
   constructor(config: HandlerConstructorConfig) {
     this._networkId = config.networkId;
     this._networkRpcs = networkRpcs[this._networkId];
-    this._networkName = networkNames[this._networkId];
+    this._networkName = networkIds[this._networkId];
     this._initialize(config);
   }
   public async getFastestRpcProvider(): Promise<JsonRpcProvider> {

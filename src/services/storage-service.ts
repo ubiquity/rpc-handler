@@ -1,5 +1,7 @@
+import { ChainId } from "types/handler";
+
 export class StorageService {
-  static getLatencies(env: string, networkId: number): Record<string | number, number> {
+  static getLatencies(env: string, networkId: ChainId): Record<string | number, number> {
     if (env === "browser") {
       if (this.bypassForTests()) return {};
       const latencies: Record<string, number> = JSON.parse(localStorage.getItem("rpcLatencies") || "{}");

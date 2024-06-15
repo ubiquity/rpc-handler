@@ -1,4 +1,4 @@
-import getRPCHandler, { HandlerConstructorConfig, RPCHandler } from "../dist/";
+import getRPCHandler, { HandlerConstructorConfig, RPCHandler, networkIds, networkCurrencies, networkExplorers, networkNames, networkRpcs } from "../dist/";
 
 /**
  * This script is meant to test the `yarn build` build output
@@ -29,9 +29,16 @@ import getRPCHandler, { HandlerConstructorConfig, RPCHandler } from "../dist/";
 
   const latencies = handler.getLatencies();
 
-  const provider = handler.getFastestRpcProvider();
-
-  console.log(provider);
+  console.log("=====================================");
+  console.log(networkIds);
+  console.log("=====================================");
+  console.log(networkNames);
+  console.log("=====================================");
+  console.log(networkRpcs);
+  console.log("=====================================");
+  console.log(networkCurrencies);
+  console.log("=====================================");
+  console.log(networkExplorers);
   console.log("=====================================");
   console.log(latencies);
   process.exit(0);

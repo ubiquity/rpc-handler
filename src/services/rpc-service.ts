@@ -1,10 +1,10 @@
-import { ValidBlockData } from "../../types/handler";
+import { ChainId, ValidBlockData } from "../../types/handler";
 import axios from "axios";
 type PromiseResult = { success: boolean; rpcUrl: string; duration: number };
 
 export class RPCService {
   static async testRpcPerformance(
-    networkId: number,
+    networkId: ChainId,
     latencies: Record<string, number>,
     runtimeRpcs: string[],
     rpcHeader: object,
@@ -58,7 +58,7 @@ export class RPCService {
 
     return { latencies, runtimeRpcs };
   }
-  static async findFastestRpc(latencies: Record<string, number>, networkId: number): Promise<string | null> {
+  static async findFastestRpc(latencies: Record<string, number>, networkId: ChainId): Promise<string | null> {
     try {
       const validLatencies: Record<string, number> = Object.entries(latencies)
         .filter(([key]) => key.startsWith(`${networkId}__`))
