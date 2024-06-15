@@ -3,11 +3,13 @@ export type Protocol = "all" | "https" | "wss";
 
 export type RpcType =
   | string // if string then it is the official rpc of the chain
-  | {
-      url: string;
-      tracking: Tracking;
-      trackingDetails: string;
-    };
+  | RpcDetailed;
+
+export type RpcDetailed = {
+  url: string;
+  tracking: Tracking;
+  trackingDetails: string;
+};
 
 export function getRpcUrls(rpcs: RpcType[]) {
   let urls: string[] = [];

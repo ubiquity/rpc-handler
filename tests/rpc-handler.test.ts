@@ -1,7 +1,7 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { networkRpcsOriginal, RPCHandler } from "../dist";
 import { HandlerConstructorConfig } from "../types/handler";
-import { getRpcUrls } from "../types/shared";
+import { getRpcUrls, RpcDetailed } from "../types/shared";
 
 export const testConfig: HandlerConstructorConfig = {
   networkId: 100,
@@ -86,10 +86,14 @@ describe("RPCHandler", () => {
     }, 10000);
   });
 
-  describe("Config Options", () => {
+  describe.only("Config Options", () => {
     it("should return rpcs with no tracking", async () => {
       const noTrackingRpcs = networkRpcsOriginal[testConfig.networkId].filter((rpc) => {
         return typeof rpc != "string" && rpc.tracking == "none";
+      });
+
+      const noTrackingUrls = noTrackingRpcs.map((rpc) => {
+        return (rpc as RpcDetailed).url;
       });
 
       const noTrackingConfig = { ...testConfig };
@@ -97,7 +101,8 @@ describe("RPCHandler", () => {
       const handler = new RPCHandler(noTrackingConfig);
       await handler.testRpcPerformance();
       const runtime = handler.getRuntimeRpcs();
-      expect(runtime.length).toBeLessThanOrEqual(noTrackingRpcs.length);
+      expect(runtime.length).toBeLessThanOrEqual(noTrackingUrls.length);
+      expect(noTrackingUrls).toEqual(expect.arrayContaining(runtime));
     }, 10000);
   });
 });
