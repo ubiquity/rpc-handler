@@ -51,6 +51,33 @@ export type ChainNames = {
   -readonly [Key in keyof typeof networks]: typeof networks[Key]
 }
 
-export type ChainName = ChainIds[keyof ChainIds] | (string & {})
-export type ChainId = ChainNames[keyof ChainNames] | (string & {})
+export type ChainName = ChainIds[keyof ChainIds] |
+  "amoy" |
+  "sepolia" |
+  "telos-testnet" |
+  "chiado" |
+  "fantom-testnet" |
+  "bsc-testnet" |
+  "sepolia-optimism" |
+  "hekla" |
+  "sepolia-base" |
+  "fuji" |
+  "bittorrent" |
+  "donau" |
+  (string & {})
+
+export type ChainId = ChainNames[keyof ChainNames] |
+  80002 |
+  11155111 |
+  41 |
+  10200 |
+  4002 |
+  97 |
+  11155420 |
+  167009 |
+  84532 |
+  43113 |
+  199 |
+  1028 |
+  (number & {})
 

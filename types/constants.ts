@@ -1,4 +1,4 @@
-import { ChainId, ChainName, NativeToken } from "./handler";
+import { ChainId, ChainIds, ChainName, NativeToken } from "./handler";
 import { chainIds, networks } from "./dynamic";
 
 export const permit2Address = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
@@ -8,54 +8,67 @@ export const LOCAL_HOST = "http://127.0.0.1:8545";
 declare const extraRpcs: Record<ChainId, string[]>;
 
 export const networkRpcs: Record<ChainId, string[]> = extraRpcs;
-export const networkIds: Record<ChainId, ChainName> = { ...chainIds };
-export const networkNames: Record<ChainName, ChainId> = { ...networks };
+export const networkIds: Record<ChainId, ChainName> = {
+  ...{ ...chainIds }, // removing readonly
+  80002: "amoy",
+  11155111: "sepolia",
+  41: "telos-testnet",
+  10200: "chiado",
+  4002: "fantom-testnet",
+  97: "bsc-testnet",
+  11155420: "sepolia-optimism",
+  167009: "hekla",
+  84532: "sepolia-base",
+  43113: "fuji",
+  199: "bittorrent-mainnet",
+  1028: "bittorrent-testnet",
+};
 
-export const networkCurrencies: Partial<Record<ChainId, NativeToken>> = {
-  [networkNames.ethereum]: { symbol: "ETH", decimals: 18 },
-  [networkNames.xdai]: { symbol: "XDAI", decimals: 18 },
-  // [networkNames.Anvil]: { symbol: "XDAI", decimals: 18 },
-  // [networkNames.Goerli]: { symbol: "GoerliETH", decimals: 18 },
+export const networkNames: Record<ChainName, ChainId> = {
+  ...{ ...networks }, // removing readonly
+  "amoy": 80002,
+  "sepolia": 11155111,
+  "telos-testnet": 41,
+  "chiado": 10200,
+  "fantom-testnet": 4002,
+  "bsc-testnet": 97,
+  "sepolia-optimism": 11155420,
+  "hekla": 167009,
+  "sepolia-base": 84532,
+  "fuji": 43113,
+  bittorrent: 199,
+  donau: 1028,
 };
 
 export const networkExplorers: Partial<Record<ChainId, string>> = {
   [networkNames.ethereum]: "https://etherscan.io",
   [networkNames.xdai]: "https://gnosisscan.io",
+  [networkNames.arbitrum]: "https://arbiscan.io/",
   [networkNames.binance]: "https://bscscan.com",
-  [80002]: "https://amoy.polygonscan.com/",
-  [11155111]: "https://sepolia.etherscan.io/",
-  [23888]: "https://testnet.blastscan.io/",
-  [41]: "https://testnet.teloscan.io/",
-  [10200]: "https://gnosis-chiado.blockscout.com/",
-  [4002]: "https://testnet.ftmscan.com/",
-  [97]: "https://testnet.bscscan.com/",
-  [420]: "https://goerli-optimism.etherscan.io/",
-  [11155420]: "https://sepolia-optimism.etherscan.io/",
-  [10]: "https://optimism.blockscout.com/",
-  [42161]: "https://arbiscan.io/",
-  [25]: "https://cronoscan.com/",
-  [42220]: "https://celoscan.io/",
-  [167009]: "https://explorer.hekla.taiko.xyz/",
-  [167000]: "https://taikoscan.io/",
-  [84532]: "https://sepolia.basescan.org/",
-  [84531]: "https://goerli.basescan.org/",
-
-
-
-
-
-
-
-
-
-
-
-
-
-  [31337]: "N/A",
-
-
-
+  [networkNames.polygon]: "https://polygonscan.com",
+  [networkNames.avalanche]: "https://snowtrace.io/",
+  [networkNames.blast]: "https://testnet.blastscan.io/",
+  [networkNames.optimism]: "hhttps://optimistic.etherscan.io/",
+  [networkNames.cronos]: "https://cronoscan.com/",
+  [networkNames.celo]: "https://celoscan.io/",
+  [networkNames.taiko]: "https://taikoscan.io/",
+  [networkNames.base]: "https://basescan.org/",
+  [networkNames.fantom]: "https://ftmscan.com/",
+  [networkNames.bttc]: "https://bttcscan.com/",
+  [networkNames.heco]: "https://hecoinfo.com/",
+  // testnets
+  [networkNames.fuji]: "https://testnet.snowtrace.io/",
+  [networkNames.amoy]: "https://amoy.polygonscan.com/",
+  [networkNames.sepolia]: "https://sepolia.etherscan.io/",
+  [networkNames["telos-testnet"]]: "https://testnet.teloscan.io/",
+  [networkNames.chiado]: "https://gnosis-chiado.blockscout.com/",
+  [networkNames["fantom-testnet"]]: "https://testnet.ftmscan.com/",
+  [networkNames["bsc-testnet"]]: "https://testnet.bscscan.com/",
+  [networkNames["sepolia-optimism"]]: "https://sepolia-optimism.etherscan.io/",
+  [networkNames.hekla]: "https://explorer.hekla.taiko.xyz/",
+  [networkNames["sepolia-base"]]: "https://sepolia.basescan.org/",
+  [networkNames["fantom-testnet"]]: "https://testnet.ftmscan.com/",
+  [networkNames.donau]: "https://testnet.bttcscan.com/",
 };
 
 export function getNetworkName(networkId: ChainId) {
@@ -73,6 +86,13 @@ export function getNetworkId(networkName: ChainName) {
   }
   return networkId ?? 0;
 }
+
+// export const networkCurrencies: Record<ChainId, NativeToken> = {
+//   [networkNames.ethereum]: { symbol: "ETH", decimals: 18 },
+//   [networkNames.xdai]: { symbol: "XDAI", decimals: 18 },
+//   // [networkNames.Anvil]: { symbol: "XDAI", decimals: 18 },
+//   // [networkNames.Goerli]: { symbol: "GoerliETH", decimals: 18 },
+// };
 
 // export const tokens: Record<ChainId, Record<Token["symbol"], Token>> = {
 //   [networkNames.ethereum]: {
