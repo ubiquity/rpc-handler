@@ -1,6 +1,6 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { networkCurrencies, networkExplorers, networkRpcs } from "../../types/constants";
-import { chainIds, networks } from "../../types/dynamic";
+import { CHAINS_IDS, NETWORKS } from "../../types/dynamic";
 
 export type ValidBlockData = {
   jsonrpc: string;
@@ -45,12 +45,17 @@ export type NetworkCurrencies = typeof networkCurrencies;
 export type NetworkExplorers = typeof networkExplorers;
 
 export type ChainIds = {
-  -readonly [Key in keyof typeof chainIds]: typeof chainIds[Key]
+  -readonly [Key in keyof typeof CHAINS_IDS]: typeof CHAINS_IDS[Key]
 }
 export type ChainNames = {
-  -readonly [Key in keyof typeof networks]: typeof networks[Key]
+  -readonly [Key in keyof typeof NETWORKS]: typeof NETWORKS[Key]
 }
 
-export type ChainName = ChainIds[keyof ChainIds] | (string & {})
-export type ChainId = ChainNames[keyof ChainNames] | (number & {})
+export type ChainName = ChainIds[keyof ChainIds] |
+  "anvil" |
+  "hardhat"
+
+export type ChainId = ChainNames[keyof ChainNames] |
+  31337 |
+  1337
 

@@ -1,6 +1,13 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { networkCurrencies, networkExplorers, networkRpcs } from "./constants";
-import { chainIds, networks } from "./dynamic";
+import { CHAINS_IDS, NETWORKS } from "./dynamic";
+
+export type BlockExplorer = {
+  name: string;
+  url: string;
+  standard?: string;
+  icon?: string;
+}
 
 export type ValidBlockData = {
   jsonrpc: string;
@@ -19,6 +26,7 @@ export type Token = {
 };
 
 export type NativeToken = {
+  name: string;
   symbol: string;
   decimals: number;
 };
@@ -45,63 +53,17 @@ export type NetworkCurrencies = typeof networkCurrencies;
 export type NetworkExplorers = typeof networkExplorers;
 
 export type ChainIds = {
-  -readonly [Key in keyof typeof chainIds]: typeof chainIds[Key]
+  -readonly [Key in keyof typeof CHAINS_IDS]: typeof CHAINS_IDS[Key]
 }
 export type ChainNames = {
-  -readonly [Key in keyof typeof networks]: typeof networks[Key]
+  -readonly [Key in keyof typeof NETWORKS]: typeof NETWORKS[Key]
 }
 
 export type ChainName = ChainIds[keyof ChainIds] |
-  "amoy" |
-  "sepolia" |
-  "telos-testnet" |
-  "chiado" |
-  "fantom-testnet" |
-  "bsc-testnet" |
-  "sepolia-optimism" |
-  "hekla" |
-  "sepolia-base" |
-  "fuji" |
-  "bittorrent" |
-  "donau" |
-  "polygon_zkevm_testnet" |
-  "kroma" |
-  "kroma-sepolia" |
-  "linea-sepolia" |
-  "scroll" |
-  "scroll-sepolia" |
-  "taiko" |
-  "cronos-testnet" |
-  "blast" |
-  "blast-testnet" |
   "anvil" |
-  "hardhat" |
-  (string & {})
+  "hardhat"
 
 export type ChainId = ChainNames[keyof ChainNames] |
-  80002 |
-  11155111 |
-  41 |
-  10200 |
-  4002 |
-  97 |
-  11155420 |
-  167009 |
-  84532 |
-  43113 |
-  199 |
-  1028 |
-  1442 |
-  255 |
-  2358 |
-  59141 |
-  534352 |
-  534351 |
-  167000 |
-  338 |
-  23888 |
-  238 |
   31337 |
-  1337 |
-  (number & {})
+  1337
 

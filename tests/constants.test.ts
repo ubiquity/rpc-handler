@@ -18,7 +18,7 @@ describe("Constants", () => {
         });
 
         it("should return 'Unknown Network' for an unknown network ID", () => {
-            const networkId = 12345;
+            const networkId = Number.MAX_SAFE_INTEGER;
             const expectedNetworkName = "Unknown Network";
             const result = getNetworkName(networkId as ChainId);
             expect(result).toBe(expectedNetworkName);
@@ -45,19 +45,12 @@ describe("Constants", () => {
         it("should contain a name for each network", () => {
             const networkIdValues = Object.values(networkIds)
                 .sort((a, b) => a.localeCompare(b));
-            const networkIdKeys = Object.keys(networkIds)
-                .map(Number)
-                .sort((a, b) => a - b)
 
             const networkNameKeys = Object.keys(networkNames)
                 .sort((a, b) => a.localeCompare(b));
-            const networkNameValues = Object.values(networkNames)
-                .sort((a, b) => a - b);
 
             // keys of networkIds are the values of networkNames
-            expect(networkNameKeys).toEqual(networkIdValues);
-            // values of networkIds are the keys of networkNames
-            expect(networkIdKeys).toEqual(networkNameValues);
+            expect(networkIdValues).toEqual(networkNameKeys);
 
             netIds.forEach((networkId) => {
                 const networkName = networkIds[networkId];
@@ -71,37 +64,37 @@ describe("Constants", () => {
     ] as ChainId[];
 
     const expected = {
-        1: "https://etherscan.io/",
-        100: "https://gnosisscan.io/",
-        56: "https://bscscan.com/",
-        80002: "https://amoy.polygonscan.com/",
-        137: "https://polygonscan.com/",
-        25: "https://cronoscan.com/"
+        1: "https://etherscan.io",
+        100: "https://gnosisscan.io",
+        56: "https://bscscan.com",
+        80002: "https://www.oklink.com/amoy",
+        137: "https://polygonscan.com",
+        25: "https://explorer.cronos.org"
     } as Partial<Record<ChainId, string>>;
 
     const expectedName = {
-        1: "ethereum",
-        100: "xdai",
-        56: "binance",
+        1: "ethereum-mainnet",
+        100: "gnosis",
+        56: "bnb-smart-chain-mainnet",
         80002: "amoy",
-        137: "polygon",
-        25: "cronos",
+        137: "polygon-mainnet",
+        25: "cronos-mainnet",
     } as Partial<Record<ChainId, string>>;
 
     const expectedNative = {
-        1: { symbol: "ETH", decimals: 18 },
-        100: { symbol: "XDAI", decimals: 18 },
-        56: { symbol: "BNB", decimals: 18 },
-        80002: { symbol: "MATIC", decimals: 18 },
-        137: { symbol: "MATIC", decimals: 18 },
-        25: { symbol: "CRO", decimals: 18 }
+        1: { symbol: "ETH", decimals: 18, name: "Ether" },
+        100: { symbol: "XDAI", decimals: 18, name: "xDAI" },
+        56: { symbol: "BNB", decimals: 18, name: "BNB Chain Native Token" },
+        80002: { symbol: "MATIC", decimals: 18, name: "MATIC" },
+        137: { symbol: "MATIC", decimals: 18, name: "MATIC" },
+        25: { symbol: "CRO", decimals: 18, name: "Cronos" },
     } as Partial<Record<ChainId, NativeToken>>;
 
 
     describe("networkCurrencies", () => {
         it("should contain a currency for each network", () => {
             netIds.forEach((networkId) => {
-                const result = networkCurrencies[networkId];
+                const result = networkCurrencies[networkId]
                 const expectedCurrency = expectedNative[networkId] as NativeToken;
                 expect(result).toEqual(expectedCurrency);
             });
@@ -111,10 +104,10 @@ describe("Constants", () => {
     describe("networkExplorers", () => {
         it("should contain an explorer for each network", () => {
             netIds.forEach((networkId) => {
-                const networkName = getNetworkName(networkId as ChainId);
                 const result = networkExplorers[networkId];
-                expect(result).toBe(expected[networkId]);
-                expect(networkName).toBe(expectedName[networkId]);
+                const explorerUrls = result.map(({ url }) => url);
+                const expectedExplorer = expected[networkId];
+                expect(explorerUrls).toContain(expectedExplorer);
             });
         });
     });

@@ -38,8 +38,8 @@ import getRPCHandler, { HandlerConstructorConfig, RPCHandler, networkIds, networ
   console.log("=====================================");
   console.log(networkCurrencies);
   console.log("=====================================");
-  console.log(networkExplorers);
-  console.log("=====================================");
+  // console.log(networkExplorers);
+  // console.log("=====================================");
   console.log(latencies);
   process.exit(0);
 })().catch(console.error);
