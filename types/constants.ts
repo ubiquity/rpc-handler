@@ -1,15 +1,12 @@
-import { ChainId, ChainIds, ChainName, NativeToken } from "./handler";
-import { chainIds, networks } from "./dynamic";
+import { ChainId, ChainIds, ChainName, ChainNames, NativeToken } from "./handler";
+import { chainIds, networks, extraRpcs } from "./dynamic";
 
 export const permit2Address = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
 export const nftAddress = "0xAa1bfC0e51969415d64d6dE74f27CDa0587e645b";
 export const LOCAL_HOST = "http://127.0.0.1:8545";
 
-declare const extraRpcs: Record<ChainId, string[]>;
-
-export const networkRpcs: Record<ChainId, string[]> = extraRpcs;
 export const networkIds: Record<ChainId, ChainName> = {
-  ...{ ...chainIds }, // removing readonly
+  ...{ ...chainIds as ChainIds }, // removing readonly
   80002: "amoy",
   11155111: "sepolia",
   41: "telos-testnet",
@@ -30,10 +27,14 @@ export const networkIds: Record<ChainId, ChainName> = {
   534352: "scroll",
   167000: "taiko",
   338: "cronos-testnet",
+  23888: "blast-testnet",
+  238: "blast",
+  31337: "anvil",
+  1337: "hardhat",
 };
 
 export const networkNames: Record<ChainName, ChainId> = {
-  ...{ ...networks }, // removing readonly
+  ...{ ...networks as ChainNames }, // removing readonly
   "amoy": 80002,
   "sepolia": 11155111,
   "telos-testnet": 41,
@@ -54,14 +55,26 @@ export const networkNames: Record<ChainName, ChainId> = {
   "scroll": 534352,
   "taiko": 167000,
   "cronos-testnet": 338,
+  "blast-testnet": 23888,
+  blast: 238,
+  anvil: 31337,
+  hardhat: 1337,
 };
 
-export const networkExplorers: Partial<Record<ChainId, string>> = {
-  [networkNames.ethereum]: "https://etherscan.io",
-  [networkNames.xdai]: "https://gnosisscan.io",
+export const networkRpcs = Object.fromEntries(
+  Object.entries(networkNames).map(([_, value]) => {
+    const chainRpcs = extraRpcs[value as unknown as keyof typeof extraRpcs];
+    return [value, chainRpcs] as [ChainId, string[]];
+  })
+) as Record<ChainId, string[]>;
+
+// @ts-expect-error - not all networks are covered
+export const networkExplorers: Record<ChainId, string> = {
+  [networkNames.ethereum]: "https://etherscan.io/",
+  [networkNames.xdai]: "https://gnosisscan.io/",
   [networkNames.arbitrum]: "https://arbiscan.io/",
-  [networkNames.binance]: "https://bscscan.com",
-  [networkNames.polygon]: "https://polygonscan.com",
+  [networkNames.binance]: "https://bscscan.com/",
+  [networkNames.polygon]: "https://polygonscan.com/",
   [networkNames.avalanche]: "https://snowtrace.io/",
   [networkNames.blast]: "https://testnet.blastscan.io/",
   [networkNames.optimism]: "hhttps://optimistic.etherscan.io/",
@@ -81,9 +94,8 @@ export const networkExplorers: Partial<Record<ChainId, string>> = {
   [networkNames.scroll]: "https://scrollscan.com/",
   [networkNames.taiko]: "https://taikoscan.io/",
 
-
   // testnets
-  [networkNames.scroll_sepolia]: "https://sepolia.scrollscan.com/",
+  [networkNames["scroll-sepolia"]]: "https://sepolia.scrollscan.com/",
   [networkNames["linea-sepolia"]]: "https://sepolia.lineascan.build/",
   [networkNames.polygon_zkevm_testnet]: "https://cardona-zkevm.polygonscan.com/",
   [networkNames["kroma-sepolia"]]: "https://sepolia-kromascan.com/",
@@ -103,6 +115,48 @@ export const networkExplorers: Partial<Record<ChainId, string>> = {
   [networkNames["polygon_zkevm_testnet"]]: "https://testnet-zkevm.polygonscan.com/",
 };
 
+export const networkCurrencies: Partial<Record<ChainId, NativeToken>> = {
+  [networkNames.ethereum]: { symbol: "ETH", decimals: 18 },
+  [networkNames.xdai]: { symbol: "XDAI", decimals: 18 },
+  [networkNames.binance]: { symbol: "BNB", decimals: 18 },
+  [networkNames.polygon]: { symbol: "MATIC", decimals: 18 },
+  [networkNames.avalanche]: { symbol: "AVAX", decimals: 18 },
+  [networkNames.blast]: { symbol: "BLAST", decimals: 18 },
+  [networkNames.optimism]: { symbol: "ETH", decimals: 18 },
+  [networkNames.cronos]: { symbol: "CRO", decimals: 18 },
+  [networkNames.celo]: { symbol: "CELO", decimals: 18 },
+  [networkNames.base]: { symbol: "BASE", decimals: 18 },
+  [networkNames.fantom]: { symbol: "FTM", decimals: 18 },
+  [networkNames.heco]: { symbol: "HT", decimals: 18 },
+  [networkNames.polygon_zkevm]: { symbol: "MATIC", decimals: 18 },
+  [networkNames.bittorrent]: { symbol: "BTT", decimals: 18 },
+  [networkNames.donau]: { symbol: "XDAI", decimals: 18 },
+  [networkNames.kroma]: { symbol: "ETH", decimals: 18 },
+  [networkNames.linea]: { symbol: "ETH", decimals: 18 },
+  [networkNames.moonbeam]: { symbol: "GLMR", decimals: 18 },
+  [networkNames.moonriver]: { symbol: "MOVR", decimals: 18 },
+  [networkNames.arbitrum_nova]: { symbol: "ETH", decimals: 18 },
+  [networkNames.scroll]: { symbol: "ETH", decimals: 18 },
+  [networkNames.fuji]: { symbol: "AVAX", decimals: 18 },
+  [networkNames.amoy]: { symbol: "MATIC", decimals: 18 },
+  [networkNames.sepolia]: { symbol: "ETH", decimals: 18 },
+  [networkNames.taiko]: { symbol: "ETH", decimals: 18 },
+  [networkNames.chiado]: { symbol: "XDAI", decimals: 18 },
+  [networkNames.hekla]: { symbol: "ETH", decimals: 18 },
+  [networkNames.donau]: { symbol: "XDAI", decimals: 18 },
+  [networkNames["scroll-sepolia"]]: { symbol: "ETH", decimals: 18 },
+  [networkNames["linea-sepolia"]]: { symbol: "ETH", decimals: 18 },
+  [networkNames["kroma-sepolia"]]: { symbol: "ETH", decimals: 18 },
+  [networkNames["telos-testnet"]]: { symbol: "TLOS", decimals: 18 },
+  [networkNames["fantom-testnet"]]: { symbol: "FTM", decimals: 18 },
+  [networkNames["bsc-testnet"]]: { symbol: "BNB", decimals: 18 },
+  [networkNames["sepolia-optimism"]]: { symbol: "ETH", decimals: 18 },
+  [networkNames["sepolia-base"]]: { symbol: "ETH", decimals: 18 },
+  [networkNames["fantom-testnet"]]: { symbol: "FTM", decimals: 18 },
+  [networkNames["cronos-testnet"]]: { symbol: "CRO", decimals: 18 },
+  [networkNames["polygon_zkevm_testnet"]]: { symbol: "MATIC", decimals: 18 },
+};
+
 export function getNetworkName(networkId: ChainId) {
   const networkName = networkIds[networkId];
   if (!networkName) {
@@ -116,15 +170,8 @@ export function getNetworkId(networkName: ChainName) {
   if (!networkId) {
     console.error(`Unknown network name: ${networkName}`);
   }
-  return networkId ?? 0;
+  return networkId ?? -1;
 }
-
-// export const networkCurrencies: Record<ChainId, NativeToken> = {
-//   [networkNames.ethereum]: { symbol: "ETH", decimals: 18 },
-//   [networkNames.xdai]: { symbol: "XDAI", decimals: 18 },
-//   // [networkNames.Anvil]: { symbol: "XDAI", decimals: 18 },
-//   // [networkNames.Goerli]: { symbol: "GoerliETH", decimals: 18 },
-// };
 
 // export const tokens: Record<ChainId, Record<Token["symbol"], Token>> = {
 //   [networkNames.ethereum]: {

@@ -72,6 +72,10 @@ export type ChainName = ChainIds[keyof ChainIds] |
   "scroll-sepolia" |
   "taiko" |
   "cronos-testnet" |
+  "blast" |
+  "blast-testnet" |
+  "anvil" |
+  "hardhat" |
   (string & {})
 
 export type ChainId = ChainNames[keyof ChainNames] |
@@ -95,5 +99,9 @@ export type ChainId = ChainNames[keyof ChainNames] |
   534351 |
   167000 |
   338 |
+  23888 |
+  238 |
+  31337 |
+  1337 |
   (number & {})
 

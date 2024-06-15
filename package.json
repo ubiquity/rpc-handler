@@ -22,8 +22,8 @@
     "knip-ci": "knip --no-exit-code --reporter json",
     "prepare": "husky install",
     "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist && rm -rf dist/src",
-    "build:tests": "tsx build/esbuild-build-tests.ts && tsc --emitDeclarationOnly --declaration --project tsconfig.tests.json",
-    "build": "rm -rf dist && tsx build/esbuild-build.ts",
+    "build:tests": "tsx build/types.ts && tsx build/esbuild-build-tests.ts && tsc --emitDeclarationOnly --declaration --project tsconfig.tests.json",
+    "build": "rm -rf dist && tsx build/types.ts && tsx build/esbuild-build.ts ",
     "postbuild": "yarn build:types",
     "postinstall": "git submodule update --init --recursive",
     "test": "rm -rf dist && yarn build:tests && jest"
