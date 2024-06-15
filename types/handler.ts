@@ -64,6 +64,14 @@ export type ChainName = ChainIds[keyof ChainIds] |
   "fuji" |
   "bittorrent" |
   "donau" |
+  "polygon_zkevm_testnet" |
+  "kroma" |
+  "kroma-sepolia" |
+  "linea-sepolia" |
+  "scroll" |
+  "scroll-sepolia" |
+  "taiko" |
+  "cronos-testnet" |
   (string & {})
 
 export type ChainId = ChainNames[keyof ChainNames] |
@@ -79,5 +87,13 @@ export type ChainId = ChainNames[keyof ChainNames] |
   43113 |
   199 |
   1028 |
+  1442 |
+  255 |
+  2358 |
+  59141 |
+  534352 |
+  534351 |
+  167000 |
+  338 |
   (number & {})
 

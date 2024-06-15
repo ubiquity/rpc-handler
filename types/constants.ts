@@ -20,8 +20,16 @@ export const networkIds: Record<ChainId, ChainName> = {
   167009: "hekla",
   84532: "sepolia-base",
   43113: "fuji",
-  199: "bittorrent-mainnet",
-  1028: "bittorrent-testnet",
+  199: "bittorrent",
+  1028: "donau",
+  1442: "polygon_zkevm_testnet",
+  255: "kroma",
+  2358: "kroma-sepolia",
+  59141: "linea-sepolia",
+  534351: "scroll-sepolia",
+  534352: "scroll",
+  167000: "taiko",
+  338: "cronos-testnet",
 };
 
 export const networkNames: Record<ChainName, ChainId> = {
@@ -38,6 +46,14 @@ export const networkNames: Record<ChainName, ChainId> = {
   "fuji": 43113,
   bittorrent: 199,
   donau: 1028,
+  polygon_zkevm_testnet: 1442,
+  kroma: 255,
+  "kroma-sepolia": 2358,
+  "linea-sepolia": 59141,
+  "scroll-sepolia": 534351,
+  "scroll": 534352,
+  "taiko": 167000,
+  "cronos-testnet": 338,
 };
 
 export const networkExplorers: Partial<Record<ChainId, string>> = {
@@ -54,9 +70,23 @@ export const networkExplorers: Partial<Record<ChainId, string>> = {
   [networkNames.taiko]: "https://taikoscan.io/",
   [networkNames.base]: "https://basescan.org/",
   [networkNames.fantom]: "https://ftmscan.com/",
-  [networkNames.bttc]: "https://bttcscan.com/",
   [networkNames.heco]: "https://hecoinfo.com/",
+  [networkNames.polygon_zkevm]: "https://zkevm.polygonscan.com/",
+  [networkNames.bittorrent]: "https://bttcscan.com/",
+  [networkNames.kroma]: "https://kromascan.com/",
+  [networkNames.linea]: "https://lineascan.build/",
+  [networkNames.moonbeam]: "https://moonbeam.moonscan.io/",
+  [networkNames.moonriver]: "https://moonriver.moonscan.io/",
+  [networkNames.arbitrum_nova]: "https://nova.arbiscan.io/",
+  [networkNames.scroll]: "https://scrollscan.com/",
+  [networkNames.taiko]: "https://taikoscan.io/",
+
+
   // testnets
+  [networkNames.scroll_sepolia]: "https://sepolia.scrollscan.com/",
+  [networkNames["linea-sepolia"]]: "https://sepolia.lineascan.build/",
+  [networkNames.polygon_zkevm_testnet]: "https://cardona-zkevm.polygonscan.com/",
+  [networkNames["kroma-sepolia"]]: "https://sepolia-kromascan.com/",
   [networkNames.fuji]: "https://testnet.snowtrace.io/",
   [networkNames.amoy]: "https://amoy.polygonscan.com/",
   [networkNames.sepolia]: "https://sepolia.etherscan.io/",
@@ -69,6 +99,8 @@ export const networkExplorers: Partial<Record<ChainId, string>> = {
   [networkNames["sepolia-base"]]: "https://sepolia.basescan.org/",
   [networkNames["fantom-testnet"]]: "https://testnet.ftmscan.com/",
   [networkNames.donau]: "https://testnet.bttcscan.com/",
+  [networkNames["cronos-testnet"]]: "https://explorer.cronos.org/testnet/",
+  [networkNames["polygon_zkevm_testnet"]]: "https://testnet-zkevm.polygonscan.com/",
 };
 
 export function getNetworkName(networkId: ChainId) {
