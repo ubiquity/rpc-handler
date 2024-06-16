@@ -1,6 +1,6 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { ChainId, networkCurrencies, networkExplorers, networkIds, networkNames, networkRpcs, networkRpcsOriginal, tokens } from "./constants";
-import { Protocol, RpcType, Tracking } from "./shared";
+import { RpcType, Tracking } from "./shared";
 
 export type ValidBlockData = {
   jsonrpc: string;
@@ -39,7 +39,6 @@ export type HandlerConstructorConfig = {
   runtimeRpcs: string[] | null;
   rpcTimeout: number | null;
   tracking: Tracking;
-  protocol: Protocol;
 };
 
 export type NetworkRPCs = typeof networkRpcs;

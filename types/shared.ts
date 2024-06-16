@@ -1,5 +1,4 @@
 export type Tracking = "yes" | "limited" | "none";
-export type Protocol = "all" | "https" | "wss";
 
 export type RpcType =
   | string // if string then it is the official rpc of the chain
