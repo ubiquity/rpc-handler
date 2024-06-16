@@ -25,23 +25,9 @@ export class RPCHandler implements HandlerInterface {
 
   constructor(config: HandlerConstructorConfig) {
     this._networkId = config.networkId;
-    this._networkRpcs = this.filterNetworks(networkRpcsOriginal[this._networkId], config.tracking || "yes");
+    this._networkRpcs = this._filterRpcs(networkRpcsOriginal[this._networkId], config.tracking || "yes");
     this._networkName = networkNames[this._networkId];
     this._initialize(config);
-  }
-
-  public filterNetworks(networks: RpcType[], tracking: Tracking) {
-    const filteredRpcs = networks.filter((rpc) => {
-      if (tracking == "yes") {
-        return true;
-      } else if (tracking == "limited" && typeof rpc != "string") {
-        return rpc.tracking == "limited" || rpc.tracking == "none";
-      } else if (tracking == "none" && typeof rpc != "string") {
-        return rpc.tracking == "none";
-      }
-      return false;
-    });
-    return filteredRpcs;
   }
 
   public async getFastestRpcProvider(): Promise<JsonRpcProvider> {
@@ -198,6 +184,20 @@ export class RPCHandler implements HandlerInterface {
       this._latencies = StorageService.getLatencies(this._env, this._networkId);
       this._refreshLatencies = StorageService.getRefreshLatencies(this._env);
     }
+  }
+
+  private _filterRpcs(networks: RpcType[], tracking: Tracking) {
+    const filteredRpcs = networks.filter((rpc) => {
+      if (tracking == "yes") {
+        return true;
+      } else if (tracking == "limited" && typeof rpc != "string") {
+        return rpc.tracking == "limited" || rpc.tracking == "none";
+      } else if (tracking == "none" && typeof rpc != "string") {
+        return rpc.tracking == "none";
+      }
+      return false;
+    });
+    return filteredRpcs;
   }
 
   private _initialize(config: HandlerConstructorConfig): void {
