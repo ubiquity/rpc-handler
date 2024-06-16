@@ -1,5 +1,5 @@
 import { getNetworkId, getNetworkName, networkCurrencies, networkExplorers, networkIds, networkNames } from "../types/constants";
-import { ChainId, ChainName, NativeToken, ChainIds, ChainNames } from "../types/handler";
+import { ChainId, ChainName, NativeToken } from "../types/handler";
 
 describe("Constants", () => {
   beforeEach(() => {
@@ -9,7 +9,7 @@ describe("Constants", () => {
 
   describe("getNetworkName", () => {
     it("should return the network name for a valid network ID", () => {
-      const networkId = 80002;
+      const networkId = "80002";
       const expectedNetworkName = "amoy";
       const result = getNetworkName(networkId);
       expect(result).toBe(expectedNetworkName);
@@ -18,7 +18,7 @@ describe("Constants", () => {
     it("should return 'Unknown Network' for an unknown network ID", () => {
       const networkId = Number.MAX_SAFE_INTEGER;
       const expectedNetworkName = "Unknown Network";
-      const result = getNetworkName(networkId as ChainId);
+      const result = getNetworkName(networkId as unknown as ChainId);
       expect(result).toBe(expectedNetworkName);
     });
   });
@@ -26,7 +26,7 @@ describe("Constants", () => {
   describe("getNetworkId", () => {
     it("should return the network ID for a valid network name", () => {
       const networkName = "amoy";
-      const expectedNetworkId = 80002;
+      const expectedNetworkId = "80002";
       const result = getNetworkId(networkName);
       expect(result).toBe(expectedNetworkId);
     });
@@ -55,33 +55,33 @@ describe("Constants", () => {
     });
   });
 
-  const netIds = [1, 100, 56, 80002, 137, 25] as ChainId[];
+  const netIds = ["1", "100", "56", "80002", "137", "25"] as ChainId[];
 
   const expected = {
-    1: "https://etherscan.io",
-    100: "https://gnosisscan.io",
-    56: "https://bscscan.com",
-    80002: "https://www.oklink.com/amoy",
-    137: "https://polygonscan.com",
-    25: "https://explorer.cronos.org",
+    "1": "https://etherscan.io",
+    "100": "https://gnosisscan.io",
+    "56": "https://bscscan.com",
+    "80002": "https://www.oklink.com/amoy",
+    "137": "https://polygonscan.com",
+    "25": "https://explorer.cronos.org",
   } as Partial<Record<ChainId, string>>;
 
   const expectedName = {
-    1: "ethereum-mainnet",
-    100: "gnosis",
-    56: "bnb-smart-chain-mainnet",
-    80002: "amoy",
-    137: "polygon-mainnet",
-    25: "cronos-mainnet",
+    "1": "ethereum-mainnet",
+    "100": "gnosis",
+    "56": "bnb-smart-chain-mainnet",
+    "80002": "amoy",
+    "137": "polygon-mainnet",
+    "25": "cronos-mainnet",
   } as Partial<Record<ChainId, string>>;
 
   const expectedNative = {
-    1: { symbol: "ETH", decimals: 18, name: "Ether" },
-    100: { symbol: "XDAI", decimals: 18, name: "xDAI" },
-    56: { symbol: "BNB", decimals: 18, name: "BNB Chain Native Token" },
-    80002: { symbol: "MATIC", decimals: 18, name: "MATIC" },
-    137: { symbol: "MATIC", decimals: 18, name: "MATIC" },
-    25: { symbol: "CRO", decimals: 18, name: "Cronos" },
+    "1": { symbol: "ETH", decimals: 18, name: "Ether" },
+    "100": { symbol: "XDAI", decimals: 18, name: "xDAI" },
+    "56": { symbol: "BNB", decimals: 18, name: "BNB Chain Native Token" },
+    "80002": { symbol: "MATIC", decimals: 18, name: "MATIC" },
+    "137": { symbol: "MATIC", decimals: 18, name: "MATIC" },
+    "25": { symbol: "CRO", decimals: 18, name: "Cronos" },
   } as Partial<Record<ChainId, NativeToken>>;
 
   describe("networkCurrencies", () => {

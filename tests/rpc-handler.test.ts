@@ -2,7 +2,7 @@ import { JsonRpcProvider } from "@ethersproject/providers";
 import { HandlerConstructorConfig, RPCHandler, networkRpcs } from "../dist";
 
 export const testConfig: HandlerConstructorConfig = {
-  networkId: 100,
+  networkId: "100",
   autoStorage: false,
   cacheRefreshCycles: 3,
   networkName: null,
@@ -63,7 +63,7 @@ describe("RPCHandler", () => {
       const latencies = rpcHandler.getLatencies();
       console.log(`latencies: `, latencies);
       console.log(`fastestRpc: `, fastestRpc);
-      expect(provider._network.chainId).toBe(testConfig.networkId);
+      expect(provider._network.chainId).toBe(Number(testConfig.networkId));
       expect(provider.connection.url).toMatch("https://");
       const latArrLen = Array.from(Object.entries(latencies)).length;
       const runtime = rpcHandler.getRuntimeRpcs();

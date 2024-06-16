@@ -1,6 +1,13 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { networkCurrencies, networkExplorers, networkRpcs } from "../../types/constants";
-import { CHAINS_IDS, NETWORKS } from "../../types/dynamic";
+import { CHAINS_IDS, EXTRA_RPCS } from "../../types/dynamic";
+
+export type BlockExplorer = {
+  name: string;
+  url: string;
+  standard?: string;
+  icon?: string;
+};
 
 export type ValidBlockData = {
   jsonrpc: string;
@@ -19,6 +26,7 @@ export type Token = {
 };
 
 export type NativeToken = {
+  name: string;
   symbol: string;
   decimals: number;
 };
@@ -44,13 +52,13 @@ export type NetworkRPCs = typeof networkRpcs;
 export type NetworkCurrencies = typeof networkCurrencies;
 export type NetworkExplorers = typeof networkExplorers;
 
-export type ChainIds = {
-  -readonly [Key in keyof typeof CHAINS_IDS]: (typeof CHAINS_IDS)[Key];
-};
-export type ChainNames = {
-  -readonly [Key in keyof typeof NETWORKS]: (typeof NETWORKS)[Key];
+// filtered chainId union
+export type ChainId = keyof typeof EXTRA_RPCS | "31337" | "1337";
+
+// unfiltered Record<ChainID, ChainName>
+type ChainsUnfiltered = {
+  -readonly [K in keyof typeof CHAINS_IDS]: (typeof CHAINS_IDS)[K];
 };
 
-export type ChainName = ChainIds[keyof ChainIds] | "anvil" | "hardhat";
-
-export type ChainId = ChainNames[keyof ChainNames] | 31337 | 1337;
+// filtered ChainName union
+export type ChainName = ChainsUnfiltered[ChainId] | "anvil" | "hardhat";

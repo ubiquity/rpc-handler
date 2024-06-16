@@ -13,7 +13,7 @@ export default async function getRPCHandler() {
 
 import {
   ChainId,
-  ChainNames,
+  ChainName,
   HandlerConstructorConfig,
   HandlerInterface,
   NativeToken,
@@ -22,8 +22,6 @@ import {
   NetworkRPCs,
   Token,
   ValidBlockData,
-  ChainIds,
-  ChainName,
 } from "./types/handler";
 
 import {
@@ -45,9 +43,7 @@ export { LOCAL_HOST, getNetworkName, getNetworkId, networkCurrencies, networkExp
 
 export type {
   ChainId,
-  ChainIds,
   ChainName,
-  ChainNames,
   HandlerConstructorConfig,
   HandlerInterface,
   NativeToken,

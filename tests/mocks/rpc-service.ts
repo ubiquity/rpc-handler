@@ -1,9 +1,9 @@
-import { ValidBlockData } from "./handler";
+import { ChainId, ValidBlockData } from "./handler";
 type PromiseResult = { success: boolean; rpcUrl: string; duration: number };
 
 export class RPCService {
   static async testRpcPerformance(
-    networkId: number,
+    networkId: ChainId,
     latencies: Record<string, number>,
     runtimeRpcs: string[],
     rpcHeader: object,
@@ -70,7 +70,7 @@ export class RPCService {
     return { latencies, runtimeRpcs };
   }
 
-  static async findFastestRpc(latencies: Record<string, number>, networkId: number): Promise<string | null> {
+  static async findFastestRpc(latencies: Record<string, number>, networkId: ChainId): Promise<string | null> {
     if (Object.keys(latencies).length === 0) {
       console.error("[RPCService] Latencies object is empty");
     }

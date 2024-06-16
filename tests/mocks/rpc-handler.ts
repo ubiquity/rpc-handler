@@ -27,13 +27,13 @@ export class RPCHandler implements HandlerInterface {
     this._initialize(config);
   }
   public async getFastestRpcProvider(): Promise<JsonRpcProvider> {
-    if (this._networkId === 31337) {
-      this._provider = new JsonRpcProvider(LOCAL_HOST, this._networkId);
+    if (this._networkId === "31337") {
+      this._provider = new JsonRpcProvider(LOCAL_HOST, Number(this._networkId));
     } else if (!this._provider) {
       this._provider = await this.testRpcPerformance();
     }
 
-    if (this._provider && this._provider?.connection.url.includes("localhost") && this._networkId !== 31337) {
+    if (this._provider && this._provider?.connection.url.includes("localhost") && this._networkId !== "31337") {
       /**
        * The JsonRpcProvider defaults erroneously to localhost:8545
        * this is a fix for that
@@ -67,7 +67,7 @@ export class RPCHandler implements HandlerInterface {
       throw new Error("Failed to find fastest RPC");
     }
 
-    const provider = new JsonRpcProvider(fastestRpcUrl, this._networkId);
+    const provider = new JsonRpcProvider(fastestRpcUrl, Number(this._networkId));
     this._provider = provider;
 
     if (this._autoStorage) {
@@ -100,7 +100,7 @@ export class RPCHandler implements HandlerInterface {
   public getRuntimeRpcs(): string[] {
     return this._runtimeRpcs;
   }
-  public getNetworkId(): number {
+  public getNetworkId(): ChainId {
     return this._networkId;
   }
   public getNetworkName(): string {
