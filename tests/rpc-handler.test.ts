@@ -96,6 +96,9 @@ describe("RPCHandler", () => {
       yes: function (rpc: RpcType) {
         return true;
       },
+      undefined: function (rpc: RpcType) {
+        return true;
+      },
     };
 
     for (const [trackingOption, filterFunction] of Object.entries(filterFunctions)) {
@@ -111,7 +114,11 @@ describe("RPCHandler", () => {
         });
 
         const rpcHandlerConfig = { ...testConfig };
-        rpcHandlerConfig.tracking = trackingOption as Tracking;
+        if (trackingOption == "undefined") {
+          delete rpcHandlerConfig.tracking;
+        } else {
+          rpcHandlerConfig.tracking = trackingOption as Tracking;
+        }
         const handler = new RPCHandler(rpcHandlerConfig);
         await handler.testRpcPerformance();
         const runtime = handler.getRuntimeRpcs();

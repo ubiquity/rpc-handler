@@ -25,7 +25,7 @@ export class RPCHandler implements HandlerInterface {
 
   constructor(config: HandlerConstructorConfig) {
     this._networkId = config.networkId;
-    this._networkRpcs = this.filterNetworks(networkRpcsOriginal[this._networkId], config.tracking);
+    this._networkRpcs = this.filterNetworks(networkRpcsOriginal[this._networkId], config.tracking || "yes");
     this._networkName = networkNames[this._networkId];
     this._initialize(config);
   }
