@@ -14,7 +14,7 @@
     "node": ">=20.10.0"
   },
   "scripts": {
-    "format": "concurrently yarn:format:*",
+    "format": "run-p format:*",
     "format:lint": "eslint --fix .",
     "format:prettier": "prettier --write .",
     "format:cspell": "cspell **/*",
@@ -22,11 +22,11 @@
     "knip-ci": "knip --no-exit-code --reporter json",
     "prepare": "husky install",
     "postinstall": "git submodule update --init --recursive",
-    "build": "concurrently yarn:clean yarn:build:types",
+    "build": "run-s clean build:types",
     "build:types": "tsx build/esbuild-build.ts && tsc --emitDeclarationOnly --declaration --outDir dist",
     "build:tests": "tsx build/esbuild-build-tests.ts && tsc --emitDeclarationOnly --declaration --project tsconfig.tests.json",
     "postbuild": "rm -rf dist/src",
-    "pretest": "concurrently yarn:clean yarn:build:tests",
+    "pretest": "run-s clean build:tests",
     "test": "jest",
     "clean": "rm -rf dist"
   },
@@ -56,7 +56,6 @@
     "@types/node-fetch": "^2.6.11",
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
-    "concurrently": "^8.2.2",
     "cspell": "^8.4.0",
     "esbuild": "^0.20.1",
     "eslint": "^8.56.0",

@@ -42,13 +42,15 @@ export async function createDynamicTypes() {
     idToNativeCurrency[chainId] = nativeCurrency;
   }
 
-  // Clear the file
-  await writeFile("types/dynamic.ts", "/* eslint-disable sonarjs/no-duplicate-string */\n\n");
+  const filename = "types/dynamic.ts";
 
-  appendFile("types/dynamic.ts", `\nexport const CHAINS_IDS = ${JSON.stringify(idToNetwork, null, 2)} as const;\n`);
-  appendFile("types/dynamic.ts", `\nexport const NETWORKS = ${JSON.stringify(networkToId, null, 2)} as const;\n`);
-  appendFile("types/dynamic.ts", `\nexport const NETWORK_FAUCETS = ${JSON.stringify(idToFaucet, null, 2)};\n`);
-  appendFile("types/dynamic.ts", `\nexport const NETWORK_EXPLORERS = ${JSON.stringify(idToExplorers, null, 2)};\n`);
-  appendFile("types/dynamic.ts", `\nexport const NETWORK_CURRENCIES = ${JSON.stringify(idToNativeCurrency, null, 2)};\n`);
-  appendFile("types/dynamic.ts", `\nexport const EXTRA_RPCS = ${JSON.stringify(extraRpcs, null, 2)};\n`);
+  // Clear the file
+  await writeFile(filename, "/* eslint-disable sonarjs/no-duplicate-string */\n\n");
+
+  appendFile(filename, `\nexport const CHAINS_IDS = ${JSON.stringify(idToNetwork, null, 2)} as const;\n`);
+  appendFile(filename, `\nexport const NETWORKS = ${JSON.stringify(networkToId, null, 2)} as const;\n`);
+  appendFile(filename, `\nexport const NETWORK_FAUCETS = ${JSON.stringify(idToFaucet, null, 2)};\n`);
+  appendFile(filename, `\nexport const NETWORK_EXPLORERS = ${JSON.stringify(idToExplorers, null, 2)};\n`);
+  appendFile(filename, `\nexport const NETWORK_CURRENCIES = ${JSON.stringify(idToNativeCurrency, null, 2)};\n`);
+  appendFile(filename, `\nexport const EXTRA_RPCS = ${JSON.stringify(extraRpcs, null, 2)};\n`);
 }

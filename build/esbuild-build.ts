@@ -75,6 +75,4 @@ function ensureDistDir() {
   }
 }
 
-createDynamicTypes().then(async () =>
-  await main()
-).catch(console.error);
+createDynamicTypes().then(main).catch(console.error);
