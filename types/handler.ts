@@ -39,8 +39,8 @@ export type HandlerInterface = {
 };
 
 export type HandlerConstructorConfig = {
-  networkId: ChainId;
-  networkName: ChainName | null;
+  networkId: NetworkId;
+  networkName: NetworkName | null;
   networkRpcs: string[] | null;
   autoStorage: boolean | null;
   cacheRefreshCycles: number | null;
@@ -52,13 +52,13 @@ export type NetworkRPCs = typeof networkRpcs;
 export type NetworkCurrencies = typeof networkCurrencies;
 export type NetworkExplorers = typeof networkExplorers;
 
-// filtered chainId union
-export type ChainId = keyof typeof EXTRA_RPCS | "31337" | "1337";
+// filtered NetworkId union
+export type NetworkId = keyof typeof EXTRA_RPCS | "31337" | "1337";
 
-// unfiltered Record<ChainID, ChainName>
+// unfiltered Record<NetworkId, NetworkName>
 type ChainsUnfiltered = {
   -readonly [K in keyof typeof CHAINS_IDS]: (typeof CHAINS_IDS)[K];
 };
 
-// filtered ChainName union
-export type ChainName = ChainsUnfiltered[ChainId] | "anvil" | "hardhat";
+// filtered NetworkName union
+export type NetworkName = ChainsUnfiltered[NetworkId] | "anvil" | "hardhat";

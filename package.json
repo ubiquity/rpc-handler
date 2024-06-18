@@ -14,19 +14,20 @@
     "node": ">=20.10.0"
   },
   "scripts": {
-    "format": "run-s format:lint format:prettier format:cspell",
+    "format": "concurrently yarn:format:*",
     "format:lint": "eslint --fix .",
     "format:prettier": "prettier --write .",
     "format:cspell": "cspell **/*",
     "knip": "knip",
     "knip-ci": "knip --no-exit-code --reporter json",
     "prepare": "husky install",
-    "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist && rm -rf dist/src",
-    "build:tests": "tsx build/types.ts && tsx build/esbuild-build-tests.ts && tsc --emitDeclarationOnly --declaration --project tsconfig.tests.json",
-    "build": "rm -rf dist && tsx build/types.ts && tsx build/esbuild-build.ts ",
-    "postbuild": "yarn build:types",
     "postinstall": "git submodule update --init --recursive",
-    "test": "rm -rf dist && yarn build:tests && jest"
+    "build": "concurrently yarn:clean yarn:build:types",
+    "build:types": "tsx build/esbuild-build.ts && tsc --emitDeclarationOnly --declaration --outDir dist",
+    "build:tests": "tsx build/esbuild-build-tests.ts && tsc --emitDeclarationOnly --declaration --project tsconfig.tests.json",
+    "postbuild": "rm -rf dist/src",
+    "test": "concurrently yarn:clean yarn:build:tests jest",
+    "clean": "rm -rf dist"
   },
   "keywords": [
     "typescript",
@@ -54,6 +55,7 @@
     "@types/node-fetch": "^2.6.11",
     "@typescript-eslint/eslint-plugin": "^7.0.1",
     "@typescript-eslint/parser": "^7.0.1",
+    "concurrently": "^8.2.2",
     "cspell": "^8.4.0",
     "esbuild": "^0.20.1",
     "eslint": "^8.56.0",

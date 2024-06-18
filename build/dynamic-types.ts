@@ -12,7 +12,7 @@ import { generateChainData } from "../lib/chainlist/utils/fetch";
  * - EXTRA_RPCS
  */
 
-async function createDynamicTypes() {
+export async function createDynamicTypes() {
   const data = await generateChainData();
   const idToNetwork: Record<string, string> = {};
   const networkToId: Record<string, number> = {};
@@ -45,22 +45,10 @@ async function createDynamicTypes() {
   // Clear the file
   await writeFile("types/dynamic.ts", "/* eslint-disable sonarjs/no-duplicate-string */\n\n");
 
-  await appendFile("types/dynamic.ts", `\nexport const CHAINS_IDS = ${JSON.stringify(idToNetwork, null, 2)} as const;\n`);
-  await appendFile("types/dynamic.ts", `\nexport const NETWORKS = ${JSON.stringify(networkToId, null, 2)} as const;\n`);
-  await appendFile("types/dynamic.ts", `\nexport const NETWORK_FAUCETS = ${JSON.stringify(idToFaucet, null, 2)};\n`);
-  await appendFile("types/dynamic.ts", `\nexport const NETWORK_EXPLORERS = ${JSON.stringify(idToExplorers, null, 2)};\n`);
-  await appendFile("types/dynamic.ts", `\nexport const NETWORK_CURRENCIES = ${JSON.stringify(idToNativeCurrency, null, 2)};\n`);
-  await appendFile("types/dynamic.ts", `\nexport const EXTRA_RPCS = ${JSON.stringify(extraRpcs, null, 2)};\n`);
+  appendFile("types/dynamic.ts", `\nexport const CHAINS_IDS = ${JSON.stringify(idToNetwork, null, 2)} as const;\n`);
+  appendFile("types/dynamic.ts", `\nexport const NETWORKS = ${JSON.stringify(networkToId, null, 2)} as const;\n`);
+  appendFile("types/dynamic.ts", `\nexport const NETWORK_FAUCETS = ${JSON.stringify(idToFaucet, null, 2)};\n`);
+  appendFile("types/dynamic.ts", `\nexport const NETWORK_EXPLORERS = ${JSON.stringify(idToExplorers, null, 2)};\n`);
+  appendFile("types/dynamic.ts", `\nexport const NETWORK_CURRENCIES = ${JSON.stringify(idToNativeCurrency, null, 2)};\n`);
+  appendFile("types/dynamic.ts", `\nexport const EXTRA_RPCS = ${JSON.stringify(extraRpcs, null, 2)};\n`);
 }
-
-/**
- * this is the same source that chainlist pulls it's data from
- * but is has a lot more info that we'd benefit from such as explorers,
- * faucets, rpcs etc.
- *
- * Writing this to a local file so that we can use it for improved static exports
- */
-
-(async () => {
-  await createDynamicTypes();
-})().catch(console.error);

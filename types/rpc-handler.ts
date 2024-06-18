@@ -1,6 +1,6 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { LOCAL_HOST, networkRpcs, networkIds } from "./constants";
-import { HandlerInterface, HandlerConstructorConfig, ChainId, ChainName } from "./handler";
+import { HandlerInterface, HandlerConstructorConfig, NetworkId, NetworkName } from "./handler";
 
 import { RPCService } from "../src/services/rpc-service";
 import { StorageService } from "../src/services/storage-service";
@@ -8,8 +8,8 @@ import { StorageService } from "../src/services/storage-service";
 export class RPCHandler implements HandlerInterface {
   private static _instance: RPCHandler | null = null;
   private _provider: JsonRpcProvider | null = null;
-  private _networkId: ChainId;
-  private _networkName: ChainName;
+  private _networkId: NetworkId;
+  private _networkName: NetworkName;
   private _env: string = "node";
 
   private _rpcTimeout: number = Number.MAX_SAFE_INTEGER; // ms

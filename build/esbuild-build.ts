@@ -1,6 +1,7 @@
 import esbuild from "esbuild";
 import path from "path";
 import * as fs from "fs";
+import { createDynamicTypes } from "./dynamic-types";
 
 const typescriptEntries = ["index.ts"];
 export const entries = [...typescriptEntries];
@@ -20,8 +21,6 @@ async function main() {
     process.exit(1);
   }
 }
-
-main();
 
 async function buildForEnvironments() {
   ensureDistDir();
@@ -69,18 +68,13 @@ async function buildIndex() {
   console.log("Index build complete.");
 }
 
-function createEnvDefines(generatedAtBuild: Record<string, unknown>): Record<string, string> {
-  const defines: Record<string, string> = {};
-  Object.keys(generatedAtBuild).forEach((key) => {
-    defines[key] = JSON.stringify(generatedAtBuild[key]);
-  });
-
-  return defines;
-}
-
 function ensureDistDir() {
   const distPath = path.resolve(__dirname, "dist");
   if (!fs.existsSync(distPath)) {
     fs.mkdirSync(distPath, { recursive: true });
   }
 }
+
+createDynamicTypes().then(async () =>
+  await main()
+).catch(console.error);

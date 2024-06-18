@@ -1,5 +1,5 @@
 import { getNetworkId, getNetworkName, networkCurrencies, networkExplorers, networkIds, networkNames } from "../types/constants";
-import { ChainId, ChainName, NativeToken } from "../types/handler";
+import { NetworkId, NetworkName, NativeToken } from "../types/handler";
 
 describe("Constants", () => {
   beforeEach(() => {
@@ -18,7 +18,7 @@ describe("Constants", () => {
     it("should return 'Unknown Network' for an unknown network ID", () => {
       const networkId = Number.MAX_SAFE_INTEGER;
       const expectedNetworkName = "Unknown Network";
-      const result = getNetworkName(networkId as unknown as ChainId);
+      const result = getNetworkName(networkId as unknown as NetworkId);
       expect(result).toBe(expectedNetworkName);
     });
   });
@@ -34,7 +34,7 @@ describe("Constants", () => {
     it("should return 0 for an unknown network name", () => {
       const networkName = "unknown";
       const expectedNetworkId = -1;
-      const result = getNetworkId(networkName as ChainName);
+      const result = getNetworkId(networkName as NetworkName);
       expect(result).toBe(expectedNetworkId);
     });
   });
@@ -55,7 +55,7 @@ describe("Constants", () => {
     });
   });
 
-  const netIds = ["1", "100", "56", "80002", "137", "25"] as ChainId[];
+  const netIds = ["1", "100", "56", "80002", "137", "25"] as NetworkId[];
 
   const expected = {
     "1": "https://etherscan.io",
@@ -64,7 +64,7 @@ describe("Constants", () => {
     "80002": "https://www.oklink.com/amoy",
     "137": "https://polygonscan.com",
     "25": "https://explorer.cronos.org",
-  } as Partial<Record<ChainId, string>>;
+  } as Partial<Record<NetworkId, string>>;
 
   const expectedName = {
     "1": "ethereum-mainnet",
@@ -73,7 +73,7 @@ describe("Constants", () => {
     "80002": "amoy",
     "137": "polygon-mainnet",
     "25": "cronos-mainnet",
-  } as Partial<Record<ChainId, string>>;
+  } as Partial<Record<NetworkId, string>>;
 
   const expectedNative = {
     "1": { symbol: "ETH", decimals: 18, name: "Ether" },
@@ -82,7 +82,7 @@ describe("Constants", () => {
     "80002": { symbol: "MATIC", decimals: 18, name: "MATIC" },
     "137": { symbol: "MATIC", decimals: 18, name: "MATIC" },
     "25": { symbol: "CRO", decimals: 18, name: "Cronos" },
-  } as Partial<Record<ChainId, NativeToken>>;
+  } as Partial<Record<NetworkId, NativeToken>>;
 
   describe("networkCurrencies", () => {
     it("should contain a currency for each network", () => {

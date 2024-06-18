@@ -4,13 +4,13 @@ import { HandlerInterface, HandlerConstructorConfig } from "./handler";
 
 import { RPCService } from "./rpc-service";
 import { StorageService } from "./storage-service";
-import { ChainId, ChainName } from "../../types/handler";
+import { NetworkId, NetworkName } from "../../types/handler";
 
 export class RPCHandler implements HandlerInterface {
   private static _instance: RPCHandler | null = null;
   private _provider: JsonRpcProvider | null = null;
-  private _networkId: ChainId;
-  private _networkName: ChainName;
+  private _networkId: NetworkId;
+  private _networkName: NetworkName;
   private _env: string = "node";
 
   private _rpcTimeout: number = 999999; // ms
@@ -100,7 +100,7 @@ export class RPCHandler implements HandlerInterface {
   public getRuntimeRpcs(): string[] {
     return this._runtimeRpcs;
   }
-  public getNetworkId(): ChainId {
+  public getNetworkId(): NetworkId {
     return this._networkId;
   }
   public getNetworkName(): string {

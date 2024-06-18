@@ -30,15 +30,15 @@ import getRPCHandler, { HandlerConstructorConfig, RPCHandler, networkIds, networ
   const latencies = handler.getLatencies();
 
   // console.log("=====================================");
-  // console.log(networkIds);
+  console.log(networkIds);
   // console.log("=====================================");
-  // console.log(networkNames);
+  console.log(networkNames);
   // console.log("=====================================");
-  // console.log(networkRpcs);
+  console.log(networkRpcs);
   // console.log("=====================================");
-  // console.log(networkCurrencies);
+  console.log(networkCurrencies);
   // console.log("=====================================");
-  // console.log(networkExplorers);
+  console.log(networkExplorers);
   console.log("=====================================");
   console.log(latencies);
   process.exit(0);
