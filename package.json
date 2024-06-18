@@ -26,7 +26,8 @@
     "build:types": "tsx build/esbuild-build.ts && tsc --emitDeclarationOnly --declaration --outDir dist",
     "build:tests": "tsx build/esbuild-build-tests.ts && tsc --emitDeclarationOnly --declaration --project tsconfig.tests.json",
     "postbuild": "rm -rf dist/src",
-    "test": "concurrently yarn:clean yarn:build:tests jest",
+    "pretest": "concurrently yarn:clean yarn:build:tests",
+    "test": "jest",
     "clean": "rm -rf dist"
   },
   "keywords": [
