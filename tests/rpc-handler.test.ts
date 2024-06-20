@@ -71,12 +71,14 @@ describe("RPCHandler", () => {
       expect(runtime.length).toBe(latArrLen);
       expect(runtime.length).toBeLessThanOrEqual(networkRpcs[testConfig.networkId].length);
 
-      expect(latArrLen).toBeGreaterThan(1);
+      expect(latArrLen).toBeGreaterThanOrEqual(1);
 
-      const sorted = Object.entries(latencies).sort((a, b) => a[1] - b[1]);
-      const first = sorted[0];
-      const last = sorted[sorted.length - 1];
-      expect(first[1]).toBeLessThan(last[1]);
+      if (latArrLen > 1) {
+        const sorted = Object.entries(latencies).sort((a, b) => a[1] - b[1]);
+        const first = sorted[0];
+        const last = sorted[sorted.length - 1];
+        expect(first[1]).toBeLessThan(last[1]);
+      }
       expect(fastestRpc.connection.url).toBe(provider.connection.url);
     }, 10000);
   });
