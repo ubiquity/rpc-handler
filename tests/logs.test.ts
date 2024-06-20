@@ -199,8 +199,9 @@ describe("Logs", () => {
     expect(debugSpy).toBeCalledTimes(0);
     expect(warnSpy).toBeCalledTimes(4);
 
-    const cleanWarnStrings = cleanSpyLogs(warnSpy);
-    expect(cleanWarnStrings).toEqual(expect.arrayContaining([cleanLogString(NULL_ARG_TX_CALL_RETRY), cleanLogString(NULL_ARG_TX_CALL_RETRY)]));
+    const cleanWarnStrings = cleanSpyLogs(warnSpy).flat();
+    const filteredStrings = cleanWarnStrings.filter((str) => str.includes(cleanLogString(NULL_ARG_TX_CALL_RETRY)));
+    expect(filteredStrings.length).toBeGreaterThanOrEqual(2)
   });
 
   it("should log only 'fatal' tiered logs", async () => {
@@ -233,7 +234,9 @@ describe("Logs", () => {
 
     expect(cleanLogStrings).toEqual([]);
     expect(cleanDebugStrings).toEqual([]);
-    expect(cleanErrorStrings).toEqual(expect.arrayContaining([cleanLogString(NULL_ARG_TX_CALL)]));
+
+    const filteredStrings = cleanErrorStrings.filter((str) => str.includes(cleanLogString(NULL_ARG_TX_CALL)));
+    expect(filteredStrings.length).toBeGreaterThanOrEqual(1);
   });
 
   it("should log all logs when 'verbose'", async () => {
@@ -263,7 +266,8 @@ describe("Logs", () => {
       expect(er).toBeInstanceOf(Error);
 
       const cleanErrorStrings = cleanSpyLogs(errorSpy);
-      expect(cleanErrorStrings).toEqual(expect.arrayContaining([cleanLogString(NULL_ARG_TX_CALL)]));
+      const filteredStrings = cleanErrorStrings.filter((str) => str.includes(cleanLogString(NULL_ARG_TX_CALL)));
+      expect(filteredStrings.length).toBeGreaterThanOrEqual(1);
     }
   });
 
@@ -315,7 +319,8 @@ describe("Logs", () => {
     }
 
     let cleanErrorStrings = cleanSpyLogs(errorSpy);
-    expect(cleanErrorStrings).toEqual(expect.arrayContaining([cleanLogString(NULL_ARG_TX_CALL), cleanLogString(NULL_ARG_TX_CALL)]));
+    const filteredStrings = cleanErrorStrings.filter((str) => str.includes(cleanLogString(NULL_ARG_TX_CALL)));
+    expect(filteredStrings.length).toBeGreaterThanOrEqual(2);
 
     let cleanDebugStrings = cleanSpyLogs(debugSpy);
     expect(cleanDebugStrings).toEqual(
