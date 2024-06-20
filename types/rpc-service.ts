@@ -2,6 +2,37 @@ import { NetworkId, ValidBlockData } from "./handler";
 import axios from "axios";
 type PromiseResult = { success: boolean; rpcUrl: string; duration: number };
 
+async function makeRpcRequest(rpcUrl: string, rpcBody: any, rpcTimeout: number, rpcHeader: any): Promise<PromiseResult> {
+  const abortController = new AbortController();
+  const instance = axios.create({
+    timeout: rpcTimeout,
+    headers: rpcHeader,
+    signal: abortController.signal,
+  });
+
+  const startTime = performance.now();
+  return instance.post(rpcUrl, rpcBody)
+    .then(() => {
+      return {
+        rpcUrl,
+        duration: performance.now() - startTime,
+        success: true,
+      };
+    })
+    .catch((error) => {
+      const isTimeout = error.code === 'ECONNABORTED';
+      return {
+        rpcUrl,
+        success: false,
+        duration: isTimeout ? performance.now() - startTime : 0,
+        error: isTimeout ? 'timeout' : error.message,
+      };
+    })
+    .finally(() => {
+      abortController.abort();
+    });
+}
+
 export class RPCService {
   static async testRpcPerformance(
     networkId: NetworkId,
@@ -11,30 +42,7 @@ export class RPCService {
     rpcBody: string,
     rpcTimeout: number
   ): Promise<{ latencies: Record<string, number>; runtimeRpcs: string[] }> {
-    const instance = axios.create({
-      timeout: rpcTimeout,
-      headers: rpcHeader,
-    });
-
-    const successfulPromises = runtimeRpcs.map<Promise<PromiseResult>>(
-      (rpcUrl) =>
-        new Promise<PromiseResult>((resolve) => {
-          const startTime = performance.now();
-          instance
-            .post(rpcUrl, rpcBody)
-            .then(() => {
-              const endTime = performance.now();
-              resolve({
-                rpcUrl,
-                duration: endTime - startTime,
-                success: true,
-              });
-            })
-            .catch(() => {
-              resolve({ rpcUrl, success: false, duration: 0 });
-            });
-        })
-    );
+    const successfulPromises = runtimeRpcs.map(rpcUrl => makeRpcRequest(rpcUrl, rpcBody, rpcTimeout, rpcHeader));
 
     const fastest = await Promise.race(successfulPromises);
 

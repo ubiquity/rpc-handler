@@ -1,13 +1,13 @@
 import { expect, jest } from "@jest/globals";
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { HandlerConstructorConfig, RPCHandler, PrettyLogs } from "../dist";
+import { HandlerConstructorConfig, RPCHandler, PrettyLogs, LOCAL_HOST } from "../dist";
 
 const nonceBitmapData = {
   to: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
   data: "0x4fe02b44000000000000000000000000d9530f3fbbea11bed01dc09e79318f2f20223716001fd097bcb5a1759ce02c0a671386a0bbbfa8216559e5855698a9d4de4cddea",
 };
 
-const rpcList = ["http://127.0.0.1:8545"];
+const rpcList = [LOCAL_HOST];
 const ansiEscapeCodes = /\x1b\[\d+m|\s/g;
 
 const INITIALIZED = `✓[RPCHandler] Provider initialized: {"provider": "http://127.0.0.1:8545" }`;
