@@ -29,7 +29,7 @@ const NULL_ARG_TX_CALL = `×${JSON.stringify({
   error: {
     reason: "processing response error",
     code: "SERVER_ERROR",
-    body: '{"jsonrpc":"2.0","id":42,"error":{"code":-32602,"message":"invalid type: null, expected struct TransactionRequest"}}',
+    body: '{"jsonrpc":"2.0","id":42,"error":{"code":-32602,"message":"invalid type: null, expected struct WithOtherFieldsHelper"}}',
     error: {
       code: -32602,
     },
@@ -44,7 +44,7 @@ const NULL_ARG_TX_CALL_RETRY = `⚠${JSON.stringify({
   error: {
     reason: "processing response error",
     code: "SERVER_ERROR",
-    body: '{"jsonrpc":"2.0","id":42,"error":{"code":-32602,"message":"invalid type: null, expected struct TransactionRequest"}}',
+    body: '{"jsonrpc":"2.0","id":42,"error":{"code":-32602,"message":"invalid type: null, expected struct WithOtherFieldsHelper"}}',
     error: {
       code: -32602,
     },
