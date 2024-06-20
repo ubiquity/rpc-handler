@@ -26,7 +26,8 @@
     "build": "run-s clean build:index build:types clean:types",
     "postinstall": "git submodule update --init --recursive",
     "test:anvil": "npx tsx ./tests/anvil.ts",
-    "test": "rm -rf dist && yarn build && jest --runInBand",
+    "test": "run-s clean build test:jest",
+    "test:jest": "jest --runInBand",
     "clean": "rm -rf dist",
     "clean:types": "rm -rf dist/src"
   },
