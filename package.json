@@ -21,12 +21,14 @@
     "knip": "knip",
     "knip-ci": "knip --no-exit-code --reporter json",
     "prepare": "husky install",
+    "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
+    "build:index": "tsx build/esbuild-build.ts",
+    "build": "run-s clean build:index build:types clean:types",
     "postinstall": "git submodule update --init --recursive",
-    "build": "run-s clean build:types",
-    "build:types": "tsx build/esbuild-build.ts && tsc --emitDeclarationOnly --declaration --outDir dist",
-    "postbuild": "rm -rf dist/src",
-    "test": "jest",
-    "clean": "rm -rf dist"
+    "test:anvil": "npx tsx ./tests/anvil.ts",
+    "test": "rm -rf dist && yarn build && jest --runInBand",
+    "clean": "rm -rf dist",
+    "clean:types": "rm -rf dist/src"
   },
   "keywords": [
     "typescript",
