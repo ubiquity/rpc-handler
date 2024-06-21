@@ -28,10 +28,13 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
+      - name: Setup tests
+        run: yarn pretest
+
       - name: Build & Run test suite
         run: |
           yarn test | tee ./coverage.txt && exit ${PIPESTATUS[0]}
-          
+
       - name: Jest Coverage Comment
         # Ensures this step is run even on previous step failure (e.g. test failed)
         if: always()

@@ -2,7 +2,7 @@ import { JsonRpcProvider } from "@ethersproject/providers";
 import { RPCHandler, HandlerConstructorConfig } from "../dist";
 
 export const testConfig: HandlerConstructorConfig = {
-  networkId: 1,
+  networkId: "1",
   autoStorage: false,
   cacheRefreshCycles: 3,
   networkName: null,

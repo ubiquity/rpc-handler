@@ -14,19 +14,21 @@
     "node": ">=20.10.0"
   },
   "scripts": {
-    "format": "run-s format:lint format:prettier format:cspell",
+    "format": "run-p format:*",
     "format:lint": "eslint --fix .",
     "format:prettier": "prettier --write .",
     "format:cspell": "cspell **/*",
     "knip": "knip",
     "knip-ci": "knip --no-exit-code --reporter json",
     "prepare": "husky install",
-    "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist && rm -rf dist/src",
-    "build:tests": "tsx build/esbuild-build-tests.ts && tsc --emitDeclarationOnly --declaration --project tsconfig.tests.json",
-    "build": "rm -rf dist && tsx build/esbuild-build.ts",
-    "postbuild": "yarn build:types",
     "postinstall": "git submodule update --init --recursive",
-    "test": "rm -rf dist && yarn build:tests && jest"
+    "build": "run-s clean build:types",
+    "build:types": "tsx build/esbuild-build.ts && tsc --emitDeclarationOnly --declaration --outDir dist",
+    "build:tests": "tsx build/esbuild-build-tests.ts && tsc --emitDeclarationOnly --declaration --project tsconfig.tests.json",
+    "postbuild": "rm -rf dist/src",
+    "pretest": "run-s clean build:tests",
+    "test": "jest",
+    "clean": "rm -rf dist"
   },
   "keywords": [
     "typescript",

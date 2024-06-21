@@ -1,5 +1,13 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { ChainId, networkCurrencies, networkExplorers, networkIds, networkNames, networkRpcs, tokens } from "../../types/constants";
+import { networkCurrencies, networkExplorers, networkRpcs } from "../../types/constants";
+import { CHAINS_IDS, EXTRA_RPCS } from "../../types/dynamic";
+
+export type BlockExplorer = {
+  name: string;
+  url: string;
+  standard?: string;
+  icon?: string;
+};
 
 export type ValidBlockData = {
   jsonrpc: string;
@@ -10,23 +18,29 @@ export type ValidBlockData = {
     hash: string;
   };
 };
+
 export type Token = {
   decimals: number;
   address: string;
+  symbol: string;
 };
+
 export type NativeToken = {
+  name: string;
   symbol: string;
   decimals: number;
 };
+
 export type HandlerInterface = {
-  getProvider(): JsonRpcProvider | undefined;
+  getProvider(): JsonRpcProvider | null;
   clearInstance(): void;
-  getFastestRpcProvider(): Promise<JsonRpcProvider | undefined>;
-  testRpcPerformance(): Promise<JsonRpcProvider | undefined>;
+  getFastestRpcProvider(): Promise<JsonRpcProvider | null>;
+  testRpcPerformance(): Promise<JsonRpcProvider | null>;
 };
+
 export type HandlerConstructorConfig = {
-  networkId: number;
-  networkName: string | null;
+  networkId: NetworkId;
+  networkName: NetworkName | null;
   networkRpcs: string[] | null;
   autoStorage: boolean | null;
   cacheRefreshCycles: number | null;
@@ -35,12 +49,16 @@ export type HandlerConstructorConfig = {
 };
 
 export type NetworkRPCs = typeof networkRpcs;
-export type NetworkNames = typeof networkNames;
 export type NetworkCurrencies = typeof networkCurrencies;
-export type Tokens = typeof tokens;
 export type NetworkExplorers = typeof networkExplorers;
-export type NetworkIds = typeof networkIds;
-export type { ChainId };
-export type ChainNames<TChainID extends PropertyKey = ChainId> = {
-  [key in TChainID]: string;
+
+// filtered NetworkId union
+export type NetworkId = keyof typeof EXTRA_RPCS | "31337" | "1337";
+
+// unfiltered Record<NetworkId, NetworkName>
+type ChainsUnfiltered = {
+  -readonly [K in keyof typeof CHAINS_IDS]: (typeof CHAINS_IDS)[K];
 };
+
+// filtered ChainName union
+export type NetworkName = ChainsUnfiltered[NetworkId] | "anvil" | "hardhat";

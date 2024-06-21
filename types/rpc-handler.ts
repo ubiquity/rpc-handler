@@ -1,6 +1,6 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { LOCAL_HOST, networkRpcs, networkNames } from "./constants";
-import { HandlerInterface, HandlerConstructorConfig } from "./handler";
+import { LOCAL_HOST, networkRpcs, networkIds } from "./constants";
+import { HandlerInterface, HandlerConstructorConfig, NetworkId, NetworkName } from "./handler";
 
 import { RPCService } from "../src/services/rpc-service";
 import { StorageService } from "../src/services/storage-service";
@@ -8,8 +8,8 @@ import { StorageService } from "../src/services/storage-service";
 export class RPCHandler implements HandlerInterface {
   private static _instance: RPCHandler | null = null;
   private _provider: JsonRpcProvider | null = null;
-  private _networkId: number;
-  private _networkName: string;
+  private _networkId: NetworkId;
+  private _networkName: NetworkName;
   private _env: string = "node";
 
   private _rpcTimeout: number = Number.MAX_SAFE_INTEGER; // ms
@@ -25,18 +25,18 @@ export class RPCHandler implements HandlerInterface {
   constructor(config: HandlerConstructorConfig) {
     this._networkId = config.networkId;
     this._networkRpcs = networkRpcs[this._networkId];
-    this._networkName = networkNames[this._networkId];
+    this._networkName = networkIds[this._networkId];
     this._initialize(config);
   }
 
   public async getFastestRpcProvider(): Promise<JsonRpcProvider> {
-    if (this._networkId === 31337) {
-      this._provider = new JsonRpcProvider(LOCAL_HOST, this._networkId);
+    if (this._networkId === "31337") {
+      this._provider = new JsonRpcProvider(LOCAL_HOST, Number(this._networkId));
     } else if (!this._provider) {
       this._provider = await this.testRpcPerformance();
     }
 
-    if (this._provider && this._provider?.connection.url.includes("localhost") && this._networkId !== 31337) {
+    if (this._provider && this._provider?.connection.url.includes("localhost") && this._networkId !== "31337") {
       /**
        * The JsonRpcProvider defaults erroneously to localhost:8545
        * this is a fix for that
@@ -71,7 +71,7 @@ export class RPCHandler implements HandlerInterface {
       throw new Error("Failed to find fastest RPC");
     }
 
-    const provider = new JsonRpcProvider(fastestRpcUrl, this._networkId);
+    const provider = new JsonRpcProvider(fastestRpcUrl, Number(this._networkId));
     this._provider = provider;
 
     if (this._autoStorage) {
@@ -111,11 +111,11 @@ export class RPCHandler implements HandlerInterface {
     return this._runtimeRpcs;
   }
 
-  public getNetworkId(): number {
+  public getNetworkId() {
     return this._networkId;
   }
 
-  public getNetworkName(): string {
+  public getNetworkName() {
     return this._networkName;
   }
 
