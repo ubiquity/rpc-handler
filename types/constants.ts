@@ -2,8 +2,7 @@ import { ChainNames, NativeToken, Token } from "./handler";
 import { RpcType } from "./shared";
 
 export declare const chainIDList: Record<string, string>;
-export declare const extraRpcs: Record<ChainId, string[]>;
-export declare const extraRpcsOriginal: Record<ChainId, { rpcs: RpcType[] }>;
+export declare const extraRpcs: Record<ChainId, { rpcs: RpcType[] }>;
 
 export type ChainId<T extends string | number = number> = T extends keyof typeof chainIDList ? (typeof chainIDList)[T] : T;
 
@@ -26,16 +25,9 @@ export const networkNames: ChainNames = Object.fromEntries(
   })
 );
 
-export const networkRpcs: Record<ChainId, string[]> = Object.fromEntries(
+export const networkRpcs: Record<ChainId, RpcType[]> = Object.fromEntries(
   Object.entries(networkIds).map(([, value]) => {
     const chainRpcs = extraRpcs[value] || [];
-    return [value, chainRpcs];
-  })
-);
-
-export const networkRpcsOriginal: Record<ChainId, RpcType[]> = Object.fromEntries(
-  Object.entries(networkIds).map(([, value]) => {
-    const chainRpcs = extraRpcsOriginal[value] || [];
     return [value, chainRpcs.rpcs];
   })
 );

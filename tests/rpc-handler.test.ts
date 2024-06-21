@@ -1,5 +1,5 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { networkRpcsOriginal, RPCHandler } from "../dist";
+import { networkRpcs, RPCHandler } from "../dist";
 import { HandlerConstructorConfig } from "../types/handler";
 import { getRpcUrls, RpcDetailed, RpcType, Tracking } from "../types/shared";
 
@@ -46,7 +46,7 @@ describe("RPCHandler", () => {
       expect(rpcHandler["_latencies"]).toEqual({});
     });
     it("should initialize with correct networkRpcs", () => {
-      expect(rpcHandler["_networkRpcs"]).toEqual(networkRpcsOriginal[testConfig.networkId]);
+      expect(rpcHandler["_networkRpcs"]).toEqual(networkRpcs[testConfig.networkId]);
     });
     it("should initialize with null provider", () => {
       const provider = rpcHandler["_provider"];
@@ -73,7 +73,7 @@ describe("RPCHandler", () => {
       expect(runtime.length).toBeGreaterThan(0);
 
       expect(runtime.length).toBe(latArrLen);
-      expect(runtime.length).toBeLessThanOrEqual(getRpcUrls(networkRpcsOriginal[testConfig.networkId]).length);
+      expect(runtime.length).toBeLessThanOrEqual(getRpcUrls(networkRpcs[testConfig.networkId]).length);
 
       expect(latArrLen).toBeGreaterThan(1);
 
@@ -103,7 +103,7 @@ describe("RPCHandler", () => {
 
     for (const [trackingOption, filterFunction] of Object.entries(filterFunctions)) {
       it(`should return correct rpcs with tracking=${trackingOption}`, async () => {
-        const filteredRpcs = networkRpcsOriginal[testConfig.networkId].filter((rpc) => {
+        const filteredRpcs = networkRpcs[testConfig.networkId].filter((rpc) => {
           return filterFunction(rpc);
         });
 
