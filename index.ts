@@ -27,7 +27,6 @@ import {
 import {
   LOCAL_HOST,
   getNetworkName,
-  extraRpcs,
   networkCurrencies,
   networkExplorers,
   networkIds,

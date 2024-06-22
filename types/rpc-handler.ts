@@ -187,7 +187,7 @@ export class RPCHandler implements HandlerInterface {
   }
 
   private _filterRpcs(networks: RpcType[], tracking: Tracking) {
-    const filteredRpcs = networks.filter((rpc) => {
+    return networks.filter((rpc) => {
       if (tracking == "yes") {
         return true;
       } else if (tracking == "limited") {
@@ -197,7 +197,6 @@ export class RPCHandler implements HandlerInterface {
       }
       return false;
     });
-    return filteredRpcs;
   }
 
   private _initialize(config: HandlerConstructorConfig): void {

@@ -8,7 +8,7 @@ export type RpcType = {
 };
 
 export function getRpcUrls(rpcs: RpcType[]) {
-  let urls: string[] = [];
+  const urls: string[] = [];
   rpcs.forEach((rpc) => {
     if (typeof rpc == "string") {
       urls.push(rpc);
