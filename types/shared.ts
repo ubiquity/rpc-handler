@@ -1,13 +1,13 @@
 export type Tracking = "yes" | "limited" | "none";
 
-export type RpcType = {
+export type Rpc = {
   url: string;
   tracking?: Tracking;
   trackingDetails?: string;
   isOpenSource?: boolean;
 };
 
-export function getRpcUrls(rpcs: RpcType[]) {
+export function getRpcUrls(rpcs: Rpc[]) {
   const urls: string[] = [];
   rpcs.forEach((rpc) => {
     if (typeof rpc == "string") {

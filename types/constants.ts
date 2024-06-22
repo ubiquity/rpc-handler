@@ -1,10 +1,10 @@
 import { BlockExplorer, NetworkId, NetworkName, NativeToken } from "./handler";
 import { CHAINS_IDS, EXTRA_RPCS, NETWORK_CURRENCIES, NETWORK_EXPLORERS, NETWORK_FAUCETS } from "./dynamic";
 
-import { RpcType } from "./shared";
+import { Rpc } from "./shared";
 
 export declare const chainIDList: Record<string, string>;
-export declare const extraRpcs: Record<ChainId, { rpcs: RpcType[] }>;
+export declare const extraRpcs: Record<ChainId, { rpcs: Rpc[] }>;
 
 export type ChainId<T extends string | number = number> = T extends keyof typeof chainIDList ? (typeof chainIDList)[T] : T;
 
@@ -32,7 +32,7 @@ const networkRpcs = Object.fromEntries(
     const chainRpcs = EXTRA_RPCS[value as unknown as keyof typeof EXTRA_RPCS];
     return [value, { rpcs: chainRpcs }];
   })
-) as Record<NetworkId, { rpcs: RpcType[] }>;
+) as Record<NetworkId, { rpcs: Rpc[] }>;
 
 const networkExplorers = Object.fromEntries(
   Object.entries(networkNames).map(([, value]) => {

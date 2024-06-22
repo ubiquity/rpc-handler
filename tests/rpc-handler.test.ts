@@ -2,7 +2,7 @@ import { JsonRpcProvider } from "@ethersproject/providers";
 import { networkRpcs } from "../dist";
 import { RPCHandler } from "../types/rpc-handler";
 import { HandlerConstructorConfig } from "../types/handler";
-import { getRpcUrls, RpcType, Tracking } from "../types/shared";
+import { getRpcUrls, Rpc, Tracking } from "../types/shared";
 
 export const testConfig: HandlerConstructorConfig = {
   networkId: "100",
@@ -90,16 +90,16 @@ describe("RPCHandler", () => {
 
   describe("RPC tracking config option", () => {
     const filterFunctions = {
-      none: function (rpc: RpcType) {
+      none: function (rpc: Rpc) {
         return rpc?.tracking && rpc.tracking == "none";
       },
-      limited: function (rpc: RpcType) {
+      limited: function (rpc: Rpc) {
         return rpc?.tracking && ["none", "limited"].includes(rpc.tracking);
       },
-      yes: function (rpc: RpcType) {
+      yes: function (rpc: Rpc) {
         return true;
       },
-      undefined: function (rpc: RpcType) {
+      undefined: function (rpc: Rpc) {
         return true;
       },
     };

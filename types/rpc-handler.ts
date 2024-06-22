@@ -4,7 +4,7 @@ import { HandlerInterface, HandlerConstructorConfig, NetworkId, NetworkName } fr
 
 import { RPCService } from "../src/services/rpc-service";
 import { StorageService } from "../src/services/storage-service";
-import { RpcType, Tracking, getRpcUrls } from "./shared";
+import { Rpc, Tracking, getRpcUrls } from "./shared";
 
 export class RPCHandler implements HandlerInterface {
   private static _instance: RPCHandler | null = null;
@@ -21,7 +21,7 @@ export class RPCHandler implements HandlerInterface {
   private _runtimeRpcs: string[] = [];
   private _latencies: Record<string, number> = {};
 
-  private _networkRpcs: RpcType[];
+  private _networkRpcs: Rpc[];
 
   constructor(config: HandlerConstructorConfig) {
     this._networkId = config.networkId;
@@ -120,7 +120,7 @@ export class RPCHandler implements HandlerInterface {
     return this._networkName;
   }
 
-  public getNetworkRpcs(): RpcType[] {
+  public getNetworkRpcs(): Rpc[] {
     return this._networkRpcs;
   }
 
@@ -186,7 +186,7 @@ export class RPCHandler implements HandlerInterface {
     }
   }
 
-  private _filterRpcs(networks: RpcType[], tracking: Tracking) {
+  private _filterRpcs(networks: Rpc[], tracking: Tracking) {
     return networks.filter((rpc) => {
       if (tracking == "yes") {
         return true;
