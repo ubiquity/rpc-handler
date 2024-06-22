@@ -1,6 +1,5 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { networkCurrencies, networkExplorers, networkRpcs } from "./constants";
-import { Rpc, Tracking } from "./shared";
 import { CHAINS_IDS, EXTRA_RPCS } from "./dynamic";
 
 export type BlockExplorer = {
@@ -64,3 +63,24 @@ type ChainsUnfiltered = {
 
 // filtered NetworkName union
 export type NetworkName = ChainsUnfiltered[NetworkId] | "anvil" | "hardhat";
+
+export type Tracking = "yes" | "limited" | "none";
+
+export type Rpc = {
+  url: string;
+  tracking?: Tracking;
+  trackingDetails?: string;
+  isOpenSource?: boolean;
+};
+
+export function getRpcUrls(rpcs: Rpc[]) {
+  const urls: string[] = [];
+  rpcs.forEach((rpc) => {
+    if (typeof rpc == "string") {
+      urls.push(rpc);
+    } else {
+      urls.push(rpc.url);
+    }
+  });
+  return urls;
+}

@@ -1,8 +1,7 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { networkRpcs } from "../dist";
 import { RPCHandler } from "../types/rpc-handler";
-import { HandlerConstructorConfig } from "../types/handler";
-import { getRpcUrls, Rpc, Tracking } from "../types/shared";
+import { HandlerConstructorConfig, getRpcUrls, Rpc, Tracking } from "../types/handler";
 
 export const testConfig: HandlerConstructorConfig = {
   networkId: "100",

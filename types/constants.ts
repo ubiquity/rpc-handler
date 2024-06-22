@@ -1,7 +1,5 @@
-import { BlockExplorer, NetworkId, NetworkName, NativeToken } from "./handler";
+import { BlockExplorer, NetworkId, NetworkName, NativeToken, Rpc } from "./handler";
 import { CHAINS_IDS, EXTRA_RPCS, NETWORK_CURRENCIES, NETWORK_EXPLORERS, NETWORK_FAUCETS } from "./dynamic";
-
-import { Rpc } from "./shared";
 
 export declare const chainIDList: Record<string, string>;
 export declare const extraRpcs: Record<ChainId, { rpcs: Rpc[] }>;

@@ -1,10 +1,9 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { LOCAL_HOST, networkRpcs, networkIds } from "./constants";
-import { HandlerInterface, HandlerConstructorConfig, NetworkId, NetworkName } from "./handler";
+import { HandlerInterface, HandlerConstructorConfig, NetworkId, NetworkName, Rpc, Tracking, getRpcUrls } from "./handler";
 
 import { RPCService } from "../src/services/rpc-service";
 import { StorageService } from "../src/services/storage-service";
-import { Rpc, Tracking, getRpcUrls } from "./shared";
 
 export class RPCHandler implements HandlerInterface {
   private static _instance: RPCHandler | null = null;
