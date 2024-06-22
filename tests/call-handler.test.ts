@@ -1,7 +1,23 @@
 import { expect, jest } from "@jest/globals";
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { HandlerConstructorConfig, RPCHandler, PrettyLogs } from "../dist";
-import { testConfig } from "./rpc-handler.test";
+
+export const testConfig: HandlerConstructorConfig = {
+  networkId: "100",
+  autoStorage: false,
+  cacheRefreshCycles: 3,
+  networkName: null,
+  networkRpcs: null,
+  rpcTimeout: 600,
+  runtimeRpcs: null,
+  proxySettings: {
+    retryCount: 3,
+    retryDelay: 10,
+    logTier: "info",
+    logger: new PrettyLogs(),
+    strictLogs: true,
+  },
+};
 
 const nonceBitmapData = {
   to: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
@@ -49,7 +65,7 @@ describe("Call Handler", () => {
         const blockNumber = await provider.send("eth_blockNumber", []);
         expect(parseInt(blockNumber)).toBeGreaterThan(0);
       });
-    });
+    }, 15000);
 
     it("should make a successful eth_call", async () => {
       await jest.isolateModulesAsync(async () => {
@@ -61,7 +77,7 @@ describe("Call Handler", () => {
         expect(response).toBeDefined();
         expect(response).toBe("0x" + "00".repeat(32));
       });
-    });
+    }, 15000);
   });
 
   describe("Write ops cases", () => {
