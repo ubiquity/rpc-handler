@@ -1,5 +1,5 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { RPCHandler } from "../dist";
+import { RPCHandler } from "../types/rpc-handler";
 import { HandlerConstructorConfig } from "../types/handler";
 
 export const testConfig: HandlerConstructorConfig = {
