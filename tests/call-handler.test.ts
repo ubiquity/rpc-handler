@@ -39,21 +39,28 @@ describe("Call Handler", () => {
 
   describe("createProviderProxy", () => {
     let provider: JsonRpcProvider;
-    const handler: RPCHandler = new RPCHandler({ ...testConfig, proxySettings: { ...testConfig.proxySettings, logTier: "verbose" } });
 
     it("should make a successful get_blockNumber call", async () => {
-      provider = await handler.getFastestRpcProvider();
-      const blockNumber = await provider.send("eth_blockNumber", ["latest"]);
-      expect(parseInt(blockNumber)).toBeGreaterThan(0);
+      await jest.isolateModulesAsync(async () => {
+        const module = await import("../dist");
+        const handler = new module.RPCHandler({ ...testConfig, proxySettings: { ...testConfig.proxySettings, logTier: "verbose" } });
+
+        provider = await handler.getFastestRpcProvider();
+        const blockNumber = await provider.send("eth_blockNumber", []);
+        expect(parseInt(blockNumber)).toBeGreaterThan(0);
+      });
     });
 
     it("should make a successful eth_call", async () => {
-      provider = await handler.getFastestRpcProvider();
-      const response = await provider.send("eth_call", [nonceBitmapData, "latest"]);
-      if (response) {
+      await jest.isolateModulesAsync(async () => {
+        const module = await import("../dist");
+        const handler = new module.RPCHandler({ ...testConfig, proxySettings: { ...testConfig.proxySettings, logTier: "verbose" } });
+
+        provider = await handler.getFastestRpcProvider();
+        const response = await provider.send("eth_call", [nonceBitmapData, "latest"]);
         expect(response).toBeDefined();
-        expect(response).toBe("0x0000000000000000000000000000000000000000000000000000000000000000");
-      }
+        expect(response).toBe("0x" + "00".repeat(32));
+      });
     });
   });
 
@@ -66,8 +73,8 @@ describe("Call Handler", () => {
       networkRpcs: rpcList,
       autoStorage: false,
       cacheRefreshCycles: 1,
-      networkName: "local",
-      networkId: 31337,
+      networkName: "anvil",
+      networkId: "31337",
       rpcTimeout: 700,
       proxySettings: {
         retryCount: 1,
@@ -122,8 +129,8 @@ describe("Call Handler", () => {
       networkRpcs: null,
       autoStorage: false,
       cacheRefreshCycles: 1,
-      networkName: "local",
-      networkId: 31337,
+      networkName: "anvil",
+      networkId: "31337",
       rpcTimeout: 700,
       proxySettings: {
         retryCount: 1,

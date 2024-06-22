@@ -85,8 +85,8 @@ describe("Logs", () => {
     networkRpcs: rpcList,
     autoStorage: false,
     cacheRefreshCycles: 1,
-    networkName: "local",
-    networkId: 31337,
+    networkName: "anvil",
+    networkId: "31337",
     rpcTimeout: 700,
     proxySettings: {
       retryCount: 3,
@@ -337,11 +337,6 @@ describe("Logs", () => {
 
     debugSpy.mockClear();
     errorSpy.mockClear();
-
-    console.log("CLEARED");
-    console.log("CLEARED");
-    console.log("CLEARED");
-    console.log("CLEARED");
 
     const res = await provider.send("eth_call", [nonceBitmapData, "latest"]);
     expect(res).toBeDefined();
