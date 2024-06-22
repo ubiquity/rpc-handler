@@ -1,8 +1,6 @@
 import esbuild from "esbuild";
 import path from "path";
 import * as fs from "fs";
-import { createEnvDefines, prepareBuildOptions, prepareExtraRpcs } from "./shared";
-import { RpcType } from "../types/shared";
 import { createDynamicTypes } from "./dynamic-types";
 
 const typescriptEntries = ["index.ts"];
