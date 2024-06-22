@@ -52,7 +52,7 @@ app.provider = await handler.getFastestRpcProvider();
 
 - The RPCs are not tested on instantiation, but are tested on each call to `handler.getFastestRpcProvider()` or `handler.testRpcPerformance()`
 
-- See the full [config](src\handler.ts) object (optionally passed in the constructor) for more options
+- See the full [config](types/handler.ts) object (optionally passed in the constructor) for more options
 
 - Local storage is not enabled by default, but can be enabled by passing `autoStorage: true` in the config object
 
