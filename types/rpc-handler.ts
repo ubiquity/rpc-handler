@@ -1,5 +1,5 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { LOCAL_HOST, networkRpcs, networkNames, networkIds } from "./constants";
+import { LOCAL_HOST, networkRpcs, networkIds } from "./constants";
 import { HandlerInterface, HandlerConstructorConfig, NetworkId, NetworkName } from "./handler";
 
 import { RPCService } from "../src/services/rpc-service";
@@ -108,7 +108,7 @@ export class RPCHandler implements HandlerInterface {
     RPCHandler._instance = null;
   }
 
-  public getRuntimeRpcs(): RpcType[] {
+  public getRuntimeRpcs(): string[] {
     return this._runtimeRpcs;
   }
 
@@ -190,9 +190,9 @@ export class RPCHandler implements HandlerInterface {
     const filteredRpcs = networks.filter((rpc) => {
       if (tracking == "yes") {
         return true;
-      } else if (tracking == "limited" && typeof rpc != "string") {
+      } else if (tracking == "limited") {
         return rpc.tracking == "limited" || rpc.tracking == "none";
-      } else if (tracking == "none" && typeof rpc != "string") {
+      } else if (tracking == "none") {
         return rpc.tracking == "none";
       }
       return false;

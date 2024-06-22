@@ -1,14 +1,10 @@
 export type Tracking = "yes" | "limited" | "none";
 
-export type RpcType =
-  | string // if string then it is the official rpc of the chain
-  | RpcDetailed;
-
-export type RpcDetailed = {
+export type RpcType = {
   url: string;
-  tracking: Tracking;
-  trackingDetails: string;
-  isOpenSource: boolean;
+  tracking?: Tracking;
+  trackingDetails?: string;
+  isOpenSource?: boolean;
 };
 
 export function getRpcUrls(rpcs: RpcType[]) {

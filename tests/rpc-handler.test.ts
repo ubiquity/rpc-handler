@@ -2,7 +2,7 @@ import { JsonRpcProvider } from "@ethersproject/providers";
 import { networkRpcs } from "../dist";
 import { RPCHandler } from "../types/rpc-handler";
 import { HandlerConstructorConfig } from "../types/handler";
-import { getRpcUrls, RpcDetailed, RpcType, Tracking } from "../types/shared";
+import { getRpcUrls, RpcType, Tracking } from "../types/shared";
 
 export const testConfig: HandlerConstructorConfig = {
   networkId: "100",
@@ -91,10 +91,10 @@ describe("RPCHandler", () => {
   describe("RPC tracking config option", () => {
     const filterFunctions = {
       none: function (rpc: RpcType) {
-        return typeof rpc != "string" && rpc.tracking == "none";
+        return rpc?.tracking && rpc.tracking == "none";
       },
       limited: function (rpc: RpcType) {
-        return typeof rpc != "string" && ["none", "limited"].includes(rpc.tracking);
+        return rpc?.tracking && ["none", "limited"].includes(rpc.tracking);
       },
       yes: function (rpc: RpcType) {
         return true;
@@ -113,7 +113,7 @@ describe("RPCHandler", () => {
         const urls = filteredRpcs.map((rpc) => {
           if (typeof rpc == "string") return rpc;
 
-          return (rpc as RpcDetailed).url;
+          return rpc.url;
         });
 
         const rpcHandlerConfig = { ...testConfig };
