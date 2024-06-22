@@ -9,7 +9,7 @@ This packages leverages [Chainlist's](https://github.com/DefiLlama/chainlist) ne
 - Can re-test the cached RPCs by calling `handler.getFastestRpcProvider()`
 - Can be used in both the browser and Node.js
 - Fully configurable and extendable
-- Only uses endpoints which Chainlist report as tracking _no_ data (see [`extraRpcs.js`](https://github.com/DefiLlama/chainlist/blob/main/constants/extraRpcs.js))
+- Uses endpoints from Chainlist (see [`extraRpcs.js`](https://github.com/DefiLlama/chainlist/blob/main/constants/extraRpcs.js))
 
 ## Installation
 
@@ -33,6 +33,7 @@ export function useHandler(networkId: number) {
     networkName: null, // the name will be deduced from the networkId, unless using a custom network
     networkRpcs: null, // same as networkName, but for injecting additional RPCs
     runtimeRpcs: null, // same as networkRpcs, although these are considered error-free
+    tracking: "yes", // accepted values: "yes" | "limited" | "none"
   };
   // No RPCs are tested at this point
   return new RPCHandler(config);
