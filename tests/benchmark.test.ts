@@ -3,7 +3,7 @@ import { RPCHandler } from "../dist";
 import { HandlerConstructorConfig } from "../types/handler";
 
 export const testConfig: HandlerConstructorConfig = {
-  networkId: 1,
+  networkId: "1",
   autoStorage: false,
   cacheRefreshCycles: 3,
   networkName: null,

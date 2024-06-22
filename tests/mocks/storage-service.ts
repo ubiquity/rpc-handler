@@ -1,7 +1,9 @@
+import { NetworkId } from "../../types/handler";
+
 const LOCALSTORAGE_NOT_DEFINED = "Passing because localStorage is not available";
 
 export class StorageService {
-  static getLatencies(env: string, networkId: number): Record<string | number, number> {
+  static getLatencies(env: string, networkId: NetworkId): Record<string | number, number> {
     if (env === "browser") {
       if (typeof localStorage === "undefined") {
         console.log(LOCALSTORAGE_NOT_DEFINED);

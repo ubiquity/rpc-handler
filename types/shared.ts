@@ -8,6 +8,7 @@ export type RpcDetailed = {
   url: string;
   tracking: Tracking;
   trackingDetails: string;
+  isOpenSource: boolean;
 };
 
 export function getRpcUrls(rpcs: RpcType[]) {

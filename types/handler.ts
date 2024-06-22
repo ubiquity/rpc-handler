@@ -1,6 +1,14 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { ChainId, networkCurrencies, networkExplorers, networkIds, networkNames, networkRpcs, tokens } from "./constants";
+import { networkCurrencies, networkExplorers, networkRpcs } from "./constants";
 import { RpcType, Tracking } from "./shared";
+import { CHAINS_IDS, EXTRA_RPCS } from "./dynamic";
+
+export type BlockExplorer = {
+  name: string;
+  url: string;
+  standard?: string;
+  icon?: string;
+};
 
 export type ValidBlockData = {
   jsonrpc: string;
@@ -19,6 +27,7 @@ export type Token = {
 };
 
 export type NativeToken = {
+  name: string;
   symbol: string;
   decimals: number;
 };
@@ -31,8 +40,8 @@ export type HandlerInterface = {
 };
 
 export type HandlerConstructorConfig = {
-  networkId: number;
-  networkName: string | null;
+  networkId: NetworkId;
+  networkName: NetworkName | null;
   networkRpcs: RpcType[] | null;
   autoStorage: boolean | null;
   cacheRefreshCycles: number | null;
@@ -42,13 +51,16 @@ export type HandlerConstructorConfig = {
 };
 
 export type NetworkRPCs = typeof networkRpcs;
-export type NetworkNames = typeof networkNames;
 export type NetworkCurrencies = typeof networkCurrencies;
-export type Tokens = typeof tokens;
 export type NetworkExplorers = typeof networkExplorers;
-export type NetworkIds = typeof networkIds;
-export type { ChainId };
 
-export type ChainNames<TChainID extends PropertyKey = ChainId> = {
-  [key in TChainID]: string;
+// filtered NetworkId union
+export type NetworkId = keyof typeof EXTRA_RPCS | "31337" | "1337";
+
+// unfiltered Record<NetworkId, NetworkName>
+type ChainsUnfiltered = {
+  -readonly [K in keyof typeof CHAINS_IDS]: (typeof CHAINS_IDS)[K];
 };
+
+// filtered NetworkName union
+export type NetworkName = ChainsUnfiltered[NetworkId] | "anvil" | "hardhat";
