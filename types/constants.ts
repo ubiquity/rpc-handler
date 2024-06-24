@@ -1,11 +1,6 @@
 import { BlockExplorer, NetworkId, NetworkName, NativeToken, Rpc } from "./handler";
 import { CHAINS_IDS, EXTRA_RPCS, NETWORK_CURRENCIES, NETWORK_EXPLORERS, NETWORK_FAUCETS } from "./dynamic";
 
-export declare const chainIDList: Record<string, string>;
-export declare const extraRpcs: Record<ChainId, { rpcs: Rpc[] }>;
-
-export type ChainId<T extends string | number = number> = T extends keyof typeof chainIDList ? (typeof chainIDList)[T] : T;
-
 export const permit2Address = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
 export const nftAddress = "0xAa1bfC0e51969415d64d6dE74f27CDa0587e645b";
 export const LOCAL_HOST = "http://127.0.0.1:8545";
