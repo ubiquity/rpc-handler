@@ -1,5 +1,5 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { networkRpcs } from "../dist";
+import { networkRpcs } from "../types/constants";
 import { RPCHandler } from "../types/rpc-handler";
 import { HandlerConstructorConfig, getRpcUrls, Rpc, Tracking } from "../types/handler";
 
