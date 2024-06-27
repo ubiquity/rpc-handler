@@ -24,9 +24,7 @@
     "postinstall": "git submodule update --init --recursive",
     "build": "run-s clean build:types",
     "build:types": "tsx build/esbuild-build.ts && tsc --emitDeclarationOnly --declaration --outDir dist",
-    "build:tests": "tsx build/esbuild-build-tests.ts && tsc --emitDeclarationOnly --declaration --project tsconfig.tests.json",
     "postbuild": "rm -rf dist/src",
-    "pretest": "run-s clean build:tests",
     "test": "jest",
     "clean": "rm -rf dist"
   },

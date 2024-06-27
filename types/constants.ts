@@ -1,4 +1,4 @@
-import { BlockExplorer, NetworkId, NetworkName, NativeToken } from "./handler";
+import { BlockExplorer, NetworkId, NetworkName, NativeToken, Rpc } from "./handler";
 import { CHAINS_IDS, EXTRA_RPCS, NETWORK_CURRENCIES, NETWORK_EXPLORERS, NETWORK_FAUCETS } from "./dynamic";
 
 export const permit2Address = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
@@ -23,9 +23,9 @@ Reflect.deleteProperty(networkNames, "gochain-testnet"); // 31337
 const networkRpcs = Object.fromEntries(
   Object.entries(networkNames).map(([, value]) => {
     const chainRpcs = EXTRA_RPCS[value as unknown as keyof typeof EXTRA_RPCS];
-    return [value, chainRpcs];
+    return [value, { rpcs: chainRpcs }];
   })
-) as Record<NetworkId, string[]>;
+) as Record<NetworkId, { rpcs: Rpc[] }>;
 
 const networkExplorers = Object.fromEntries(
   Object.entries(networkNames).map(([, value]) => {

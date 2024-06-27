@@ -1,6 +1,6 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { LOCAL_HOST, networkRpcs, networkIds } from "./constants";
-import { HandlerInterface, HandlerConstructorConfig, NetworkId, NetworkName } from "./handler";
+import { HandlerInterface, HandlerConstructorConfig, NetworkId, NetworkName, Rpc, Tracking, getRpcUrls } from "./handler";
 
 import { RPCService } from "../src/services/rpc-service";
 import { StorageService } from "../src/services/storage-service";
@@ -20,11 +20,11 @@ export class RPCHandler implements HandlerInterface {
   private _runtimeRpcs: string[] = [];
   private _latencies: Record<string, number> = {};
 
-  private _networkRpcs: string[] = [];
+  private _networkRpcs: Rpc[];
 
   constructor(config: HandlerConstructorConfig) {
     this._networkId = config.networkId;
-    this._networkRpcs = networkRpcs[this._networkId];
+    this._networkRpcs = this._filterRpcs(networkRpcs[this._networkId].rpcs, config.tracking || "yes");
     this._networkName = networkIds[this._networkId];
     this._initialize(config);
   }
@@ -55,7 +55,7 @@ export class RPCHandler implements HandlerInterface {
       Object.keys(this._latencies).filter((rpc) => rpc.startsWith(`${this._networkId}__`)).length <= 1 || this._refreshLatencies >= this._cacheRefreshCycles;
 
     if (shouldRefreshRpcs) {
-      this._runtimeRpcs = networkRpcs[this._networkId];
+      this._runtimeRpcs = getRpcUrls(this._networkRpcs);
       this._refreshLatencies = 0;
     } else {
       this._runtimeRpcs = Object.keys(this._latencies).map((rpc) => {
@@ -119,7 +119,7 @@ export class RPCHandler implements HandlerInterface {
     return this._networkName;
   }
 
-  public getNetworkRpcs(): string[] {
+  public getNetworkRpcs(): Rpc[] {
     return this._networkRpcs;
   }
 
@@ -183,6 +183,19 @@ export class RPCHandler implements HandlerInterface {
       this._latencies = StorageService.getLatencies(this._env, this._networkId);
       this._refreshLatencies = StorageService.getRefreshLatencies(this._env);
     }
+  }
+
+  private _filterRpcs(networks: Rpc[], tracking: Tracking) {
+    return networks.filter((rpc) => {
+      if (tracking == "yes") {
+        return true;
+      } else if (tracking == "limited") {
+        return rpc.tracking == "limited" || rpc.tracking == "none";
+      } else if (tracking == "none") {
+        return rpc.tracking == "none";
+      }
+      return false;
+    });
   }
 
   private _initialize(config: HandlerConstructorConfig): void {

@@ -35,8 +35,7 @@ export async function createDynamicTypes() {
     }
 
     if (rpc && rpc.length > 0) {
-      const rpcs = rpc.filter((rpc: { url: string }) => rpc.url);
-      extraRpcs[chainId] = rpcs.map((rpc: { url: string }) => rpc.url);
+      extraRpcs[chainId] = rpc;
     }
 
     idToNativeCurrency[chainId] = nativeCurrency;

@@ -1,5 +1,7 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { HandlerConstructorConfig, RPCHandler, networkRpcs } from "../dist";
+import { networkRpcs } from "../types/constants";
+import { RPCHandler } from "../types/rpc-handler";
+import { HandlerConstructorConfig, getRpcUrls, Rpc, Tracking } from "../types/handler";
 
 export const testConfig: HandlerConstructorConfig = {
   networkId: "100",
@@ -9,6 +11,7 @@ export const testConfig: HandlerConstructorConfig = {
   networkRpcs: null,
   rpcTimeout: 1500,
   runtimeRpcs: null,
+  tracking: "yes",
 };
 
 describe("RPCHandler", () => {
@@ -43,7 +46,7 @@ describe("RPCHandler", () => {
       expect(rpcHandler["_latencies"]).toEqual({});
     });
     it("should initialize with correct networkRpcs", () => {
-      expect(rpcHandler["_networkRpcs"]).toEqual(networkRpcs[testConfig.networkId]);
+      expect(rpcHandler["_networkRpcs"]).toEqual(networkRpcs[testConfig.networkId].rpcs);
     });
     it("should initialize with null provider", () => {
       const provider = rpcHandler["_provider"];
@@ -68,8 +71,9 @@ describe("RPCHandler", () => {
       const latArrLen = Array.from(Object.entries(latencies)).length;
       const runtime = rpcHandler.getRuntimeRpcs();
       expect(runtime.length).toBeGreaterThan(0);
+
       expect(runtime.length).toBe(latArrLen);
-      expect(runtime.length).toBeLessThanOrEqual(networkRpcs[testConfig.networkId].length);
+      expect(runtime.length).toBeLessThanOrEqual(getRpcUrls(networkRpcs[testConfig.networkId].rpcs).length);
 
       expect(latArrLen).toBeGreaterThanOrEqual(1);
 
@@ -81,5 +85,50 @@ describe("RPCHandler", () => {
       }
       expect(fastestRpc.connection.url).toBe(provider.connection.url);
     }, 10000);
+  });
+
+  describe("RPC tracking config option", () => {
+    const filterFunctions = {
+      none: function (rpc: Rpc) {
+        return rpc?.tracking && rpc.tracking == "none";
+      },
+      limited: function (rpc: Rpc) {
+        return rpc?.tracking && ["none", "limited"].includes(rpc.tracking);
+      },
+      yes: function (rpc: Rpc) {
+        return true;
+      },
+      undefined: function (rpc: Rpc) {
+        return true;
+      },
+    };
+
+    for (const [trackingOption, filterFunction] of Object.entries(filterFunctions)) {
+      it(`should return correct rpcs with tracking=${trackingOption}`, async () => {
+        const filteredRpcs = networkRpcs[testConfig.networkId].rpcs.filter((rpc) => {
+          return filterFunction(rpc);
+        });
+
+        const urls = filteredRpcs.map((rpc) => {
+          if (typeof rpc == "string") return rpc;
+
+          return rpc.url;
+        });
+
+        const rpcHandlerConfig = { ...testConfig };
+        if (trackingOption == "undefined") {
+          delete rpcHandlerConfig.tracking;
+        } else {
+          rpcHandlerConfig.tracking = trackingOption as Tracking;
+        }
+        const handler = new RPCHandler(rpcHandlerConfig);
+        await handler.testRpcPerformance();
+        const runtime = handler.getRuntimeRpcs();
+        expect(runtime.length).toBeLessThanOrEqual(urls.length);
+
+        // expect runtime to be the subset of urls
+        expect(urls).toEqual(expect.arrayContaining(runtime));
+      }, 10000);
+    }
   });
 });

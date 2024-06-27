@@ -41,11 +41,12 @@ export type HandlerInterface = {
 export type HandlerConstructorConfig = {
   networkId: NetworkId;
   networkName: NetworkName | null;
-  networkRpcs: string[] | null;
+  networkRpcs: Rpc[] | null;
   autoStorage: boolean | null;
   cacheRefreshCycles: number | null;
   runtimeRpcs: string[] | null;
   rpcTimeout: number | null;
+  tracking?: Tracking;
 };
 
 export type NetworkRPCs = typeof networkRpcs;
@@ -62,3 +63,24 @@ type ChainsUnfiltered = {
 
 // filtered NetworkName union
 export type NetworkName = ChainsUnfiltered[NetworkId] | "anvil" | "hardhat";
+
+export type Tracking = "yes" | "limited" | "none";
+
+export type Rpc = {
+  url: string;
+  tracking?: Tracking;
+  trackingDetails?: string;
+  isOpenSource?: boolean;
+};
+
+export function getRpcUrls(rpcs: Rpc[]) {
+  const urls: string[] = [];
+  rpcs.forEach((rpc) => {
+    if (typeof rpc == "string") {
+      urls.push(rpc);
+    } else {
+      urls.push(rpc.url);
+    }
+  });
+  return urls;
+}

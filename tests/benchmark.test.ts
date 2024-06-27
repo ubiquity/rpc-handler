@@ -1,5 +1,6 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { RPCHandler, HandlerConstructorConfig } from "../dist";
+import { RPCHandler } from "../types/rpc-handler";
+import { HandlerConstructorConfig } from "../types/handler";
 
 export const testConfig: HandlerConstructorConfig = {
   networkId: "1",
@@ -9,6 +10,7 @@ export const testConfig: HandlerConstructorConfig = {
   networkRpcs: null,
   rpcTimeout: 1500,
   runtimeRpcs: null,
+  tracking: "yes",
 };
 
 describe("RPCHandler", () => {
