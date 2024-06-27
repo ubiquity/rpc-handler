@@ -14,7 +14,7 @@
     "node": ">=20.10.0"
   },
   "scripts": {
-    "format": "run-p format:*",
+    "format": "run-s format:lint format:prettier format:cspell",
     "format:lint": "eslint --fix .",
     "format:prettier": "prettier --write .",
     "format:cspell": "cspell **/*",
@@ -23,12 +23,12 @@
     "prepare": "husky install",
     "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
     "build:index": "tsx build/esbuild-build.ts",
-    "build": "run-s clean build:index build:types",
+    "build": "run-s clean build:index build:types clean:types",
     "postinstall": "git submodule update --init --recursive",
     "test:anvil": "npx tsx ./tests/anvil.ts",
-    "test": "run-s clean build test:jest",
-    "test:jest": "jest --runInBand",
-    "clean": "rm -rf dist"
+    "test": "jest --runInBand",
+    "clean": "rm -rf dist",
+    "clean:types": "rm -rf dist/dynamic.d.ts"
   },
   "keywords": [
     "typescript",
