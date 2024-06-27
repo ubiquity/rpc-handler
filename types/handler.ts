@@ -1,6 +1,6 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { networkCurrencies, networkExplorers, networkRpcs } from "./constants";
-import { CHAINS_IDS, EXTRA_RPCS } from "./dynamic";
+import { CHAINS_IDS, EXTRA_RPCS } from "../dynamic";
 import { LogInterface, PrettyLogs, PrettyLogsWithOk } from "./logs";
 
 export type BlockExplorer = {

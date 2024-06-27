@@ -1,5 +1,5 @@
 import { BlockExplorer, NetworkId, NetworkName, NativeToken, Rpc } from "./handler";
-import { CHAINS_IDS, EXTRA_RPCS, NETWORK_CURRENCIES, NETWORK_EXPLORERS, NETWORK_FAUCETS } from "./dynamic";
+import { CHAINS_IDS, EXTRA_RPCS, NETWORK_CURRENCIES, NETWORK_EXPLORERS, NETWORK_FAUCETS } from "../dynamic";
 
 export const permit2Address = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
 export const nftAddress = "0xAa1bfC0e51969415d64d6dE74f27CDa0587e645b";
