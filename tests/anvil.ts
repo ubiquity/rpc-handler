@@ -1,5 +1,5 @@
 import { spawnSync } from "child_process";
-import { RPCHandler } from "../dist/";
+import { RPCHandler } from "../types/rpc-handler";
 
 class Anvil {
   rpcs: string[] = [];
@@ -9,8 +9,8 @@ class Anvil {
     this.rpcHandler = new RPCHandler({
       autoStorage: false,
       cacheRefreshCycles: 3,
-      networkId: 100,
-      networkName: "test",
+      networkId: "100",
+      networkName: "gnosis",
       rpcTimeout: 1000,
       runtimeRpcs: null,
       networkRpcs: null,

@@ -1,6 +1,8 @@
 import { expect, jest } from "@jest/globals";
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { HandlerConstructorConfig, RPCHandler, PrettyLogs } from "../dist";
+import { RPCHandler } from "../types/rpc-handler";
+import { HandlerConstructorConfig } from "../types/handler";
+import { PrettyLogs } from "../types/logs";
 
 export const testConfig: HandlerConstructorConfig = {
   networkId: "100",
@@ -24,17 +26,17 @@ const nonceBitmapData = {
   data: "0x4fe02b44000000000000000000000000d9530f3fbbea11bed01dc09e79318f2f20223716001fd097bcb5a1759ce02c0a671386a0bbbfa8216559e5855698a9d4de4cddea",
 };
 const rpcList = [
-  "http://127.0.0.1:85451",
-  "http://127.0.0.1:85454",
-  "http://127.0.0.1:85453",
-  "http://127.0.0.1:854531",
-  "http://127.0.0.1:854532",
-  "http://127.0.0.1:854533",
-  "http://127.0.0.1:854535",
-  "http://127.0.0.1:854",
-  "http://127.0.0.1:85",
-  "http://127.0.0.1:81",
-  "http://127.0.0.1:8545",
+  { url: "http://127.0.0.1:85451" },
+  { url: "http://127.0.0.1:85454" },
+  { url: "http://127.0.0.1:85453" },
+  { url: "http://127.0.0.1:854531" },
+  { url: "http://127.0.0.1:854532" },
+  { url: "http://127.0.0.1:854533" },
+  { url: "http://127.0.0.1:854535" },
+  { url: "http://127.0.0.1:854" },
+  { url: "http://127.0.0.1:85" },
+  { url: "http://127.0.0.1:81" },
+  { url: "http://127.0.0.1:8545" },
 ];
 const txHashRegex = new RegExp("0x[0-9a-f]{64}");
 
@@ -58,7 +60,7 @@ describe("Call Handler", () => {
 
     it("should make a successful get_blockNumber call", async () => {
       await jest.isolateModulesAsync(async () => {
-        const module = await import("../dist");
+        const module = await import("../types/rpc-handler");
         const handler = new module.RPCHandler({ ...testConfig, proxySettings: { ...testConfig.proxySettings, logTier: "verbose" } });
 
         provider = await handler.getFastestRpcProvider();
@@ -69,7 +71,7 @@ describe("Call Handler", () => {
 
     it("should make a successful eth_call", async () => {
       await jest.isolateModulesAsync(async () => {
-        const module = await import("../dist");
+        const module = await import("../types/rpc-handler");
         const handler = new module.RPCHandler({ ...testConfig, proxySettings: { ...testConfig.proxySettings, logTier: "verbose" } });
 
         provider = await handler.getFastestRpcProvider();
@@ -85,7 +87,7 @@ describe("Call Handler", () => {
     let handler: RPCHandler;
 
     const mods: HandlerConstructorConfig = {
-      runtimeRpcs: rpcList,
+      runtimeRpcs: rpcList.map((rpc) => rpc.url),
       networkRpcs: rpcList,
       autoStorage: false,
       cacheRefreshCycles: 1,
@@ -165,7 +167,7 @@ describe("Call Handler", () => {
     });
 
     it("should be able to filter all bad rpcs then make a successful call", async () => {
-      const badRpcList = ["http://127.0.0.1:85451", "http://127.0.0.1:85454", "http://127.0.0.1:8545"];
+      const badRpcList = [{ url: "http://127.0.0.1:85451" }, { url: "http://127.0.0.1:85454" }, { url: "http://127.0.0.1:8545" }];
       mods.networkRpcs = badRpcList;
 
       const newHandler = new RPCHandler(mods);
@@ -178,7 +180,7 @@ describe("Call Handler", () => {
     });
 
     it("should throw an error if every call fails 3x", async () => {
-      const badRpcList = ["http://127.0.0.1:85451", "http://127.0.0.1:85454"];
+      const badRpcList = [{ url: "http://127.0.0.1:85451" }, { url: "http://127.0.0.1:85454" }];
       const newHandler = new RPCHandler({
         ...mods,
         networkRpcs: badRpcList,

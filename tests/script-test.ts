@@ -1,11 +1,8 @@
-import getRPCHandler, { HandlerConstructorConfig, RPCHandler, networkIds, networkCurrencies, networkExplorers, networkNames, networkRpcs } from "../dist/";
+import getRPCHandler, { HandlerConstructorConfig, RPCHandler, networkIds, networkCurrencies, networkExplorers, networkNames } from "../dist/";
 
 /**
- * This script is meant to test the `yarn build` build output
- * while the jest tests work under the `yarn test` build output.
- *
- * Both have different esbuild configurations, this is to ensure that the
- * library works in both scenarios.
+ * A test script to ensure that the module can be imported and used correctly
+ * This script is not meant to be run in the test suite
  */
 
 (async () => {
@@ -36,12 +33,13 @@ import getRPCHandler, { HandlerConstructorConfig, RPCHandler, networkIds, networ
   await handler.getFastestRpcProvider();
 
   const latencies = handler.getLatencies();
+  const networkRpcs = handler.getNetworkRpcs();
 
   console.log(networkIds);
   console.log(networkNames);
-  console.log(networkRpcs);
   console.log(networkCurrencies);
   console.log(networkExplorers);
+  console.log(networkRpcs);
   console.log(latencies);
   process.exit(0);
 })().catch(console.error);

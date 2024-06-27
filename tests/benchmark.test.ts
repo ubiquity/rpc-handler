@@ -39,8 +39,8 @@ describe("RPCHandler", () => {
 
   it("executing without an rpc timeout", async () => {
     await jest.isolateModulesAsync(async () => {
-      const module = await import("../dist");
-      rpcHandler = new module.RPCHandler({
+      const module = await import("../types/rpc-handler");
+      const rpcHandler = new module.RPCHandler({
         ...testConfig,
         rpcTimeout: 99999999,
       });
@@ -57,8 +57,8 @@ describe("RPCHandler", () => {
 
   it("executing with an rpc timeout", async () => {
     await jest.isolateModulesAsync(async () => {
-      const module = await import("../dist");
-      rpcHandler = new module.RPCHandler({
+      const module = await import("../types/rpc-handler");
+      const rpcHandler = new module.RPCHandler({
         ...testConfig,
         rpcTimeout: 1500,
       });
@@ -70,6 +70,6 @@ describe("RPCHandler", () => {
 
       console.log("slowestRpc: with an rpc timeout > ", slowestRpc);
       console.log("fastestRpc: with an rpc timeout > ", fastestRpcUrl);
-    })
+    });
   }, 999999);
 });

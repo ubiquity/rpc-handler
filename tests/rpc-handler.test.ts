@@ -80,7 +80,7 @@ describe("RPCHandler", () => {
   describe("getFastestRpcProvider", () => {
     it("should return the fastest RPC compared to the latencies", async () => {
       await jest.isolateModulesAsync(async () => {
-        const module = await import("../dist");
+        const module = await import("../types/rpc-handler");
         const rpcHandler = new module.RPCHandler({
           ...testConfig,
           rpcTimeout: 99999999,
@@ -95,8 +95,7 @@ describe("RPCHandler", () => {
         const runtime = rpcHandler.getRuntimeRpcs();
         expect(runtime.length).toBeGreaterThan(0);
         expect(runtime.length).toBe(latArrLen);
-        expect(runtime.length).toBeLessThanOrEqual(networkRpcs[testConfig.networkId].rpcs.length);
-
+        expect(runtime.length).toBeLessThanOrEqual(getRpcUrls(networkRpcs[testConfig.networkId].rpcs).length);
         expect(latArrLen).toBeGreaterThanOrEqual(1);
 
         if (latArrLen > 1) {
