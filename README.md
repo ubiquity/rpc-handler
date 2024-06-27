@@ -43,7 +43,7 @@ export function useHandler(networkId: number) {
       logger: null; // null will default to PrettyLogs
       strictLogs: true; // true, only the specified logTier will be logged and false all wll be logged.
       moduleName?: "[UBQ RPC Handler];" // Can be omitted. this is the prefix for the logs.
-      disabled?: false; // Can be omitted. this will disable the proxy, requiring you to handle retry logic etc yourself. 
+      disabled?: false; // Can be omitted. this will disable the proxy, requiring you to handle retry logic etc yourself.
     }
   };
   // No RPCs are tested at this point

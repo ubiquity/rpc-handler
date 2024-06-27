@@ -21,7 +21,7 @@ import {
   NetworkExplorers,
   NetworkRPCs,
   Token,
-  ValidBlockData
+  ValidBlockData,
 } from "./types/handler";
 
 import {
@@ -39,7 +39,7 @@ import {
   getNetworkName,
   getNetworkRpcs,
   getNetworkCurrency,
-  getNetworkData
+  getNetworkData,
 } from "./types/constants";
 
 import { RPCHandler } from "./types/rpc-handler";
@@ -60,6 +60,6 @@ export type {
   NetworkExplorers,
   NetworkRPCs,
   Token,
-  ValidBlockData
+  ValidBlockData,
 };
 export { RPCHandler, PrettyLogs, StorageService, RPCService };

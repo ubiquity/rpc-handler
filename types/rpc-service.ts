@@ -7,7 +7,7 @@ const rpcBody = JSON.stringify({
   method: "eth_getBlockByNumber",
   params: ["latest", false],
   id: 1,
-})
+});
 
 async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: object): Promise<PromiseResult> {
   const abortController = new AbortController();
@@ -18,7 +18,8 @@ async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: obj
   });
 
   const startTime = performance.now();
-  return instance.post(rpcUrl, rpcBody)
+  return instance
+    .post(rpcUrl, rpcBody)
     .then(() => {
       return {
         rpcUrl,
@@ -27,12 +28,12 @@ async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: obj
       };
     })
     .catch((error) => {
-      const isTimeout = error.code === 'ECONNABORTED';
+      const isTimeout = error.code === "ECONNABORTED";
       return {
         rpcUrl,
         success: false,
         duration: isTimeout ? performance.now() - startTime : 0,
-        error: isTimeout ? 'timeout' : error.message,
+        error: isTimeout ? "timeout" : error.message,
       };
     })
     .finally(() => {
@@ -48,7 +49,7 @@ export class RPCService {
     rpcHeader: object,
     rpcTimeout: number
   ): Promise<{ latencies: Record<string, number>; runtimeRpcs: string[] }> {
-    const successfulPromises = runtimeRpcs.map(rpcUrl => makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader));
+    const successfulPromises = runtimeRpcs.map((rpcUrl) => makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader));
 
     const fastest = await Promise.race(successfulPromises);
 
