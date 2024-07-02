@@ -41,7 +41,7 @@ export async function createDynamicTypes() {
     idToNativeCurrency[chainId] = nativeCurrency;
   }
 
-  const filename = "types/dynamic.ts";
+  const filename = "dynamic.ts";
 
   // Clear the file
   await writeFile(filename, "/* eslint-disable sonarjs/no-duplicate-string */\n\n");

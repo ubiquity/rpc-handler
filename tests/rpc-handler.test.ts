@@ -2,6 +2,7 @@ import { JsonRpcProvider } from "@ethersproject/providers";
 import { networkRpcs } from "../types/constants";
 import { RPCHandler } from "../types/rpc-handler";
 import { HandlerConstructorConfig, getRpcUrls, Rpc, Tracking } from "../types/handler";
+import { PrettyLogs } from "../types/logs";
 
 export const testConfig: HandlerConstructorConfig = {
   networkId: "100",
@@ -9,23 +10,41 @@ export const testConfig: HandlerConstructorConfig = {
   cacheRefreshCycles: 3,
   networkName: null,
   networkRpcs: null,
-  rpcTimeout: 1500,
+  rpcTimeout: 600,
   runtimeRpcs: null,
   tracking: "yes",
+  proxySettings: {
+    retryCount: 3,
+    retryDelay: 10,
+    logTier: "info",
+    logger: new PrettyLogs(),
+    strictLogs: true,
+  },
 };
 
 describe("RPCHandler", () => {
   let provider: JsonRpcProvider;
-  let rpcHandler: RPCHandler;
 
-  beforeEach(async () => {
-    jest.resetAllMocks();
+  afterAll(() => {
     jest.clearAllMocks();
+    jest.clearAllTimers();
+    jest.resetAllMocks();
     jest.resetModules();
-    rpcHandler = new RPCHandler(testConfig);
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.clearAllTimers();
+    jest.resetAllMocks();
+    jest.resetModules();
   });
 
   describe("Initialization", () => {
+    let rpcHandler: RPCHandler;
+    beforeEach(async () => {
+      rpcHandler = new RPCHandler(testConfig);
+    });
+
     it("should be instance of RPCHandler", () => {
       expect(rpcHandler).toBeInstanceOf(RPCHandler);
     });
@@ -60,31 +79,34 @@ describe("RPCHandler", () => {
 
   describe("getFastestRpcProvider", () => {
     it("should return the fastest RPC compared to the latencies", async () => {
-      await rpcHandler.testRpcPerformance();
-      provider = await rpcHandler.getFastestRpcProvider();
-      const fastestRpc = rpcHandler.getProvider();
-      const latencies = rpcHandler.getLatencies();
-      console.log(`latencies: `, latencies);
-      console.log(`fastestRpc: `, fastestRpc);
-      expect(provider._network.chainId).toBe(Number(testConfig.networkId));
-      expect(provider.connection.url).toMatch("https://");
-      const latArrLen = Array.from(Object.entries(latencies)).length;
-      const runtime = rpcHandler.getRuntimeRpcs();
-      expect(runtime.length).toBeGreaterThan(0);
+      await jest.isolateModulesAsync(async () => {
+        const module = await import("../types/rpc-handler");
+        const rpcHandler = new module.RPCHandler({
+          ...testConfig,
+          rpcTimeout: 99999999,
+        });
 
-      expect(runtime.length).toBe(latArrLen);
-      expect(runtime.length).toBeLessThanOrEqual(getRpcUrls(networkRpcs[testConfig.networkId].rpcs).length);
+        provider = await rpcHandler.getFastestRpcProvider();
+        const fastestRpc = rpcHandler.getProvider();
+        const latencies = rpcHandler.getLatencies();
+        expect(provider._network.chainId).toBe(Number(testConfig.networkId));
+        expect(provider.connection.url).toMatch("https://");
+        const latArrLen = Array.from(Object.entries(latencies)).length;
+        const runtime = rpcHandler.getRuntimeRpcs();
+        expect(runtime.length).toBeGreaterThan(0);
+        expect(runtime.length).toBe(latArrLen);
+        expect(runtime.length).toBeLessThanOrEqual(getRpcUrls(networkRpcs[testConfig.networkId].rpcs).length);
+        expect(latArrLen).toBeGreaterThanOrEqual(1);
 
-      expect(latArrLen).toBeGreaterThanOrEqual(1);
-
-      if (latArrLen > 1) {
-        const sorted = Object.entries(latencies).sort((a, b) => a[1] - b[1]);
-        const first = sorted[0];
-        const last = sorted[sorted.length - 1];
-        expect(first[1]).toBeLessThan(last[1]);
-      }
-      expect(fastestRpc.connection.url).toBe(provider.connection.url);
-    }, 10000);
+        if (latArrLen > 1) {
+          const sorted = Object.entries(latencies).sort((a, b) => a[1] - b[1]);
+          const first = sorted[0];
+          const last = sorted[sorted.length - 1];
+          expect(first[1]).toBeLessThan(last[1]);
+        }
+        expect(fastestRpc.connection.url).toBe(provider.connection.url);
+      });
+    }, 30000);
   });
 
   describe("RPC tracking config option", () => {

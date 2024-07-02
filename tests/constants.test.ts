@@ -1,5 +1,16 @@
-import { getNetworkId, getNetworkName, networkCurrencies, networkExplorers, networkIds, networkNames } from "../types/constants";
 import { NetworkId, NetworkName, NativeToken } from "../types/handler";
+
+import {
+  getNetworkId,
+  getNetworkName,
+  networkCurrencies,
+  networkExplorers,
+  networkIds,
+  networkNames,
+  getNetworkCurrency,
+  getNetworkData,
+  getNetworkExplorer,
+} from "../types/constants";
 
 describe("Constants", () => {
   beforeEach(() => {
@@ -31,11 +42,18 @@ describe("Constants", () => {
       expect(result).toBe(expectedNetworkId);
     });
 
-    it("should return 0 for an unknown network name", () => {
+    it("should return -1 for an unknown network name", () => {
       const networkName = "unknown";
       const expectedNetworkId = -1;
       const result = getNetworkId(networkName as NetworkName);
       expect(result).toBe(expectedNetworkId);
+    });
+
+    it("should work with getNetworkData", () => {
+      const networkName = "amoy";
+      const expectedNetworkId = "80002";
+      const result = getNetworkData(expectedNetworkId);
+      expect(result.name).toBe(networkName);
     });
   });
 
@@ -50,6 +68,13 @@ describe("Constants", () => {
 
       netIds.forEach((networkId) => {
         const networkName = networkIds[networkId];
+        expect(networkName).toBe(expectedName[networkId]);
+      });
+    });
+
+    it("should work with getNetworkName", () => {
+      netIds.forEach((networkId) => {
+        const networkName = getNetworkName(networkId);
         expect(networkName).toBe(expectedName[networkId]);
       });
     });
@@ -92,12 +117,29 @@ describe("Constants", () => {
         expect(result).toEqual(expectedCurrency);
       });
     });
+
+    it("should work with getNetworkCurrency", () => {
+      netIds.forEach((networkId) => {
+        const result = getNetworkCurrency(networkId);
+        const expectedCurrency = expectedNative[networkId] as NativeToken;
+        expect(result).toEqual(expectedCurrency);
+      });
+    });
   });
 
   describe("networkExplorers", () => {
     it("should contain an explorer for each network", () => {
       netIds.forEach((networkId) => {
         const result = networkExplorers[networkId];
+        const explorerUrls = result.map(({ url }) => url);
+        const expectedExplorer = expected[networkId];
+        expect(explorerUrls).toContain(expectedExplorer);
+      });
+    });
+
+    it("should work with getNetworkExplorer", () => {
+      netIds.forEach((networkId) => {
+        const result = getNetworkExplorer(networkId);
         const explorerUrls = result.map(({ url }) => url);
         const expectedExplorer = expected[networkId];
         expect(explorerUrls).toContain(expectedExplorer);

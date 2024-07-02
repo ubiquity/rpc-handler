@@ -26,7 +26,6 @@ import {
 
 import {
   LOCAL_HOST,
-  getNetworkName,
   networkCurrencies,
   networkExplorers,
   networkIds,
@@ -35,11 +34,21 @@ import {
   nftAddress,
   permit2Address,
   getNetworkId,
+  getNetworkFaucets,
+  getNetworkExplorer,
+  getNetworkName,
+  getNetworkRpcs,
+  getNetworkCurrency,
+  getNetworkData,
 } from "./types/constants";
 
 import { RPCHandler } from "./types/rpc-handler";
+import { PrettyLogs } from "./types/logs";
+import { StorageService } from "./types/storage-service";
+import { RPCService } from "./types/rpc-service";
 
-export { LOCAL_HOST, getNetworkName, getNetworkId, networkCurrencies, networkExplorers, networkIds, networkNames, networkRpcs, nftAddress, permit2Address };
+export { LOCAL_HOST, networkCurrencies, networkExplorers, networkIds, networkNames, networkRpcs, nftAddress, permit2Address };
+export { getNetworkId, getNetworkFaucets, getNetworkExplorer, getNetworkName, getNetworkRpcs, getNetworkCurrency, getNetworkData };
 
 export type {
   NetworkId,
@@ -53,4 +62,4 @@ export type {
   Token,
   ValidBlockData,
 };
-export { RPCHandler };
+export { RPCHandler, PrettyLogs, StorageService, RPCService };

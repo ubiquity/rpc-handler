@@ -11,3 +11,4 @@ dist
 
 coverage
 junit.xml
+dynamic.ts
