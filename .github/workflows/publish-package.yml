@@ -28,8 +28,7 @@ jobs:
       - name: Build
         run: |
           yarn install --immutable --check-cache
-          yarn build
-          yarn postbuild
+          run-s build postbuild
           yarn pack
 
       - name: Publish
