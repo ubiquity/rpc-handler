@@ -12,25 +12,20 @@ export default async function getRPCHandler() {
 }
 
 import {
-  ChainId,
-  ChainNames,
+  NetworkId,
+  NetworkName,
   HandlerConstructorConfig,
   HandlerInterface,
   NativeToken,
   NetworkCurrencies,
   NetworkExplorers,
-  NetworkIds,
-  NetworkNames,
   NetworkRPCs,
   Token,
-  Tokens,
   ValidBlockData,
 } from "./types/handler";
 
 import {
   LOCAL_HOST,
-  chainIDList,
-  extraRpcs,
   getNetworkName,
   networkCurrencies,
   networkExplorers,
@@ -39,39 +34,23 @@ import {
   networkRpcs,
   nftAddress,
   permit2Address,
-  tokens,
+  getNetworkId,
 } from "./types/constants";
 
 import { RPCHandler } from "./types/rpc-handler";
 
-export {
-  LOCAL_HOST,
-  chainIDList,
-  extraRpcs,
-  getNetworkName,
-  networkCurrencies,
-  networkExplorers,
-  networkIds,
-  networkNames,
-  networkRpcs,
-  nftAddress,
-  permit2Address,
-  tokens,
-};
+export { LOCAL_HOST, getNetworkName, getNetworkId, networkCurrencies, networkExplorers, networkIds, networkNames, networkRpcs, nftAddress, permit2Address };
 
 export type {
-  ChainId,
-  ChainNames,
+  NetworkId,
+  NetworkName,
   HandlerConstructorConfig,
   HandlerInterface,
   NativeToken,
   NetworkCurrencies,
   NetworkExplorers,
-  NetworkIds,
-  NetworkNames,
   NetworkRPCs,
   Token,
-  Tokens,
   ValidBlockData,
 };
 export { RPCHandler };

@@ -1,4 +1,4 @@
-import { RPCHandler } from "../dist";
+import { RPCHandler } from "../types/rpc-handler";
 import { testConfig } from "./rpc-handler.test";
 
 describe("Browser env detection", () => {

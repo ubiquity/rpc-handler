@@ -14,19 +14,19 @@
     "node": ">=20.10.0"
   },
   "scripts": {
-    "format": "run-s format:lint format:prettier format:cspell",
+    "format": "run-p format:*",
     "format:lint": "eslint --fix .",
     "format:prettier": "prettier --write .",
     "format:cspell": "cspell **/*",
     "knip": "knip",
     "knip-ci": "knip --no-exit-code --reporter json",
     "prepare": "husky install",
-    "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist && rm -rf dist/src",
-    "build:tests": "tsx build/esbuild-build-tests.ts && tsc --emitDeclarationOnly --declaration --project tsconfig.tests.json",
-    "build": "rm -rf dist && tsx build/esbuild-build.ts",
-    "postbuild": "yarn build:types",
     "postinstall": "git submodule update --init --recursive",
-    "test": "rm -rf dist && yarn build:tests && jest"
+    "build": "run-s clean build:types",
+    "build:types": "tsx build/esbuild-build.ts && tsc --emitDeclarationOnly --declaration --outDir dist",
+    "postbuild": "rm -rf dist/src",
+    "test": "jest",
+    "clean": "rm -rf dist"
   },
   "keywords": [
     "typescript",
@@ -63,6 +63,7 @@
     "husky": "^9.0.11",
     "jest": "^29.7.0",
     "jest-junit": "16.0.0",
+    "jest-md-dashboard": "0.8.0",
     "knip": "^5.0.1",
     "lint-staged": "^15.2.2",
     "npm-run-all": "^4.1.5",

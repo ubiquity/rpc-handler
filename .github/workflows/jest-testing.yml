@@ -28,16 +28,9 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Build & Run test suite
-        run: |
-          yarn test | tee ./coverage.txt && exit ${PIPESTATUS[0]}
-          
-      - name: Jest Coverage Comment
-        # Ensures this step is run even on previous step failure (e.g. test failed)
+      - name: Jest With Coverage
+        run: yarn test
+
+      - name: Add Jest Report to Summary
         if: always()
-        uses: MishaKav/jest-coverage-comment@main
-        with:
-          coverage-summary-path: coverage/coverage-summary.json
-          junitxml-path: junit.xml
-          junitxml-title: JUnit
-          coverage-path: ./coverage.txt
+        run: echo "$(cat test-dashboard.md)" >> $GITHUB_STEP_SUMMARY
