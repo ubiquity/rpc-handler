@@ -27,6 +27,7 @@ jobs:
 
       - name: Build
         run: |
+          yarn
           yarn install --immutable --check-cache
           yarn build
           yarn pack
