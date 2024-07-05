@@ -1,5 +1,5 @@
 {
-  "name": "@ubiquity-dao/rpc-handler",
+  "name": "@sadaf-a/qa-test",
   "version": "1.1.0",
   "description": "Uses Chainlist's RPC collection racing them returning the lowest latency RPC",
   "main": "dist/cjs/index.js",
