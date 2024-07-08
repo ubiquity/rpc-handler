@@ -10,6 +10,12 @@ jobs:
   publish-package:
     runs-on: ubuntu-latest
     steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          release-type: node
+          target-branch: main
+
       - name: Checkout repository code
         uses: actions/checkout@v4
         with:
@@ -32,6 +38,7 @@ jobs:
           yarn pack
 
       - name: Publish
-        run: npm publish --access public
+        run: yarn publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        if: ${{ steps.release.outputs.release_created }}
