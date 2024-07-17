@@ -12,3 +12,4 @@ dist
 coverage
 junit.xml
 dynamic.ts
+test-dashboard.md
