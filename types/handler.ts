@@ -69,8 +69,16 @@ export type NetworkRPCs = typeof networkRpcs;
 export type NetworkCurrencies = typeof networkCurrencies;
 export type NetworkExplorers = typeof networkExplorers;
 
+/**
+ * Without this NetworkName builds as `any` because `keyof typeof EXTRA_RPCS`
+ * extends symbol which cannot be used to index an object
+ */
+type NetworkIds<T extends PropertyKey = keyof typeof EXTRA_RPCS> = {
+  [K in T]: K extends string ? K : never;
+}[T];
+
 // filtered NetworkId union
-export type NetworkId = keyof typeof EXTRA_RPCS | "31337" | "1337";
+export type NetworkId = NetworkIds | "31337" | "1337";
 
 // unfiltered Record<NetworkId, NetworkName>
 type ChainsUnfiltered = {

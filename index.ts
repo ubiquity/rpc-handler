@@ -1,16 +1,3 @@
-export default async function getRPCHandler() {
-  let modulePath;
-  if (typeof window !== "undefined") {
-    modulePath = "./esm/index.js";
-  } else {
-    modulePath = "./cjs/index.js";
-  }
-
-  const { RPCHandler } = await import(modulePath);
-
-  return RPCHandler;
-}
-
 import {
   NetworkId,
   NetworkName,

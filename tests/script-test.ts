@@ -1,4 +1,4 @@
-import getRPCHandler, { HandlerConstructorConfig, RPCHandler, networkIds, networkCurrencies, networkExplorers, networkNames } from "../dist/";
+import { HandlerConstructorConfig, RPCHandler, networkIds, networkCurrencies, networkExplorers, networkNames } from "../dist/";
 
 /**
  * A test script to ensure that the module can be imported and used correctly
@@ -8,7 +8,6 @@ import getRPCHandler, { HandlerConstructorConfig, RPCHandler, networkIds, networ
 (async () => {
   // a hook that loads the correct module based on the environment
   // not required but a good to have if main/module entry is causing issues
-  const RPCHandler = await getRPCHandler();
 
   const config: HandlerConstructorConfig = {
     networkId: "100",
@@ -28,7 +27,7 @@ import getRPCHandler, { HandlerConstructorConfig, RPCHandler, networkIds, networ
     },
   };
 
-  const handler: RPCHandler = new RPCHandler(config);
+  const handler = new RPCHandler(config);
 
   await handler.getFastestRpcProvider();
 
