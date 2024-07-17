@@ -1,4 +1,4 @@
-import { NetworkId } from "types/handler";
+import { NetworkId } from "./handler";
 
 export class StorageService {
   static getLatencies(env: string, networkId: NetworkId): Record<string | number, number> {

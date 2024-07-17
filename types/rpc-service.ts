@@ -1,6 +1,45 @@
-import { NetworkId, ValidBlockData } from "../../types/handler";
+import { NetworkId, ValidBlockData } from "./handler";
 import axios from "axios";
 type PromiseResult = { success: boolean; rpcUrl: string; duration: number };
+
+const rpcBody = JSON.stringify({
+  jsonrpc: "2.0",
+  method: "eth_getBlockByNumber",
+  params: ["latest", false],
+  id: 1,
+});
+
+async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: object): Promise<PromiseResult> {
+  const abortController = new AbortController();
+  const instance = axios.create({
+    timeout: rpcTimeout,
+    headers: rpcHeader,
+    signal: abortController.signal,
+  });
+
+  const startTime = performance.now();
+  return instance
+    .post(rpcUrl, rpcBody)
+    .then(() => {
+      return {
+        rpcUrl,
+        duration: performance.now() - startTime,
+        success: true,
+      };
+    })
+    .catch((error) => {
+      const isTimeout = error.code === "ECONNABORTED";
+      return {
+        rpcUrl,
+        success: false,
+        duration: isTimeout ? performance.now() - startTime : 0,
+        error: isTimeout ? "timeout" : error.message,
+      };
+    })
+    .finally(() => {
+      abortController.abort();
+    });
+}
 
 export class RPCService {
   static async testRpcPerformance(
@@ -8,34 +47,10 @@ export class RPCService {
     latencies: Record<string, number>,
     runtimeRpcs: string[],
     rpcHeader: object,
-    rpcBody: string,
     rpcTimeout: number
   ): Promise<{ latencies: Record<string, number>; runtimeRpcs: string[] }> {
-    const instance = axios.create({
-      timeout: rpcTimeout,
-      headers: rpcHeader,
-      cancelToken: new axios.CancelToken((c) => setTimeout(() => c("Request Timeout"), rpcTimeout)),
-    });
+    const successfulPromises = runtimeRpcs.map((rpcUrl) => makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader));
 
-    const successfulPromises = runtimeRpcs.map<Promise<PromiseResult>>(
-      (rpcUrl) =>
-        new Promise<PromiseResult>((resolve) => {
-          const startTime = performance.now();
-          instance
-            .post(rpcUrl, rpcBody)
-            .then(() => {
-              const endTime = performance.now();
-              resolve({
-                rpcUrl,
-                duration: endTime - startTime,
-                success: true,
-              });
-            })
-            .catch(() => {
-              resolve({ rpcUrl, success: false, duration: 0 });
-            });
-        })
-    );
     const fastest = await Promise.race(successfulPromises);
 
     if (fastest.success) {
@@ -45,10 +60,10 @@ export class RPCService {
     const allResults = await Promise.allSettled(successfulPromises);
 
     allResults.forEach((result) => {
-      if (result.status === "fulfilled" && (result.value as PromiseResult).success) {
-        latencies[`${networkId}__${(result.value as PromiseResult).rpcUrl}`] = (result.value as PromiseResult).duration;
+      if (result.status === "fulfilled" && result.value.success) {
+        latencies[`${networkId}__${result.value.rpcUrl}`] = result.value.duration;
       } else if (result.status === "fulfilled") {
-        const fulfilledResult = result.value as PromiseResult;
+        const fulfilledResult = result.value;
         const index = runtimeRpcs.indexOf(fulfilledResult.rpcUrl);
         if (index > -1) {
           runtimeRpcs.splice(index, 1);
@@ -58,6 +73,7 @@ export class RPCService {
 
     return { latencies, runtimeRpcs };
   }
+
   static async findFastestRpc(latencies: Record<string, number>, networkId: NetworkId): Promise<string | null> {
     try {
       const validLatencies: Record<string, number> = Object.entries(latencies)
@@ -74,7 +90,7 @@ export class RPCService {
         .reduce((a, b) => (validLatencies[a] < validLatencies[b] ? a : b))
         .split("__")[1];
     } catch (error) {
-      console.error("[RPCService] Failed to find fastest RPC");
+      console.error("[RPCService] Failed to find fastest RPC", error);
       return null;
     }
   }
