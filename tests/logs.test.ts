@@ -371,8 +371,8 @@ function cleanSpyLogs(
     (message?: any, ...optionalParams: any[]): void;
   }>
 ) {
-  const strs = spy.mock.calls.map((call) => call.map((str) => str.toString()).join(" "));
-  return strs.flat().map((str) => cleanLogString(str));
+  const strings = spy.mock.calls.map((call) => call.map((str) => str.toString()).join(" "));
+  return strings.flat().map((str) => cleanLogString(str));
 }
 
 function cleanLogString(logString: string) {
