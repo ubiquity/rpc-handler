@@ -31,7 +31,7 @@ async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: obj
   } catch (err) {
     if (err instanceof AxiosError) {
       const isTimeout = err.code === "ECONNABORTED";
-      console.log("4.makeRpcRequest");
+      console.log("4.makeRpcRequest", err);
       return {
         rpcUrl,
         success: false,
@@ -39,7 +39,7 @@ async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: obj
         error: isTimeout ? "timeout" : err.message,
       };
     }
-    console.log("5.makeRpcRequest");
+    console.log("5.makeRpcRequest", err);
     return {
       rpcUrl,
       success: false,
@@ -64,12 +64,19 @@ export class RPCService {
     const successfulPromises = runtimeRpcs.map((rpcUrl) => makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader));
     console.log("2.RPCService-testRpcPerformance");
 
-    // const [res] = await Promise.all(successfulPromises);
-    // console.log("3.RPCService-testRpcPerformance");
-    // latencies[`${networkId}__${res.rpcUrl}`] = res.duration;
-    // return { latencies, runtimeRpcs };
+    async function getFirstSuccessfulRequest(requests: Promise<PromiseResult>[]) {
+      if (requests.length === 0) {
+        throw new Error("All requests failed");
+      }
 
-    const fastest = await Promise.race(successfulPromises);
+      try {
+        return await Promise.race(requests);
+      } catch {
+        return getFirstSuccessfulRequest(requests.slice(1));
+      }
+    }
+    // const fastest = await Promise.race(successfulPromises);
+    const fastest = await getFirstSuccessfulRequest(successfulPromises);
 
     if (fastest.success) {
       latencies[`${networkId}__${fastest.rpcUrl}`] = fastest.duration;
