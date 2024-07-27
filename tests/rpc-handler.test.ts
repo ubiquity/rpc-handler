@@ -89,6 +89,7 @@ describe("RPCHandler", () => {
         console.log('2.')
 
         provider = await rpcHandler.getFastestRpcProvider();
+        console.log('2.1')
         const fastestRpc = rpcHandler.getProvider();
         const latencies = rpcHandler.getLatencies();
         expect(provider._network.chainId).toBe(Number(testConfig.networkId));
