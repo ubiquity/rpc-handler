@@ -93,7 +93,7 @@ describe.only("RPCHandler", () => {
       const fastestRpc = rpcHandler.getProvider();
       const latencies = rpcHandler.getLatencies();
       expect(provider._network.chainId).toBe(Number(testConfig.networkId));
-      expect(provider.connection.url).toMatch("https://");
+      expect(provider.connection.url).toMatch(/(https|wss):\/\//);
       console.log("3.");
       const latArrLen = Array.from(Object.entries(latencies)).length;
       const runtime = rpcHandler.getRuntimeRpcs();
