@@ -28,15 +28,15 @@ async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: obj
       success: true,
     };
   } catch (err) {
-    if (err instanceof AxiosError) {
-      const isTimeout = err.code === "ECONNABORTED";
-      return {
-        rpcUrl,
-        success: false,
-        duration: isTimeout ? performance.now() - startTime : 0,
-        error: isTimeout ? "timeout" : err.message,
-      };
-    }
+    // if (err instanceof AxiosError) {
+    //   const isTimeout = err.code === "ECONNABORTED";
+    //   return {
+    //     rpcUrl,
+    //     success: false,
+    //     duration: isTimeout ? performance.now() - startTime : 0,
+    //     error: isTimeout ? "timeout" : err.message,
+    //   };
+    // }
     return {
       rpcUrl,
       success: false,
