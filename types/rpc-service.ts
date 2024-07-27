@@ -58,30 +58,34 @@ export class RPCService {
     const successfulPromises = runtimeRpcs.map((rpcUrl) => makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader));
     console.log("2.testRpcPerformance");
 
-    const fastest = await Promise.race(successfulPromises);
-
-    if (fastest.success) {
-      latencies[`${networkId}__${fastest.rpcUrl}`] = fastest.duration;
-    }
-    console.log("3.testRpcPerformance");
-
-    const allResults = await Promise.allSettled(successfulPromises);
-    console.log("4.testRpcPerformance");
-
-    allResults.forEach((result) => {
-      if (result.status === "fulfilled" && result.value.success) {
-        latencies[`${networkId}__${result.value.rpcUrl}`] = result.value.duration;
-      } else if (result.status === "fulfilled") {
-        const fulfilledResult = result.value;
-        const index = runtimeRpcs.indexOf(fulfilledResult.rpcUrl);
-        if (index > -1) {
-          runtimeRpcs.splice(index, 1);
-        }
-      }
-    });
-    console.log("5.testRpcPerformance");
-
+    const [res] = await Promise.all(successfulPromises);
+    latencies[`${networkId}__${res.rpcUrl}`] = res.duration;
     return { latencies, runtimeRpcs };
+
+    // const fastest = await Promise.race(successfulPromises);
+    //
+    // if (fastest.success) {
+    //   latencies[`${networkId}__${fastest.rpcUrl}`] = fastest.duration;
+    // }
+    // console.log("3.testRpcPerformance");
+    //
+    // const allResults = await Promise.allSettled(successfulPromises);
+    // console.log("4.testRpcPerformance");
+    //
+    // allResults.forEach((result) => {
+    //   if (result.status === "fulfilled" && result.value.success) {
+    //     latencies[`${networkId}__${result.value.rpcUrl}`] = result.value.duration;
+    //   } else if (result.status === "fulfilled") {
+    //     const fulfilledResult = result.value;
+    //     const index = runtimeRpcs.indexOf(fulfilledResult.rpcUrl);
+    //     if (index > -1) {
+    //       runtimeRpcs.splice(index, 1);
+    //     }
+    //   }
+    // });
+    // console.log("5.testRpcPerformance");
+    //
+    // return { latencies, runtimeRpcs };
   }
 
   static async findFastestRpc(latencies: Record<string, number>, networkId: NetworkId): Promise<string | null> {
