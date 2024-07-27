@@ -10,6 +10,7 @@ const rpcBody = JSON.stringify({
 });
 
 async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: object): Promise<PromiseResult> {
+  console.log("1.makeRpcRequest");
   const abortController = new AbortController();
   const instance = axios.create({
     timeout: rpcTimeout,
@@ -17,9 +18,11 @@ async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: obj
     signal: abortController.signal,
   });
 
+  console.log("2.makeRpcRequest");
   const startTime = performance.now();
   try {
     await instance.post(rpcUrl, rpcBody);
+    console.log("3.makeRpcRequest");
     return {
       rpcUrl,
       duration: performance.now() - startTime,
@@ -28,6 +31,7 @@ async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: obj
   } catch (err) {
     if (err instanceof AxiosError) {
       const isTimeout = err.code === "ECONNABORTED";
+      console.log("4.makeRpcRequest");
       return {
         rpcUrl,
         success: false,
@@ -35,6 +39,7 @@ async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: obj
         error: isTimeout ? "timeout" : err.message,
       };
     }
+    console.log("5.makeRpcRequest");
     return {
       rpcUrl,
       success: false,
@@ -42,7 +47,8 @@ async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: obj
       error: `${err}`,
     };
   } finally {
-    abortController.abort();
+    // console.log("6.makeRpcRequest");
+    // abortController.abort();
   }
 }
 
