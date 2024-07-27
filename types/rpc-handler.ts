@@ -56,19 +56,19 @@ export class RPCHandler implements HandlerInterface {
   }
 
   public async getFastestRpcProvider(): Promise<JsonRpcProvider> {
-    console.log("2.1.1");
+    console.log("1.getFastestRpcProvider");
     let fastest = await this.testRpcPerformance();
-    console.log("2.1.2");
+    console.log("2.getFastestRpcProvider");
 
     if (fastest && fastest?.connection.url.includes("localhost") && !(this._networkId === "31337" || this._networkId === "1337")) {
       fastest = await this.testRpcPerformance();
     }
-    console.log("2.1.3");
+    console.log("3.getFastestRpcProvider");
 
     this._provider = this.createProviderProxy(fastest, this);
     this.log("ok", `[${this.proxySettings.moduleName}] Provider initialized: `, { provider: this._provider?.connection.url });
     this.log("info", `[${this.proxySettings.moduleName}]`, { latencies: this._latencies });
-    console.log("2.1.4");
+    console.log("4.getFastestRpcProvider");
 
     return this._provider;
   }
@@ -232,11 +232,11 @@ export class RPCHandler implements HandlerInterface {
       this._runtimeRpcs = getRpcUrls(this._networkRpcs);
     }
 
-    console.log("1.test");
+    console.log("1.handler-testRpcPerformance");
     await this._testRpcPerformance();
-    console.log("2.test");
+    console.log("2.handler-testRpcPerformance");
     const fastestRpcUrl = await RPCService.findFastestRpc(this._latencies, this._networkId);
-    console.log("3.test");
+    console.log("3.handler-testRpcPerformance");
     if (!fastestRpcUrl) {
       throw this.log(
         "fatal",

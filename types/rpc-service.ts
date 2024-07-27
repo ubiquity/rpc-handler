@@ -54,11 +54,12 @@ export class RPCService {
     rpcHeader: object,
     rpcTimeout: number
   ): Promise<{ latencies: Record<string, number>; runtimeRpcs: string[] }> {
-    console.log("1.testRpcPerformance");
+    console.log("1.RPCService-testRpcPerformance");
     const successfulPromises = runtimeRpcs.map((rpcUrl) => makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader));
-    console.log("2.testRpcPerformance");
+    console.log("2.RPCService-testRpcPerformance");
 
     const [res] = await Promise.all(successfulPromises);
+    console.log("3.RPCService-testRpcPerformance");
     latencies[`${networkId}__${res.rpcUrl}`] = res.duration;
     return { latencies, runtimeRpcs };
 
