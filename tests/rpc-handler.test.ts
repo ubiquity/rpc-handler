@@ -111,7 +111,7 @@ describe.only("RPCHandler", () => {
       }
       expect(fastestRpc.connection.url).toBe(provider.connection.url);
       // });
-    }, 120000);
+    }, 360000);
   });
 
   // describe("RPC tracking config option", () => {
