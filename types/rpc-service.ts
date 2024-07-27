@@ -1,6 +1,7 @@
+import { AbortError } from "node-fetch";
 import { NetworkId, ValidBlockData } from "./handler";
-import axios from "axios";
-type PromiseResult = { success: boolean; rpcUrl: string; duration: number };
+import axios, { AxiosError } from "axios";
+type PromiseResult = { success: boolean; rpcUrl: string; duration: number; error?: string };
 
 const rpcBody = JSON.stringify({
   jsonrpc: "2.0",
@@ -18,27 +19,32 @@ async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: obj
   });
 
   const startTime = performance.now();
-  return instance
-    .post(rpcUrl, rpcBody)
-    .then(() => {
-      return {
-        rpcUrl,
-        duration: performance.now() - startTime,
-        success: true,
-      };
-    })
-    .catch((error) => {
-      const isTimeout = error.code === "ECONNABORTED";
+  try {
+    await instance.post(rpcUrl, rpcBody);
+    return {
+      rpcUrl,
+      duration: performance.now() - startTime,
+      success: true,
+    };
+  } catch (err) {
+    if (err instanceof AxiosError) {
+      const isTimeout = err.code === "ECONNABORTED";
       return {
         rpcUrl,
         success: false,
         duration: isTimeout ? performance.now() - startTime : 0,
-        error: isTimeout ? "timeout" : error.message,
+        error: isTimeout ? "timeout" : err.message,
       };
-    })
-    .finally(() => {
-      abortController.abort();
-    });
+    }
+    return {
+      rpcUrl,
+      success: false,
+      duration: 0,
+      error: `${err}`,
+    };
+  } finally {
+    abortController.abort();
+  }
 }
 
 export class RPCService {
@@ -60,7 +66,6 @@ export class RPCService {
     }
     console.log("3.testRpcPerformance");
 
-    await Promise.all(successfulPromises);
     const allResults = await Promise.allSettled(successfulPromises);
     console.log("4.testRpcPerformance");
 
