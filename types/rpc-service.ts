@@ -10,19 +10,15 @@ const rpcBody = JSON.stringify({
 });
 
 async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: object): Promise<PromiseResult> {
-  console.log("1.makeRpcRequest");
   const abortController = new AbortController();
   const instance = axios.create({
     timeout: rpcTimeout,
     headers: rpcHeader,
     signal: abortController.signal,
   });
-
-  console.log("2.makeRpcRequest");
   const startTime = performance.now();
   try {
     await instance.post(rpcUrl, rpcBody);
-    console.log("3.makeRpcRequest");
     return {
       rpcUrl,
       duration: performance.now() - startTime,
@@ -31,7 +27,6 @@ async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: obj
   } catch (err) {
     if (err instanceof AxiosError) {
       const isTimeout = err.code === "ECONNABORTED";
-      console.log("4.makeRpcRequest", err);
       return {
         rpcUrl,
         success: false,
@@ -39,7 +34,6 @@ async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: obj
         error: isTimeout ? "timeout" : err.message,
       };
     }
-    console.log("5.makeRpcRequest", err);
     return {
       rpcUrl,
       success: false,
@@ -60,9 +54,7 @@ export class RPCService {
     rpcHeader: object,
     rpcTimeout: number
   ): Promise<{ latencies: Record<string, number>; runtimeRpcs: string[] }> {
-    console.log("1.RPCService-testRpcPerformance");
     const successfulPromises = runtimeRpcs.map((rpcUrl) => makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader));
-    console.log("2.RPCService-testRpcPerformance");
 
     async function getFirstSuccessfulRequest(requests: Promise<PromiseResult>[]) {
       if (requests.length === 0) {
@@ -81,10 +73,8 @@ export class RPCService {
     if (fastest.success) {
       latencies[`${networkId}__${fastest.rpcUrl}`] = fastest.duration;
     }
-    console.log("3.RPCService-testRpcPerformance");
 
     const allResults = await Promise.allSettled(successfulPromises);
-    console.log("4.RPCService-testRpcPerformance");
 
     allResults.forEach((result) => {
       if (result.status === "fulfilled" && result.value.success) {
@@ -97,7 +87,6 @@ export class RPCService {
         }
       }
     });
-    console.log("5.RPCService-testRpcPerformance");
 
     return { latencies, runtimeRpcs };
   }

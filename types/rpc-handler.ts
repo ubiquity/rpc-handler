@@ -325,7 +325,6 @@ export class RPCHandler implements HandlerInterface {
   }
 
   private async _testRpcPerformance(): Promise<void> {
-    console.log("1._testRpcPerformance");
     const { latencies, runtimeRpcs } = await RPCService.testRpcPerformance(
       this._networkId,
       this._latencies,
@@ -337,11 +336,9 @@ export class RPCHandler implements HandlerInterface {
     this._runtimeRpcs = runtimeRpcs;
     this._latencies = latencies;
     this._refreshLatencies++;
-    console.log("2._testRpcPerformance");
 
     StorageService.setLatencies(this._env, this._latencies);
     StorageService.setRefreshLatencies(this._env, this._refreshLatencies);
-    console.log("3._testRpcPerformance");
   }
 
   // creates metadata for logging
