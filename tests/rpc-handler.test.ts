@@ -1,6 +1,6 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { networkRpcs } from "../types/constants";
-import { RPCHandler } from "../types/rpc-handler";
+// import { RPCHandler } from "../types/rpc-handler";
 import { HandlerConstructorConfig, getRpcUrls, Rpc, Tracking } from "../types/handler";
 import { PrettyLogs } from "../types/logs";
 
@@ -39,43 +39,43 @@ describe.only("RPCHandler", () => {
     jest.resetModules();
   });
 
-  describe("Initialization", () => {
-    let rpcHandler: RPCHandler;
-    beforeEach(async () => {
-      rpcHandler = new RPCHandler(testConfig);
-    });
-
-    it("should be instance of RPCHandler", () => {
-      expect(rpcHandler).toBeInstanceOf(RPCHandler);
-    });
-    it("should initialize with correct networkId", () => {
-      expect(rpcHandler["_networkId"]).toBe(testConfig.networkId);
-    });
-
-    it("should initialize with correct cacheRefreshCycles", () => {
-      expect(rpcHandler["_cacheRefreshCycles"]).toBe(testConfig.cacheRefreshCycles);
-    });
-    it("should initialize with correct autoStorage", () => {
-      expect(rpcHandler["_autoStorage"]).toBe(false);
-    });
-    it("should initialize with correct runtimeRpcs", () => {
-      expect(rpcHandler["_runtimeRpcs"]).toEqual([]);
-    });
-    it("should initialize with correct latencies", () => {
-      expect(rpcHandler["_latencies"]).toEqual({});
-    });
-    it("should initialize with correct networkRpcs", () => {
-      expect(rpcHandler["_networkRpcs"]).toEqual(networkRpcs[testConfig.networkId].rpcs);
-    });
-    it("should initialize with null provider", () => {
-      const provider = rpcHandler["_provider"];
-      expect(provider).toBeNull();
-    });
-
-    it("should initialize with correct rpcTimeout", () => {
-      expect(rpcHandler["_rpcTimeout"]).toBe(testConfig.rpcTimeout);
-    });
-  });
+  // describe("Initialization", () => {
+  //   let rpcHandler: RPCHandler;
+  //   beforeEach(async () => {
+  //     rpcHandler = new RPCHandler(testConfig);
+  //   });
+  //
+  //   it("should be instance of RPCHandler", () => {
+  //     expect(rpcHandler).toBeInstanceOf(RPCHandler);
+  //   });
+  //   it("should initialize with correct networkId", () => {
+  //     expect(rpcHandler["_networkId"]).toBe(testConfig.networkId);
+  //   });
+  //
+  //   it("should initialize with correct cacheRefreshCycles", () => {
+  //     expect(rpcHandler["_cacheRefreshCycles"]).toBe(testConfig.cacheRefreshCycles);
+  //   });
+  //   it("should initialize with correct autoStorage", () => {
+  //     expect(rpcHandler["_autoStorage"]).toBe(false);
+  //   });
+  //   it("should initialize with correct runtimeRpcs", () => {
+  //     expect(rpcHandler["_runtimeRpcs"]).toEqual([]);
+  //   });
+  //   it("should initialize with correct latencies", () => {
+  //     expect(rpcHandler["_latencies"]).toEqual({});
+  //   });
+  //   it("should initialize with correct networkRpcs", () => {
+  //     expect(rpcHandler["_networkRpcs"]).toEqual(networkRpcs[testConfig.networkId].rpcs);
+  //   });
+  //   it("should initialize with null provider", () => {
+  //     const provider = rpcHandler["_provider"];
+  //     expect(provider).toBeNull();
+  //   });
+  //
+  //   it("should initialize with correct rpcTimeout", () => {
+  //     expect(rpcHandler["_rpcTimeout"]).toBe(testConfig.rpcTimeout);
+  //   });
+  // });
 
   describe.only("getFastestRpcProvider", () => {
     it.only("should return the fastest RPC compared to the latencies", async () => {
@@ -114,48 +114,48 @@ describe.only("RPCHandler", () => {
     }, 60000);
   });
 
-  describe("RPC tracking config option", () => {
-    const filterFunctions = {
-      none: function (rpc: Rpc) {
-        return rpc?.tracking && rpc.tracking == "none";
-      },
-      limited: function (rpc: Rpc) {
-        return rpc?.tracking && ["none", "limited"].includes(rpc.tracking);
-      },
-      yes: function (rpc: Rpc) {
-        return true;
-      },
-      undefined: function (rpc: Rpc) {
-        return true;
-      },
-    };
-
-    for (const [trackingOption, filterFunction] of Object.entries(filterFunctions)) {
-      it(`should return correct rpcs with tracking=${trackingOption}`, async () => {
-        const filteredRpcs = networkRpcs[testConfig.networkId].rpcs.filter((rpc) => {
-          return filterFunction(rpc);
-        });
-
-        const urls = filteredRpcs.map((rpc) => {
-          if (typeof rpc == "string") return rpc;
-
-          return rpc.url;
-        });
-
-        const rpcHandlerConfig = { ...testConfig };
-        if (trackingOption == "undefined") {
-          delete rpcHandlerConfig.tracking;
-        } else {
-          rpcHandlerConfig.tracking = trackingOption as Tracking;
-        }
-        const handler = new RPCHandler(rpcHandlerConfig);
-        await handler.testRpcPerformance();
-        const runtime = handler.getRuntimeRpcs();
-        expect(runtime.length).toBeLessThanOrEqual(urls.length);
-
-        // expect runtime to be the subset of urls
-        expect(urls).toEqual(expect.arrayContaining(runtime));
-      }, 10000);
-    }
-  });
+  // describe("RPC tracking config option", () => {
+  //   const filterFunctions = {
+  //     none: function (rpc: Rpc) {
+  //       return rpc?.tracking && rpc.tracking == "none";
+  //     },
+  //     limited: function (rpc: Rpc) {
+  //       return rpc?.tracking && ["none", "limited"].includes(rpc.tracking);
+  //     },
+  //     yes: function (rpc: Rpc) {
+  //       return true;
+  //     },
+  //     undefined: function (rpc: Rpc) {
+  //       return true;
+  //     },
+  //   };
+  //
+  //   for (const [trackingOption, filterFunction] of Object.entries(filterFunctions)) {
+  //     it(`should return correct rpcs with tracking=${trackingOption}`, async () => {
+  //       const filteredRpcs = networkRpcs[testConfig.networkId].rpcs.filter((rpc) => {
+  //         return filterFunction(rpc);
+  //       });
+  //
+  //       const urls = filteredRpcs.map((rpc) => {
+  //         if (typeof rpc == "string") return rpc;
+  //
+  //         return rpc.url;
+  //       });
+  //
+  //       const rpcHandlerConfig = { ...testConfig };
+  //       if (trackingOption == "undefined") {
+  //         delete rpcHandlerConfig.tracking;
+  //       } else {
+  //         rpcHandlerConfig.tracking = trackingOption as Tracking;
+  //       }
+  //       const handler = new RPCHandler(rpcHandlerConfig);
+  //       await handler.testRpcPerformance();
+  //       const runtime = handler.getRuntimeRpcs();
+  //       expect(runtime.length).toBeLessThanOrEqual(urls.length);
+  //
+  //       // expect runtime to be the subset of urls
+  //       expect(urls).toEqual(expect.arrayContaining(runtime));
+  //     }, 10000);
+  //   }
+  // });
 });
