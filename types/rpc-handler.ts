@@ -56,15 +56,19 @@ export class RPCHandler implements HandlerInterface {
   }
 
   public async getFastestRpcProvider(): Promise<JsonRpcProvider> {
+    console.log('2.1.1')
     let fastest = await this.testRpcPerformance();
+    console.log('2.1.2')
 
     if (fastest && fastest?.connection.url.includes("localhost") && !(this._networkId === "31337" || this._networkId === "1337")) {
       fastest = await this.testRpcPerformance();
     }
+    console.log('2.1.3')
 
     this._provider = this.createProviderProxy(fastest, this);
     this.log("ok", `[${this.proxySettings.moduleName}] Provider initialized: `, { provider: this._provider?.connection.url });
     this.log("info", `[${this.proxySettings.moduleName}]`, { latencies: this._latencies });
+    console.log('2.1.4')
 
     return this._provider;
   }
