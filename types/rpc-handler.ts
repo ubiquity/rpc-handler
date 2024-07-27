@@ -228,11 +228,8 @@ export class RPCHandler implements HandlerInterface {
       this._runtimeRpcs = getRpcUrls(this._networkRpcs);
     }
 
-    console.log("1.handler-testRpcPerformance");
     await this._testRpcPerformance();
-    console.log("2.handler-testRpcPerformance");
     const fastestRpcUrl = await RPCService.findFastestRpc(this._latencies, this._networkId);
-    console.log("3.handler-testRpcPerformance");
     if (!fastestRpcUrl) {
       throw this.log(
         "fatal",
