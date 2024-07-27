@@ -40,9 +40,6 @@ async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: obj
       duration: 0,
       error: `${err}`,
     };
-  } finally {
-    // console.log("6.makeRpcRequest");
-    // abortController.abort();
   }
 }
 
