@@ -49,15 +49,19 @@ export class RPCService {
     rpcHeader: object,
     rpcTimeout: number
   ): Promise<{ latencies: Record<string, number>; runtimeRpcs: string[] }> {
+    console.log('1.testRpcPerformance')
     const successfulPromises = runtimeRpcs.map((rpcUrl) => makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader));
+    console.log('2.testRpcPerformance')
 
     const fastest = await Promise.race(successfulPromises);
 
     if (fastest.success) {
       latencies[`${networkId}__${fastest.rpcUrl}`] = fastest.duration;
     }
+    console.log('3.testRpcPerformance')
 
     const allResults = await Promise.allSettled(successfulPromises);
+    console.log('4.testRpcPerformance')
 
     allResults.forEach((result) => {
       if (result.status === "fulfilled" && result.value.success) {
@@ -70,6 +74,7 @@ export class RPCService {
         }
       }
     });
+    console.log('5.testRpcPerformance')
 
     return { latencies, runtimeRpcs };
   }
