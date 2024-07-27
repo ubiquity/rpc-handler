@@ -67,7 +67,7 @@ export class RPCService {
         return getFirstSuccessfulRequest(requests.slice(1));
       }
     }
-    // const fastest = await Promise.race(successfulPromises);
+
     const fastest = await getFirstSuccessfulRequest(successfulPromises);
 
     if (fastest.success) {

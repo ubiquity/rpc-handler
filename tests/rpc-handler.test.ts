@@ -22,7 +22,7 @@ export const testConfig: HandlerConstructorConfig = {
   },
 };
 
-describe.only("RPCHandler", () => {
+describe("RPCHandler", () => {
   let provider: JsonRpcProvider;
 
   afterAll(() => {
@@ -77,8 +77,8 @@ describe.only("RPCHandler", () => {
     });
   });
 
-  describe.only("getFastestRpcProvider", () => {
-    it.only("should return the fastest RPC compared to the latencies", async () => {
+  describe("getFastestRpcProvider", () => {
+    it("should return the fastest RPC compared to the latencies", async () => {
       const module = await import("../types/rpc-handler");
       const rpcHandler = new module.RPCHandler({
         ...testConfig,
