@@ -1,4 +1,3 @@
-import { AbortError } from "node-fetch";
 import { NetworkId, ValidBlockData } from "./handler";
 import axios, { AxiosError } from "axios";
 type PromiseResult = { success: boolean; rpcUrl: string; duration: number; error?: string };
@@ -11,7 +10,6 @@ const rpcBody = JSON.stringify({
 });
 
 async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: object): Promise<PromiseResult> {
-  return { rpcUrl, duration: 0, success: true };
   const abortController = new AbortController();
   const instance = axios.create({
     timeout: rpcTimeout,
@@ -28,15 +26,15 @@ async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: obj
       success: true,
     };
   } catch (err) {
-    // if (err instanceof AxiosError) {
-    //   const isTimeout = err.code === "ECONNABORTED";
-    //   return {
-    //     rpcUrl,
-    //     success: false,
-    //     duration: isTimeout ? performance.now() - startTime : 0,
-    //     error: isTimeout ? "timeout" : err.message,
-    //   };
-    // }
+    if (err instanceof AxiosError) {
+      const isTimeout = err.code === "ECONNABORTED";
+      return {
+        rpcUrl,
+        success: false,
+        duration: isTimeout ? performance.now() - startTime : 0,
+        error: isTimeout ? "timeout" : err.message,
+      };
+    }
     return {
       rpcUrl,
       success: false,
