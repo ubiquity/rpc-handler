@@ -51,27 +51,38 @@ export class RPCService {
     rpcHeader: object,
     rpcTimeout: number
   ): Promise<{ latencies: Record<string, number>; runtimeRpcs: string[] }> {
-    const successfulPromises = runtimeRpcs.map((rpcUrl) => makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader));
-
-    async function getFirstSuccessfulRequest(requests: Promise<PromiseResult>[]) {
-      if (requests.length === 0) {
-        throw new Error("All requests failed");
+    async function requestEndpoint(rpcUrl: string) {
+      try {
+        return await makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader);
+      } catch (err) {
+        console.error(`Failed to reach endpoint. ${err}`);
+        throw new Error(rpcUrl);
       }
+    }
+    const promises = runtimeRpcs.map((rpcUrl) => requestEndpoint(rpcUrl));
+    async function getFirstSuccessfulRequest(requests: string[]) {
+      if (requests.length === 0) {
+        throw new Error("All requests failed.");
+      }
+      const promisesToResolve = requests.map((rpcUrl) => requestEndpoint(rpcUrl));
 
       try {
-        return await Promise.race(requests);
-      } catch {
+        return await Promise.race(promisesToResolve);
+      } catch (err) {
+        console.error(`Failed to reach endpoint. ${err}`);
+        if (err instanceof Error && requests.includes(err.message)) {
+          return getFirstSuccessfulRequest(requests.filter((request) => request !== err.message));
+        }
         return getFirstSuccessfulRequest(requests.slice(1));
       }
     }
-
-    const fastest = await getFirstSuccessfulRequest(successfulPromises);
+    const fastest = await getFirstSuccessfulRequest(runtimeRpcs);
 
     if (fastest.success) {
       latencies[`${networkId}__${fastest.rpcUrl}`] = fastest.duration;
     }
 
-    const allResults = await Promise.allSettled(successfulPromises);
+    const allResults = await Promise.allSettled(promises);
 
     allResults.forEach((result) => {
       if (result.status === "fulfilled" && result.value.success) {
