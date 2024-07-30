@@ -38,7 +38,7 @@ describe("RPCHandler", () => {
     const module = await import("../types/rpc-handler");
     const rpcHandler = new module.RPCHandler({
       ...testConfig,
-      rpcTimeout: 99999999,
+      rpcTimeout: null,
     });
     await rpcHandler.testRpcPerformance();
     const latencies = rpcHandler.getLatencies();
@@ -48,7 +48,7 @@ describe("RPCHandler", () => {
 
     console.log("slowestRpc: without an rpc timeout > ", slowestRpc);
     console.log("fastestRpc: without an rpc timeout > ", fastestRpcUrl);
-  }, 999999);
+  }, 15000);
 
   it("executing with an rpc timeout", async () => {
     const module = await import("../types/rpc-handler");
