@@ -33,7 +33,7 @@ describe("Call Handler", () => {
       },
     };
 
-    afterAll(() => {
+    afterEach(() => {
       jest.clearAllMocks();
       jest.clearAllTimers();
     });

@@ -35,8 +35,6 @@ describe("RPCHandler", () => {
   afterEach(() => {
     jest.clearAllMocks();
     jest.clearAllTimers();
-    jest.resetAllMocks();
-    jest.resetModules();
   });
 
   describe("Initialization", () => {
@@ -46,7 +44,6 @@ describe("RPCHandler", () => {
 
     it("should be instance of RPCHandler", () => {
       const rpcHandler = setup();
-      console.log(rpcHandler);
       expect(rpcHandler).toBeInstanceOf(RPCHandler);
     });
 
@@ -57,32 +54,31 @@ describe("RPCHandler", () => {
 
     it("should initialize with correct cacheRefreshCycles", () => {
       const rpcHandler = setup();
-
       expect(rpcHandler["_cacheRefreshCycles"]).toBe(testConfig.cacheRefreshCycles);
     });
+
     it("should initialize with correct autoStorage", () => {
       const rpcHandler = setup();
-
       expect(rpcHandler["_autoStorage"]).toBe(false);
     });
+
     it("should initialize with correct runtimeRpcs", () => {
       const rpcHandler = setup();
-
       expect(rpcHandler["_runtimeRpcs"]).toEqual([]);
     });
+
     it("should initialize with correct latencies", () => {
       const rpcHandler = setup();
-
       expect(rpcHandler["_latencies"]).toEqual({});
     });
+
     it("should initialize with correct networkRpcs", () => {
       const rpcHandler = setup();
-
       expect(rpcHandler["_networkRpcs"]).toEqual(networkRpcs[testConfig.networkId].rpcs);
     });
+
     it("should initialize with null provider", () => {
       const rpcHandler = setup();
-
       const provider = rpcHandler["_provider"];
       expect(provider).toBeNull();
     });
