@@ -20,17 +20,15 @@ export const testConfig: HandlerConstructorConfig = {
   },
 };
 
+jest.mock("axios", () => ({
+  ...jest.requireActual("axios"),
+  create: jest.fn(() => ({
+    post: jest.fn(),
+  })),
+}));
+
 describe("RPCHandler", () => {
-  let rpcHandler: RPCHandler;
-
-  afterAll(() => {
-    jest.clearAllMocks();
-    jest.clearAllTimers();
-    jest.resetAllMocks();
-    jest.resetModules();
-  });
-
-  beforeEach(() => {
+  afterEach(() => {
     jest.clearAllMocks();
     jest.clearAllTimers();
     jest.resetAllMocks();

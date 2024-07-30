@@ -48,13 +48,6 @@ describe("Call Handler", () => {
     jest.resetModules();
   });
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-    jest.clearAllTimers();
-    jest.resetAllMocks();
-    jest.resetModules();
-  });
-
   describe("createProviderProxy", () => {
     let provider: JsonRpcProvider;
 

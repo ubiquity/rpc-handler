@@ -100,14 +100,7 @@ describe("Logs", () => {
     },
   };
 
-  afterAll(() => {
-    jest.clearAllMocks();
-    jest.clearAllTimers();
-    jest.resetAllMocks();
-    jest.resetModules();
-  });
-
-  beforeEach(() => {
+  afterEach(() => {
     jest.clearAllMocks();
     jest.clearAllTimers();
     jest.resetAllMocks();

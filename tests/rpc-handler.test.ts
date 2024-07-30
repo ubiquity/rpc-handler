@@ -32,7 +32,7 @@ jest.mock("axios", () => ({
 describe("RPCHandler", () => {
   let provider: JsonRpcProvider;
 
-  afterAll(() => {
+  afterEach(() => {
     jest.clearAllMocks();
     jest.clearAllTimers();
     jest.resetAllMocks();
