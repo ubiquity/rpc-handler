@@ -9,41 +9,39 @@ const rpcBody = JSON.stringify({
   id: 1,
 });
 
-async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: object): Promise<PromiseResult> {
-  // const abortController = new AbortController();
-  const instance = axios.create({
-    timeout: rpcTimeout,
-    headers: rpcHeader,
-    // signal: abortController.signal,
-  });
-  const startTime = performance.now();
-  try {
-    await instance.post(rpcUrl, rpcBody);
-    return {
-      rpcUrl,
-      duration: performance.now() - startTime,
-      success: true,
-    };
-  } catch (err) {
-    if (err instanceof AxiosError) {
-      const isTimeout = err.code === "ECONNABORTED";
+export class RPCService {
+  static async makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: object): Promise<PromiseResult> {
+    const instance = axios.create({
+      timeout: rpcTimeout,
+      headers: rpcHeader,
+    });
+    const startTime = performance.now();
+    try {
+      await instance.post(rpcUrl, rpcBody);
+      return {
+        rpcUrl,
+        duration: performance.now() - startTime,
+        success: true,
+      };
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        const isTimeout = err.code === "ECONNABORTED";
+        return {
+          rpcUrl,
+          success: false,
+          duration: isTimeout ? performance.now() - startTime : 0,
+          error: isTimeout ? "timeout" : err.message,
+        };
+      }
       return {
         rpcUrl,
         success: false,
-        duration: isTimeout ? performance.now() - startTime : 0,
-        error: isTimeout ? "timeout" : err.message,
+        duration: 0,
+        error: `${err}`,
       };
     }
-    return {
-      rpcUrl,
-      success: false,
-      duration: 0,
-      error: `${err}`,
-    };
   }
-}
 
-export class RPCService {
   static async testRpcPerformance(
     networkId: NetworkId,
     latencies: Record<string, number>,
@@ -53,7 +51,7 @@ export class RPCService {
   ): Promise<{ latencies: Record<string, number>; runtimeRpcs: string[] }> {
     async function requestEndpoint(rpcUrl: string) {
       try {
-        return await makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader);
+        return await RPCService.makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader);
       } catch (err) {
         console.error(`Failed to reach endpoint. ${err}`);
         throw new Error(rpcUrl);
