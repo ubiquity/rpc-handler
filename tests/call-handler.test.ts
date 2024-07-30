@@ -1,38 +1,6 @@
-import { JsonRpcProvider } from "@ethersproject/providers";
 import { RPCHandler } from "../types/rpc-handler";
 import { HandlerConstructorConfig } from "../types/handler";
 import { PrettyLogs } from "../types/logs";
-
-export const testConfig: HandlerConstructorConfig = {
-  networkId: "100",
-  autoStorage: false,
-  cacheRefreshCycles: 3,
-  networkName: null,
-  networkRpcs: null,
-  rpcTimeout: 600,
-  runtimeRpcs: null,
-  proxySettings: {
-    retryCount: 3,
-    retryDelay: 10,
-    logTier: "info",
-    logger: new PrettyLogs(),
-    strictLogs: true,
-  },
-};
-
-const rpcList = [
-  { url: "http://127.0.0.1:85451" },
-  { url: "http://127.0.0.1:85454" },
-  { url: "http://127.0.0.1:85453" },
-  { url: "http://127.0.0.1:854531" },
-  { url: "http://127.0.0.1:854532" },
-  { url: "http://127.0.0.1:854533" },
-  { url: "http://127.0.0.1:854535" },
-  { url: "http://127.0.0.1:854" },
-  { url: "http://127.0.0.1:85" },
-  { url: "http://127.0.0.1:81" },
-  { url: "http://127.0.0.1:8545" },
-];
 
 jest.mock("axios", () => ({
   ...jest.requireActual("axios"),
@@ -45,8 +13,6 @@ describe("Call Handler", () => {
   afterEach(() => {
     jest.clearAllMocks();
     jest.clearAllTimers();
-    jest.resetAllMocks();
-    jest.resetModules();
   });
 
   describe("Failure cases", () => {
@@ -67,11 +33,9 @@ describe("Call Handler", () => {
       },
     };
 
-    afterEach(() => {
+    afterAll(() => {
       jest.clearAllMocks();
       jest.clearAllTimers();
-      jest.resetAllMocks();
-      jest.resetModules();
     });
 
     it("should be able to filter all bad rpcs then make a successful call", async () => {
@@ -91,7 +55,6 @@ describe("Call Handler", () => {
         networkRpcs: badRpcList,
         proxySettings: { ...mods.proxySettings, retryDelay: 10, strictLogs: false, logTier: "verbose" },
       });
-
       const newProvider = await newHandler.getFastestRpcProvider();
       expect(newProvider).toBeTruthy();
     });
