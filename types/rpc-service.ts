@@ -10,11 +10,11 @@ const rpcBody = JSON.stringify({
 });
 
 async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: object): Promise<PromiseResult> {
-  const abortController = new AbortController();
+  // const abortController = new AbortController();
   const instance = axios.create({
     timeout: rpcTimeout,
     headers: rpcHeader,
-    signal: abortController.signal,
+    // signal: abortController.signal,
   });
   const startTime = performance.now();
   try {
