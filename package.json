@@ -26,7 +26,7 @@
     "build": "run-s clean build:index build:types",
     "postinstall": "git submodule update --init --recursive",
     "test:anvil": "npx tsx ./tests/anvil.ts",
-    "test": "jest",
+    "test": "jest --detectOpenHandles tests/rpc-handler.test.ts",
     "clean": "rm -rf dist"
   },
   "keywords": [
