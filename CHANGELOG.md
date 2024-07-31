@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/ubiquity/rpc-handler/compare/v1.2.1...v1.2.2) (2024-07-31)
+
+
+### Bug Fixes
+
+* changed env variable for npm login ([69804d8](https://github.com/ubiquity/rpc-handler/commit/69804d8d244b50c089aea0aac84daca102877554))
+
 ## [1.2.1](https://github.com/ubiquity/rpc-handler/compare/v1.1.0...v1.2.1) (2024-07-31)
 
 
