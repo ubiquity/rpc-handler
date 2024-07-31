@@ -13,7 +13,7 @@ import {
 } from "../types/constants";
 
 describe("Constants", () => {
-  beforeEach(() => {
+  afterEach(() => {
     jest.clearAllMocks();
     jest.clearAllTimers();
   });

@@ -28,22 +28,22 @@ import { RPCHandler, HandlerConstructorConfig } from "@ubiquity-dao/rpc-handler/
 
 export function useHandler(networkId: number) {
   const config: HandlerConstructorConfig = {
-    networkId: 100; // your chosen networkId
-    networkName:  null; // will default using the networkRpcs
-    networkRpcs:  null; // e.g "https://mainnet.infura.io/..."
-    runtimeRpcs:  null; // e.g "<networkId>__https://mainnet.infura.io/..." > "1__https://mainnet.infura.io/..."
-    autoStorage: true; // browser only, will store in localStorage
-    cacheRefreshCycles: 10; // bad RPCs are excluded if they fail, this is how many cycles before they're re-tested
-    rpcTimeout: 1500; // when the RPCs are tested they are raced, this is the max time to allow for a response
+    networkId: 100, // your chosen networkId
+    networkName:  null, // will default using the networkRpcs
+    networkRpcs:  null, // e.g "https://mainnet.infura.io/..."
+    runtimeRpcs:  null, // e.g "<networkId>__https://mainnet.infura.io/..." > "1__https://mainnet.infura.io/..."
+    autoStorage: true, // browser only, will store in localStorage
+    cacheRefreshCycles: 10, // bad RPCs are excluded if they fail, this is how many cycles before they're re-tested
+    rpcTimeout: 1500, // when the RPCs are tested they are raced, this is the max time to allow for a response
     tracking: "yes", // accepted values: "yes" | "limited" | "none". This is the data tracking status of the RPC, not this package.
     proxySettings: {
-      retryCount: 3; // how many times we'll loop the list of RPCs retrying the request before failing
-      retryDelay: 100; // (ms) how long we'll wait before moving to the next RPC, best to keep this low
-      logTier: "ok"; // |"info"|"error"|"debug"|"fatal"|"verbose"; set to "none" for no logs, null will default to "error", "verbose" will log all
-      logger: null; // null will default to PrettyLogs
-      strictLogs: true; // true, only the specified logTier will be logged and false all wll be logged.
-      moduleName?: "[UBQ RPC Handler];" // Can be omitted. this is the prefix for the logs.
-      disabled?: false; // Can be omitted. this will disable the proxy, requiring you to handle retry logic etc yourself.
+      retryCount: 3, // how many times we'll loop the list of RPCs retrying the request before failing
+      retryDelay: 100, // (ms) how long we'll wait before moving to the next RPC, best to keep this low
+      logTier: "ok", // |"info"|"error"|"debug"|"fatal"|"verbose"; set to "none" for no logs, null will default to "error", "verbose" will log all
+      logger: null, // null will default to PrettyLogs
+      strictLogs: true, // true, only the specified logTier will be logged and false all wll be logged.
+      moduleName?: "[UBQ RPC Handler]", // Can be omitted. this is the prefix for the logs.
+      disabled?: false, // Can be omitted. this will disable the proxy, requiring you to handle retry logic etc yourself.
     }
   };
   // No RPCs are tested at this point
@@ -93,7 +93,8 @@ yarn test
 
 This packages leverages [Chainlist's](https://github.com/DefiLlama/chainlist) network RPC list to return the lowest latency provider from the list for any given network ID. Creating a runtime/local storage cache of the fastest RPCs, it can be used in both the browser and Node.js.
 
-By default it performs as an abstraction layer for the Web3 developer by having built-in failed method call retries, bad endpoint exclusion and a cache of the fastest RPCs for a given network ID. It serves as a drop-in replacement for any `JsonRpcProvider` and can be extended to handle custom RPCs, chains and more.
+By default, it performs as an abstraction layer for the Web3 developer by having built-in failed method call retries,
+bad endpoint exclusion and a cache of the fastest RPCs for a given network ID. It serves as a drop-in replacement for any `JsonRpcProvider` and can be extended to handle custom RPCs, chains and more.
 
 By routing requests through this package, it ensures the lowest latency for your users, while also providing a fallback mechanism for when the fastest provider fails. As even the best of nodes can fail, it retries failed method calls on the next fastest provider and so on until it succeeds or until your custom breakpoints are reached. With the ability to configure the number of retries, retry delay, log tier, breakpoints and more, it can be tailored to your specific needs.
 

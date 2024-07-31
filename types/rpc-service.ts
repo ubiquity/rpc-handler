@@ -1,6 +1,6 @@
 import { NetworkId, ValidBlockData } from "./handler";
-import axios from "axios";
-type PromiseResult = { success: boolean; rpcUrl: string; duration: number };
+import axios, { AxiosError } from "axios";
+type PromiseResult = { success: boolean; rpcUrl: string; duration: number; error?: string };
 
 const rpcBody = JSON.stringify({
   jsonrpc: "2.0",
@@ -9,39 +9,39 @@ const rpcBody = JSON.stringify({
   id: 1,
 });
 
-async function makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: object): Promise<PromiseResult> {
-  const abortController = new AbortController();
-  const instance = axios.create({
-    timeout: rpcTimeout,
-    headers: rpcHeader,
-    signal: abortController.signal,
-  });
-
-  const startTime = performance.now();
-  return instance
-    .post(rpcUrl, rpcBody)
-    .then(() => {
+export class RPCService {
+  static async makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: object): Promise<PromiseResult> {
+    const instance = axios.create({
+      timeout: rpcTimeout,
+      headers: rpcHeader,
+    });
+    const startTime = performance.now();
+    try {
+      await instance.post(rpcUrl, rpcBody);
       return {
         rpcUrl,
         duration: performance.now() - startTime,
         success: true,
       };
-    })
-    .catch((error) => {
-      const isTimeout = error.code === "ECONNABORTED";
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        const isTimeout = err.code === "ECONNABORTED";
+        return {
+          rpcUrl,
+          success: false,
+          duration: isTimeout ? performance.now() - startTime : 0,
+          error: isTimeout ? "timeout" : err.message,
+        };
+      }
       return {
         rpcUrl,
         success: false,
-        duration: isTimeout ? performance.now() - startTime : 0,
-        error: isTimeout ? "timeout" : error.message,
+        duration: 0,
+        error: `${err}`,
       };
-    })
-    .finally(() => {
-      abortController.abort();
-    });
-}
+    }
+  }
 
-export class RPCService {
   static async testRpcPerformance(
     networkId: NetworkId,
     latencies: Record<string, number>,
@@ -49,15 +49,38 @@ export class RPCService {
     rpcHeader: object,
     rpcTimeout: number
   ): Promise<{ latencies: Record<string, number>; runtimeRpcs: string[] }> {
-    const successfulPromises = runtimeRpcs.map((rpcUrl) => makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader));
+    async function requestEndpoint(rpcUrl: string) {
+      try {
+        return await RPCService.makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader);
+      } catch (err) {
+        console.error(`Failed to reach endpoint. ${err}`);
+        throw new Error(rpcUrl);
+      }
+    }
+    const promises = runtimeRpcs.map((rpcUrl) => requestEndpoint(rpcUrl));
+    async function getFirstSuccessfulRequest(requests: string[]) {
+      if (requests.length === 0) {
+        throw new Error("All requests failed.");
+      }
+      const promisesToResolve = requests.map((rpcUrl) => requestEndpoint(rpcUrl));
 
-    const fastest = await Promise.race(successfulPromises);
+      try {
+        return await Promise.race(promisesToResolve);
+      } catch (err) {
+        console.error(`Failed to reach endpoint. ${err}`);
+        if (err instanceof Error && requests.includes(err.message)) {
+          return getFirstSuccessfulRequest(requests.filter((request) => request !== err.message));
+        }
+        return getFirstSuccessfulRequest(requests.slice(1));
+      }
+    }
+    const fastest = await getFirstSuccessfulRequest(runtimeRpcs);
 
     if (fastest.success) {
       latencies[`${networkId}__${fastest.rpcUrl}`] = fastest.duration;
     }
 
-    const allResults = await Promise.allSettled(successfulPromises);
+    const allResults = await Promise.allSettled(promises);
 
     allResults.forEach((result) => {
       if (result.status === "fulfilled" && result.value.success) {
