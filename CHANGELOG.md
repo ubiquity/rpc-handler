@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.3](https://github.com/ubiquity/rpc-handler/compare/v1.2.2...v1.2.3) (2024-07-31)
+
+
+### Miscellaneous Chores
+
+* release 1.2.3 ([0b44fdf](https://github.com/ubiquity/rpc-handler/commit/0b44fdfacb50c8f59576d1cf6faf79c3f19c72e4))
+
 ## [1.2.2](https://github.com/ubiquity/rpc-handler/compare/v1.2.1...v1.2.2) (2024-07-31)
 
 
