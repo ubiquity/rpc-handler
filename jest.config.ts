@@ -7,6 +7,6 @@ module.exports = {
   coveragePathIgnorePatterns: ["node_modules", "mocks"],
   collectCoverage: true,
   coverageReporters: ["json", "lcov", "text", "clover", "json-summary"],
-  reporters: ["default", "jest-junit"],
+  reporters: ["default", "jest-junit", "jest-md-dashboard"],
   coverageDirectory: "coverage",
 } as JestConfigWithTsJest;

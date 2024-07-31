@@ -1,12 +1,9 @@
-const LOCALSTORAGE_NOT_DEFINED = "Passing because localStorage is not available";
+import { NetworkId } from "./handler";
 
 export class StorageService {
-  static getLatencies(env: string, networkId: number): Record<string | number, number> {
+  static getLatencies(env: string, networkId: NetworkId): Record<string | number, number> {
     if (env === "browser") {
-      if (typeof localStorage === "undefined") {
-        console.log(LOCALSTORAGE_NOT_DEFINED);
-        return {};
-      }
+      if (this.bypassForTests()) return {};
       const latencies: Record<string, number> = JSON.parse(localStorage.getItem("rpcLatencies") || "{}");
       return Object.keys(latencies).reduce((acc: Record<string, number>, key) => {
         if (key.startsWith(`${networkId}__`)) {
@@ -21,10 +18,7 @@ export class StorageService {
 
   static getRefreshLatencies(env: string): number {
     if (env === "browser") {
-      if (typeof localStorage === "undefined") {
-        console.log(LOCALSTORAGE_NOT_DEFINED);
-        return 0;
-      }
+      if (this.bypassForTests()) return 0;
       const refresh = JSON.parse(localStorage.getItem("refreshLatencies") || "0");
 
       if (typeof refresh === "number") {
@@ -35,24 +29,24 @@ export class StorageService {
     }
     return 0;
   }
-
   static setLatencies(env: string, latencies: Record<string | number, number>): void {
     if (env === "browser") {
-      if (typeof localStorage === "undefined") {
-        console.log(LOCALSTORAGE_NOT_DEFINED);
-        return;
-      }
+      if (this.bypassForTests()) return;
       localStorage.setItem("rpcLatencies", JSON.stringify(latencies));
     }
   }
-
   static setRefreshLatencies(env: string, refreshLatencies: number): void {
     if (env === "browser") {
-      if (typeof localStorage === "undefined") {
-        console.log(LOCALSTORAGE_NOT_DEFINED);
-        return;
-      }
+      if (this.bypassForTests()) return;
       localStorage.setItem("refreshLatencies", JSON.stringify(refreshLatencies));
+    }
+  }
+
+  // This method is only used for env detection testing
+  static bypassForTests() {
+    if (typeof localStorage === "undefined") {
+      console.log("Passing test because localStorage is not defined.");
+      return true;
     }
   }
 }

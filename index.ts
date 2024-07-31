@@ -1,37 +1,18 @@
-export default async function getRPCHandler() {
-  let modulePath;
-  if (typeof window !== "undefined") {
-    modulePath = "./esm/index.js";
-  } else {
-    modulePath = "./cjs/index.js";
-  }
-
-  const { RPCHandler } = await import(modulePath);
-
-  return RPCHandler;
-}
-
 import {
-  ChainId,
-  ChainNames,
+  NetworkId,
+  NetworkName,
   HandlerConstructorConfig,
   HandlerInterface,
   NativeToken,
   NetworkCurrencies,
   NetworkExplorers,
-  NetworkIds,
-  NetworkNames,
   NetworkRPCs,
   Token,
-  Tokens,
   ValidBlockData,
 } from "./types/handler";
 
 import {
   LOCAL_HOST,
-  chainIDList,
-  extraRpcs,
-  getNetworkName,
   networkCurrencies,
   networkExplorers,
   networkIds,
@@ -39,39 +20,33 @@ import {
   networkRpcs,
   nftAddress,
   permit2Address,
-  tokens,
+  getNetworkId,
+  getNetworkFaucets,
+  getNetworkExplorer,
+  getNetworkName,
+  getNetworkRpcs,
+  getNetworkCurrency,
+  getNetworkData,
 } from "./types/constants";
 
 import { RPCHandler } from "./types/rpc-handler";
+import { PrettyLogs } from "./types/logs";
+import { StorageService } from "./types/storage-service";
+import { RPCService } from "./types/rpc-service";
 
-export {
-  LOCAL_HOST,
-  chainIDList,
-  extraRpcs,
-  getNetworkName,
-  networkCurrencies,
-  networkExplorers,
-  networkIds,
-  networkNames,
-  networkRpcs,
-  nftAddress,
-  permit2Address,
-  tokens,
-};
+export { LOCAL_HOST, networkCurrencies, networkExplorers, networkIds, networkNames, networkRpcs, nftAddress, permit2Address };
+export { getNetworkId, getNetworkFaucets, getNetworkExplorer, getNetworkName, getNetworkRpcs, getNetworkCurrency, getNetworkData };
 
 export type {
-  ChainId,
-  ChainNames,
+  NetworkId,
+  NetworkName,
   HandlerConstructorConfig,
   HandlerInterface,
   NativeToken,
   NetworkCurrencies,
   NetworkExplorers,
-  NetworkIds,
-  NetworkNames,
   NetworkRPCs,
   Token,
-  Tokens,
   ValidBlockData,
 };
-export { RPCHandler };
+export { RPCHandler, PrettyLogs, StorageService, RPCService };
