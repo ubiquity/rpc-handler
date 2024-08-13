@@ -57,7 +57,6 @@ export class RPCService {
         throw new Error(rpcUrl);
       }
     }
-    const promises = runtimeRpcs.map((rpcUrl) => requestEndpoint(rpcUrl));
     async function getFirstSuccessfulRequest(requests: string[]) {
       if (requests.length === 0) {
         throw new Error("All requests failed.");
@@ -65,9 +64,12 @@ export class RPCService {
       const promisesToResolve = requests.map((rpcUrl) => requestEndpoint(rpcUrl));
 
       try {
-        return await Promise.race(promisesToResolve);
+        const res = await Promise.race(promisesToResolve);
+        if (!res.success) {
+          throw new Error(res.rpcUrl);
+        }
+        return res;
       } catch (err) {
-        console.error(`Failed to reach endpoint. ${err}`);
         if (err instanceof Error && requests.includes(err.message)) {
           return getFirstSuccessfulRequest(requests.filter((request) => request !== err.message));
         }
@@ -78,21 +80,8 @@ export class RPCService {
 
     if (fastest.success) {
       latencies[`${networkId}__${fastest.rpcUrl}`] = fastest.duration;
+      runtimeRpcs = runtimeRpcs.filter((o) => o === fastest.rpcUrl);
     }
-
-    const allResults = await Promise.allSettled(promises);
-
-    allResults.forEach((result) => {
-      if (result.status === "fulfilled" && result.value.success) {
-        latencies[`${networkId}__${result.value.rpcUrl}`] = result.value.duration;
-      } else if (result.status === "fulfilled") {
-        const fulfilledResult = result.value;
-        const index = runtimeRpcs.indexOf(fulfilledResult.rpcUrl);
-        if (index > -1) {
-          runtimeRpcs.splice(index, 1);
-        }
-      }
-    });
 
     return { latencies, runtimeRpcs };
   }
