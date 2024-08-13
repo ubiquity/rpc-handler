@@ -1,6 +1,6 @@
 {
   "name": "@ubiquity-dao/rpc-handler",
-  "version": "1.1.0",
+  "version": "1.2.3",
   "description": "Uses Chainlist's RPC collection racing them returning the lowest latency RPC",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -87,6 +87,5 @@
     "extends": [
       "@commitlint/config-conventional"
     ]
-  },
-  "packageManager": "yarn@4.2.2"
+  }
 }

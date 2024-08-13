@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   publish-package:
     runs-on: ubuntu-latest
@@ -21,10 +25,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # needed to use yarn v4
-      - name: Enable corepack
-        run: corepack enable
-
       - name: Install Node
         uses: actions/setup-node@v4
         with:
@@ -36,9 +36,10 @@ jobs:
           yarn install --immutable --check-cache
           yarn build
           yarn pack
+        if: ${{ steps.release.outputs.release_created }}
 
       - name: Publish
-        run: yarn npm publish --access public
+        run: yarn publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         if: ${{ steps.release.outputs.release_created }}
