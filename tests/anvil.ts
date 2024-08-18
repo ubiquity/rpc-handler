@@ -1,9 +1,11 @@
 import { spawnSync } from "child_process";
+import { networkRpcs } from "../types/constants";
 import { RPCHandler } from "../types/rpc-handler";
 
 class Anvil {
   rpcs: string[] = [];
   rpcHandler: RPCHandler | null = null;
+  availableRpcs = [...networkRpcs["100"].rpcs];
 
   async init() {
     this.rpcHandler = new RPCHandler({
@@ -13,7 +15,7 @@ class Anvil {
       networkName: "gnosis",
       rpcTimeout: 1000,
       runtimeRpcs: null,
-      networkRpcs: null,
+      networkRpcs: this.availableRpcs,
       proxySettings: {
         logger: null,
         logTier: "ok",
@@ -58,7 +60,9 @@ class Anvil {
     if (anvil.status !== 0) {
       console.log(`Anvil failed to start with RPC: ${rpc}`);
       console.log(`Retrying with next RPC...`);
-      return this.spawner(this.rpcs.shift());
+      this.availableRpcs.shift();
+      await this.init();
+      return this.spawner(this.rpcs[0]);
     }
 
     return true;
