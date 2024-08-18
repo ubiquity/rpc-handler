@@ -1,6 +1,6 @@
 {
-  "name": "@ubiquity-dao/rpc-handler",
-  "version": "1.2.3",
+  "name": "@ubiquibot/rpc-handler",
+  "version": "1.2.4-rc",
   "description": "Uses Chainlist's RPC collection racing them returning the lowest latency RPC",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -23,7 +23,7 @@
     "prepare": "husky install",
     "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
     "build:index": "tsx build/esbuild-build.ts",
-    "build": "run-s clean build:index build:types",
+    "build": "run-s build:index build:types",
     "postinstall": "git submodule update --init --recursive",
     "test:anvil": "npx tsx ./tests/anvil.ts",
     "test": "jest",
