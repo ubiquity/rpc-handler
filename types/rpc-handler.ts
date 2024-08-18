@@ -72,7 +72,7 @@ export class RPCHandler implements HandlerInterface {
       try {
         const result = await RPCService.makeRpcRequest(rpc.url, this._rpcTimeout, { "Content-Type": "application/json" });
         if (result.success) {
-          return this.createProviderProxy(new JsonRpcProvider({ url: rpc.url, skipFetchSetup: true }, Number(this._networkId)), this);
+          return new JsonRpcProvider({ url: rpc.url, skipFetchSetup: true }, Number(this._networkId));
         } else {
           console.error(`Failed to reach endpoint ${rpc.url}. ${result.error}`);
         }
