@@ -7,6 +7,13 @@ import { StorageService } from "./storage-service";
 
 const NO_RPCS_AVAILABLE = "No RPCs available";
 
+function shuffleArray(array: object[]) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
 export class RPCHandler implements HandlerInterface {
   private static _instance: RPCHandler | null = null;
   private _provider: JsonRpcProvider | null = null;
@@ -53,6 +60,27 @@ export class RPCHandler implements HandlerInterface {
     this.getNetworkName.bind(this);
     this.getNetworkRpcs.bind(this);
     this.testRpcPerformance.bind(this);
+  }
+
+  /**
+   * Loops through all RPCs for a given network id and returns a provider with the first successful network.
+   */
+  public async getFirstAvailableRpcProvider() {
+    const rpcList = [...networkRpcs[this._networkId].rpcs];
+    shuffleArray(rpcList);
+    for (const rpc of rpcList) {
+      try {
+        const result = await RPCService.makeRpcRequest(rpc.url, this._rpcTimeout, { "Content-Type": "application/json" });
+        if (result.success) {
+          return this.createProviderProxy(new JsonRpcProvider({ url: rpc.url, skipFetchSetup: true }, Number(this._networkId)), this);
+        } else {
+          console.error(`Failed to reach endpoint ${rpc.url}. ${result.error}`);
+        }
+      } catch (err) {
+        console.error(`Failed to reach endpoint ${rpc.url}. ${err}`);
+      }
+    }
+    return null;
   }
 
   public async getFastestRpcProvider(): Promise<JsonRpcProvider> {
