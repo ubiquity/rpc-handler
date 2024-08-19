@@ -57,32 +57,45 @@ export class RPCService {
         throw new Error(rpcUrl);
       }
     }
-    async function getFirstSuccessfulRequest(requests: string[]) {
-      if (requests.length === 0) {
-        throw new Error("All requests failed.");
-      }
-      const promisesToResolve = requests.map((rpcUrl) => requestEndpoint(rpcUrl));
+    const promises = runtimeRpcs.map((rpcUrl) => requestEndpoint(rpcUrl));
+    // async function getFirstSuccessfulRequest(requests: string[]) {
+    //   if (requests.length === 0) {
+    //     throw new Error("All requests failed.");
+    //   }
+    //   const promisesToResolve = requests.map((rpcUrl) => requestEndpoint(rpcUrl));
+    //
+    //   try {
+    //     const res = await Promise.race(promisesToResolve);
+    //     if (!res.success) {
+    //       throw new Error(res.rpcUrl);
+    //     }
+    //     return res;
+    //   } catch (err) {
+    //     if (err instanceof Error && requests.includes(err.message)) {
+    //       return getFirstSuccessfulRequest(requests.filter((request) => request !== err.message));
+    //     }
+    //     return getFirstSuccessfulRequest(requests.slice(1));
+    //   }
+    // }
+    // const fastest = await getFirstSuccessfulRequest(runtimeRpcs);
+    //
+    // if (fastest.success) {
+    //   latencies[`${networkId}__${fastest.rpcUrl}`] = fastest.duration;
+    // }
 
-      try {
-        const res = await Promise.race(promisesToResolve);
-        if (!res.success) {
-          throw new Error(res.rpcUrl);
+    const allResults = await Promise.allSettled(promises);
+
+    allResults.forEach((result) => {
+      if (result.status === "fulfilled" && result.value.success) {
+        latencies[`${networkId}__${result.value.rpcUrl}`] = result.value.duration;
+      } else if (result.status === "fulfilled") {
+        const fulfilledResult = result.value;
+        const index = runtimeRpcs.indexOf(fulfilledResult.rpcUrl);
+        if (index > -1) {
+          runtimeRpcs.splice(index, 1);
         }
-        return res;
-      } catch (err) {
-        if (err instanceof Error && requests.includes(err.message)) {
-          return getFirstSuccessfulRequest(requests.filter((request) => request !== err.message));
-        }
-        return getFirstSuccessfulRequest(requests.slice(1));
       }
-    }
-    const fastest = await getFirstSuccessfulRequest(runtimeRpcs);
-
-    if (fastest.success) {
-      latencies[`${networkId}__${fastest.rpcUrl}`] = fastest.duration;
-      runtimeRpcs = runtimeRpcs.filter((o) => o === fastest.rpcUrl);
-    }
-
+    });
     return { latencies, runtimeRpcs };
   }
 
