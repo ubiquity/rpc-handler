@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/ubiquity/rpc-handler/compare/v1.2.3...v1.3.0) (2024-08-23)
+
+
+### Features
+
+* fastest rpc is selected and others are discarded for faster results and less network calls ([5ca9ba3](https://github.com/ubiquity/rpc-handler/commit/5ca9ba39567e0c8ece377c2782a10637bb393e04))
+* new method to get the first available RPC ([f19192c](https://github.com/ubiquity/rpc-handler/commit/f19192c08e6b4a2ebbae8fccd4985a79dde35d9a))
+
 ## [1.2.3](https://github.com/ubiquity/rpc-handler/compare/v1.2.2...v1.2.3) (2024-07-31)
 
 
