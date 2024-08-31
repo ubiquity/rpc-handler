@@ -14,7 +14,7 @@ jobs:
   publish-package:
     runs-on: ubuntu-latest
     steps:
-        name: Get GitHub App token
+      - name: Get GitHub App token
         uses: tibdex/github-app-token@v1.7.0
         id: get_installation_token
         with:
