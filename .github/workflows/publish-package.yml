@@ -14,9 +14,17 @@ jobs:
   publish-package:
     runs-on: ubuntu-latest
     steps:
+      - name: Get GitHub App token
+        uses: tibdex/github-app-token@v1.7.0
+        id: get_installation_token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+        
       - uses: googleapis/release-please-action@v4
         id: release
         with:
+          token: ${{ steps.get_installation_token.outputs.token }}
           release-type: node
           target-branch: main
 
