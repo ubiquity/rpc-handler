@@ -13,3 +13,5 @@ coverage
 junit.xml
 dynamic.ts
 test-dashboard.md
+static/dist
+cypress/screenshots
