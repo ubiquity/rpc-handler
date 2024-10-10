@@ -1,8 +1,8 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { LOCAL_HOST, networkRpcs, networkIds, LOCAL_HOST_2 } from "./constants";
-import { HandlerInterface, HandlerConstructorConfig, NetworkId, NetworkName, Rpc, Tracking, getRpcUrls } from "./handler";
+import { LOCAL_HOST, LOCAL_HOST_2, networkIds, networkRpcs } from "./constants";
+import { HandlerConstructorConfig, HandlerInterface, NetworkId, NetworkName, Rpc, Tracking, getRpcUrls } from "./handler";
 import { Metadata, PrettyLogs, PrettyLogsWithOk } from "./logs";
-import { RPCService } from "./rpc-service";
+import { RpcService } from "./rpc-service";
 import { StorageService } from "./storage-service";
 
 const NO_RPCS_AVAILABLE = "No RPCs available";
@@ -14,8 +14,8 @@ function shuffleArray(array: object[]) {
   }
 }
 
-export class RPCHandler implements HandlerInterface {
-  private static _instance: RPCHandler | null = null;
+export class RpcHandler implements HandlerInterface {
+  private static _instance: RpcHandler | null = null;
   private _provider: JsonRpcProvider | null = null;
   private _networkId: NetworkId;
   private _networkName: NetworkName;
@@ -70,7 +70,7 @@ export class RPCHandler implements HandlerInterface {
     shuffleArray(rpcList);
     for (const rpc of rpcList) {
       try {
-        const result = await RPCService.makeRpcRequest(rpc.url, this._rpcTimeout, { "Content-Type": "application/json" });
+        const result = await RpcService.makeRpcRequest(rpc.url, this._rpcTimeout, { "Content-Type": "application/json" });
         if (result.success) {
           return new JsonRpcProvider({ url: rpc.url, skipFetchSetup: true }, Number(this._networkId));
         } else {
@@ -111,7 +111,7 @@ export class RPCHandler implements HandlerInterface {
    * If proxySettings.disabled, it will return the provider as is and
    * any retry or RPC reselection logic will be down to the user to implement
    */
-  createProviderProxy(provider: JsonRpcProvider, handler: RPCHandler): JsonRpcProvider {
+  createProviderProxy(provider: JsonRpcProvider, handler: RpcHandler): JsonRpcProvider {
     /**
      * It is not recommended to disable this feature
      * unless you are handling retries and RPC reselection yourself
@@ -258,7 +258,7 @@ export class RPCHandler implements HandlerInterface {
 
     await this._testRpcPerformance();
 
-    const fastestRpcUrl = await RPCService.findFastestRpc(this._latencies, this._networkId);
+    const fastestRpcUrl = await RpcService.findFastestRpc(this._latencies, this._networkId);
 
     if (!fastestRpcUrl) {
       throw this.log(
@@ -304,19 +304,19 @@ export class RPCHandler implements HandlerInterface {
     return this._provider;
   }
 
-  public static getInstance(config: HandlerConstructorConfig): RPCHandler {
-    if (!RPCHandler._instance) {
+  public static getInstance(config: HandlerConstructorConfig): RpcHandler {
+    if (!RpcHandler._instance) {
       if (!config) {
         throw new Error("Config is required to initialize RPCHandler");
       }
 
-      RPCHandler._instance = new RPCHandler(config);
+      RpcHandler._instance = new RpcHandler(config);
     }
-    return RPCHandler._instance;
+    return RpcHandler._instance;
   }
 
   public clearInstance(): void {
-    RPCHandler._instance = null;
+    RpcHandler._instance = null;
   }
 
   public getRuntimeRpcs(): string[] {
@@ -348,7 +348,7 @@ export class RPCHandler implements HandlerInterface {
   }
 
   private async _testRpcPerformance(): Promise<void> {
-    const { latencies, runtimeRpcs } = await RPCService.testRpcPerformance(
+    const { latencies, runtimeRpcs } = await RpcService.testRpcPerformance(
       this._networkId,
       this._latencies,
       this._runtimeRpcs,

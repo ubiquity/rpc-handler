@@ -15,8 +15,8 @@
     "jest.config.ts",
     "knip.ts",
     "build",
-    "./lib",
-    "./dist"
+    "./dist",
+    "lib/**/*"
   ],
   "rules": {
     "filename-rules/match": [2, "/^(e2e\\.ts$|.*\\/e2e\\.ts$|[a-z0-9]+(?:[-._a-z0-9]+)*\\.ts|\\.[a-z0-9]+)$/"],

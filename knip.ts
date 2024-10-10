@@ -5,11 +5,7 @@ const config: KnipConfig = {
   project: ["src/**/*.ts"],
   ignore: ["src/types/config.ts", "tests/*", ".github/workflows/**"],
   ignoreExportsUsedInFile: true,
-  ignoreDependencies: ["axios", "ts-node", "node-fetch", "eslint-config-prettier", "eslint-plugin-prettier", "@types/jest", "@types/node-fetch"],
-  jest: {
-    config: ["jest.config.ts"],
-    entry: ["tests/*.ts"],
-  },
+  ignoreDependencies: ["axios", "ts-node", "node-fetch", "eslint-config-prettier", "eslint-plugin-prettier", "@types/node-fetch"],
 };
 
 export default config;

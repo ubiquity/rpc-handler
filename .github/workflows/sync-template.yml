@@ -3,7 +3,7 @@ name: Sync branch to template
 on:
   workflow_dispatch:
   schedule:
-    - cron: '14 0 1 * *'
+    - cron: "14 0 1 * *"
 
 jobs:
   sync:

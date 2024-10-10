@@ -1,17 +1,24 @@
 import {
-  NetworkId,
-  NetworkName,
   HandlerConstructorConfig,
   HandlerInterface,
   NativeToken,
   NetworkCurrencies,
   NetworkExplorers,
-  NetworkRPCs,
+  NetworkId,
+  NetworkName,
+  NetworkRpcs,
   Token,
   ValidBlockData,
 } from "./types/handler";
 
 import {
+  getNetworkCurrency,
+  getNetworkData,
+  getNetworkExplorer,
+  getNetworkFaucets,
+  getNetworkId,
+  getNetworkName,
+  getNetworkRpcs,
   LOCAL_HOST,
   networkCurrencies,
   networkExplorers,
@@ -20,33 +27,41 @@ import {
   networkRpcs,
   nftAddress,
   permit2Address,
-  getNetworkId,
-  getNetworkFaucets,
-  getNetworkExplorer,
-  getNetworkName,
-  getNetworkRpcs,
-  getNetworkCurrency,
-  getNetworkData,
 } from "./types/constants";
 
-import { RPCHandler } from "./types/rpc-handler";
 import { PrettyLogs } from "./types/logs";
+import { RpcHandler } from "./types/rpc-handler";
+import { RpcService } from "./types/rpc-service";
 import { StorageService } from "./types/storage-service";
-import { RPCService } from "./types/rpc-service";
 
-export { LOCAL_HOST, networkCurrencies, networkExplorers, networkIds, networkNames, networkRpcs, nftAddress, permit2Address };
-export { getNetworkId, getNetworkFaucets, getNetworkExplorer, getNetworkName, getNetworkRpcs, getNetworkCurrency, getNetworkData };
+export {
+  getNetworkCurrency,
+  getNetworkData,
+  getNetworkExplorer,
+  getNetworkFaucets,
+  getNetworkId,
+  getNetworkName,
+  getNetworkRpcs,
+  LOCAL_HOST,
+  networkCurrencies,
+  networkExplorers,
+  networkIds,
+  networkNames,
+  networkRpcs,
+  nftAddress,
+  permit2Address,
+};
 
+export { PrettyLogs, RpcHandler as RPCHandler, RpcService as RPCService, StorageService };
 export type {
-  NetworkId,
-  NetworkName,
   HandlerConstructorConfig,
   HandlerInterface,
   NativeToken,
   NetworkCurrencies,
   NetworkExplorers,
-  NetworkRPCs,
+  NetworkId,
+  NetworkName,
+  NetworkRpcs as NetworkRPCs,
   Token,
   ValidBlockData,
 };
-export { RPCHandler, PrettyLogs, StorageService, RPCService };
