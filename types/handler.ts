@@ -1,7 +1,7 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { networkCurrencies, networkExplorers, networkRpcs } from "./constants";
-import { CHAINS_IDS, EXTRA_RPCS } from "../dynamic";
 import { LogInterface, PrettyLogs, PrettyLogsWithOk } from "./logs";
+import { CHAINS_IDS, EXTRA_RPCS } from "../build/dynamic-types";
 
 export type BlockExplorer = {
   name: string;
@@ -65,7 +65,7 @@ export type HandlerConstructorConfig = {
   proxySettings: ProxySettings; // settings for the proxy
 };
 
-export type NetworkRPCs = typeof networkRpcs;
+export type NetworkRpcs = typeof networkRpcs;
 export type NetworkCurrencies = typeof networkCurrencies;
 export type NetworkExplorers = typeof networkExplorers;
 

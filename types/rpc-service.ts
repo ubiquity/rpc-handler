@@ -1,5 +1,5 @@
-import { NetworkId, ValidBlockData } from "./handler";
 import axios, { AxiosError } from "axios";
+import { NetworkId, ValidBlockData } from "./handler";
 type PromiseResult = { success: boolean; rpcUrl: string; duration: number; error?: string };
 
 const rpcBody = JSON.stringify({
@@ -9,7 +9,7 @@ const rpcBody = JSON.stringify({
   id: 1,
 });
 
-export class RPCService {
+export class RpcService {
   static async makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: object): Promise<PromiseResult> {
     const instance = axios.create({
       timeout: rpcTimeout,
@@ -51,7 +51,7 @@ export class RPCService {
   ): Promise<{ latencies: Record<string, number>; runtimeRpcs: string[] }> {
     async function requestEndpoint(rpcUrl: string) {
       try {
-        return await RPCService.makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader);
+        return await RpcService.makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader);
       } catch (err) {
         console.error(`Failed to reach endpoint. ${err}`);
         throw new Error(rpcUrl);
