@@ -92,7 +92,7 @@ export class RPCHandler implements HandlerInterface {
 
     this._provider = this.createProviderProxy(fastest, this);
     this.log("ok", `[${this.proxySettings.moduleName}] Provider initialized: `, { provider: this._provider?.connection.url });
-    this.log("info", `[${this.proxySettings.moduleName}]`, { latencies: this._latencies });
+    this.log("info", `[${this.proxySettings.moduleName}]`, { runTimeRpcs: this._runtimeRpcs, latencies: this._latencies });
 
     return this._provider;
   }
@@ -258,7 +258,7 @@ export class RPCHandler implements HandlerInterface {
 
     await this._testRpcPerformance();
 
-    const fastestRpcUrl = await RPCService.findFastestRpc(this._latencies, this._networkId);
+    const fastestRpcUrl = await RPCService.findFastestRpc(this._latencies, this._networkId, this);
 
     if (!fastestRpcUrl) {
       throw this.log(
@@ -353,18 +353,13 @@ export class RPCHandler implements HandlerInterface {
       this._latencies,
       this._runtimeRpcs,
       { "Content-Type": "application/json" },
-      this._rpcTimeout
+      this._rpcTimeout,
+      this
     );
 
     this._runtimeRpcs = runtimeRpcs;
     this._latencies = latencies;
     this._refreshLatencies++;
-
-    console.log("_testRpcPerformance -> this._latencies", {
-      latencies: this._latencies,
-      runtimeRpcs: this._runtimeRpcs,
-      refreshLatencies: this._refreshLatencies,
-    });
 
     StorageService.setLatencies(this._env, this._latencies);
     StorageService.setRefreshLatencies(this._env, this._refreshLatencies);

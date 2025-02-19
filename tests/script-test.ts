@@ -23,7 +23,7 @@ import { HandlerConstructorConfig, RPCHandler, networkIds, networkCurrencies, ne
       logTier: "info",
       logger: null,
       strictLogs: false,
-      moduleName: "[RPCHandler Provider Test] -> ",
+      moduleName: "[RPCHandler-Script-Test] -> ",
     },
   };
 
@@ -34,5 +34,11 @@ import { HandlerConstructorConfig, RPCHandler, networkIds, networkCurrencies, ne
   const latencies = handler.getLatencies();
   const networkRpcs = handler.getNetworkRpcs();
 
+  console.log(networkIds);
+  console.log(networkNames);
+  console.log(networkCurrencies);
+  console.log(networkExplorers);
+  console.log(networkRpcs);
+  console.log(latencies);
   process.exit(0);
 })().catch(console.error);
