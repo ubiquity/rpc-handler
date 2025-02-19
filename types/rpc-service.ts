@@ -40,7 +40,7 @@ export class RPCService {
         rpcUrl,
         duration: performance.now() - startTime,
         success: true,
-        data: res.data,
+        data: res?.data || null,
         isBlockReq,
       };
     } catch (err) {

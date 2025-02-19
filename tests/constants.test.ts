@@ -104,8 +104,8 @@ describe("Constants", () => {
     "1": { symbol: "ETH", decimals: 18, name: "Ether" },
     "100": { symbol: "XDAI", decimals: 18, name: "xDAI" },
     "56": { symbol: "BNB", decimals: 18, name: "BNB Chain Native Token" },
-    "80002": { symbol: "MATIC", decimals: 18, name: "MATIC" },
-    "137": { symbol: "MATIC", decimals: 18, name: "MATIC" },
+    "80002": { symbol: "POL", decimals: 18, name: "POL" },
+    "137": { symbol: "POL", decimals: 18, name: "POL" },
     "25": { symbol: "CRO", decimals: 18, name: "Cronos" },
   } as Partial<Record<NetworkId, NativeToken>>;
 

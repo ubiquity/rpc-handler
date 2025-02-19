@@ -26,7 +26,8 @@ const DEBUG_CALL_NUMBER = `›› [RPCHandler] Call number: `;
 const DEBUG_CONNECT_TO = `›› [RPCHandler] Connected to: 31337__http://127.0.0.1:8545`;
 const DEBUG_RETRY = `›› [RPCHandler] Current provider failed, retrying with next fastest provider... ${JSON.stringify({
   method: "send",
-  args: ["eth_call", [null, null, null, "latest"]],
+  args: [],
+  metadata: ["eth_call", [null, null, null, "latest"]],
 })}`;
 const NULL_ARG_TX_CALL = `×${JSON.stringify({
   error: {
@@ -127,7 +128,7 @@ describe("Logs", () => {
       expect(er).toBeInstanceOf(Error);
     }
 
-    expect(logSpy).toBeCalledTimes(1);
+    expect(logSpy).toBeCalledTimes(2);
     expect(errorSpy).toBeCalledTimes(0);
     expect(debugSpy).toBeCalledTimes(0);
     expect(warnSpy).toBeCalledTimes(0);
@@ -165,6 +166,7 @@ describe("Logs", () => {
     const latencies = handler.getLatencies();
     const rpcLatency = latencies["31337__http://127.0.0.1:8545"];
     const INFO_CALL = `› [RPCHandler] ${JSON.stringify({
+      runTimeRpcs: ["http://127.0.0.1:8545"],
       latencies: {
         "31337__http://127.0.0.1:8545": rpcLatency,
       },
@@ -327,13 +329,33 @@ describe("Logs", () => {
     let cleanDebugStrings = cleanSpyLogs(debugSpy);
     expect(cleanDebugStrings).toEqual(
       expect.arrayContaining([
-        cleanLogString(DEBUG_CONNECT_TO),
         cleanLogString(DEBUG_RETRY),
+        cleanLogString(DEBUG_CONNECT_TO),
         cleanLogString(DEBUG_RETRY_IN_20),
         cleanLogString(`${DEBUG_CALL_NUMBER}1`),
+        cleanLogString(DEBUG_CONNECT_TO),
+        cleanLogString(DEBUG_RETRY_IN_20),
         cleanLogString(`${DEBUG_CALL_NUMBER}2`),
+        cleanLogString(DEBUG_CONNECT_TO),
+        cleanLogString(DEBUG_RETRY_IN_20),
         cleanLogString(`${DEBUG_CALL_NUMBER}3`),
+        cleanLogString(DEBUG_CONNECT_TO),
+        cleanLogString(DEBUG_RETRY_IN_20),
         cleanLogString(`${DEBUG_CALL_NUMBER}4`),
+        cleanLogString(DEBUG_RETRY),
+        cleanLogString(DEBUG_CONNECT_TO),
+        cleanLogString(DEBUG_RETRY_IN_20),
+        cleanLogString(`${DEBUG_CALL_NUMBER}1`),
+        cleanLogString(DEBUG_CONNECT_TO),
+        cleanLogString(DEBUG_RETRY_IN_20),
+        cleanLogString(`${DEBUG_CALL_NUMBER}2`),
+        cleanLogString(DEBUG_CONNECT_TO),
+        cleanLogString(DEBUG_RETRY_IN_20),
+        cleanLogString(`${DEBUG_CALL_NUMBER}3`),
+        cleanLogString(DEBUG_CONNECT_TO),
+        cleanLogString(DEBUG_RETRY_IN_20),
+        cleanLogString(`${DEBUG_CALL_NUMBER}4`),
+        cleanLogString(DEBUG_CONNECT_TO),
       ])
     );
 

@@ -19,11 +19,9 @@ export const testConfig: HandlerConstructorConfig = {
   },
 };
 
+// We need the actual responses now for blocknumber and nonceBitmap
 jest.mock("axios", () => ({
   ...jest.requireActual("axios"),
-  create: jest.fn(() => ({
-    post: jest.fn(),
-  })),
 }));
 
 describe("RPCHandler", () => {
@@ -38,7 +36,9 @@ describe("RPCHandler", () => {
     const module = await import("../types/rpc-handler");
     const rpcHandler = new module.RPCHandler({
       ...testConfig,
-      rpcTimeout: null,
+      // null === "TimeoutOverflowWarning: 9007199254740991 does not fit into a 32-bit signed integer.
+      // Timer duration was truncated to 2147483647."
+      rpcTimeout: 2147483647,
     });
     await rpcHandler.testRpcPerformance();
     const latencies = rpcHandler.getLatencies();
@@ -48,7 +48,7 @@ describe("RPCHandler", () => {
 
     console.log("slowestRpc: without an rpc timeout > ", slowestRpc);
     console.log("fastestRpc: without an rpc timeout > ", fastestRpcUrl);
-  }, 15000);
+  }, 999999);
 
   it("executing with an rpc timeout", async () => {
     const module = await import("../types/rpc-handler");
