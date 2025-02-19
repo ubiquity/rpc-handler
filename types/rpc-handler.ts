@@ -134,7 +134,7 @@ export class RPCHandler implements HandlerInterface {
               if (response) {
                 handler.log(
                   "verbose",
-                  `[${handler.proxySettings.moduleName}] Successfully called provider method ${prop}`,
+                  `[${handler.proxySettings.moduleName}] Successfully called provider method ${prop.toString()}`,
                   handler.metadataMaker(response, prop as string, args, { rpc: target.connection.url })
                 );
                 return response;
@@ -143,7 +143,7 @@ export class RPCHandler implements HandlerInterface {
               // first attempt with currently connected provider
               handler.log(
                 "error",
-                `[${handler.proxySettings.moduleName}] Failed to call provider method ${prop}, retrying...`,
+                `[${handler.proxySettings.moduleName}] Failed to call provider method ${prop.toString()}, retrying...`,
                 handler.metadataMaker(e, prop as string, args, { rpc: target.connection.url })
               );
             }
@@ -162,7 +162,7 @@ export class RPCHandler implements HandlerInterface {
             handler.log(
               "debug",
               `[${handler.proxySettings.moduleName}] Current provider failed, retrying with next fastest provider...`,
-              handler.metadataMaker({}, prop, args)
+              handler.metadataMaker({}, prop.toString(), [], args)
             );
 
             // how many times we'll loop the whole list of RPCs
@@ -186,7 +186,7 @@ export class RPCHandler implements HandlerInterface {
                   if (response) {
                     handler.log(
                       "verbose",
-                      `[${handler.proxySettings.moduleName}] Successfully called provider method ${prop}`,
+                      `[${handler.proxySettings.moduleName}] Successfully called provider method ${prop.toString()}`,
                       handler.metadataMaker(response, prop as string, args, { rpc })
                     );
                     res = response;
@@ -198,7 +198,7 @@ export class RPCHandler implements HandlerInterface {
                   if (loops === 1) {
                     handler.log(
                       "fatal",
-                      `[${handler.proxySettings.moduleName}] Failed to call provider method ${prop} after ${handler._proxySettings.retryCount} attempts`,
+                      `[${handler.proxySettings.moduleName}] Failed to call provider method ${prop.toString()} after ${handler._proxySettings.retryCount} attempts`,
                       handler.metadataMaker(e, prop as string, args)
                     );
                     throw e;
@@ -359,6 +359,12 @@ export class RPCHandler implements HandlerInterface {
     this._runtimeRpcs = runtimeRpcs;
     this._latencies = latencies;
     this._refreshLatencies++;
+
+    console.log("_testRpcPerformance -> this._latencies", {
+      latencies: this._latencies,
+      runtimeRpcs: this._runtimeRpcs,
+      refreshLatencies: this._refreshLatencies,
+    });
 
     StorageService.setLatencies(this._env, this._latencies);
     StorageService.setRefreshLatencies(this._env, this._refreshLatencies);
