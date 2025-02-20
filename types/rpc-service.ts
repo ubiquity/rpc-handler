@@ -10,16 +10,10 @@ const getBlockNumberPayload = JSON.stringify({
   id: 1,
 });
 
-const nonceBitmapPayload = JSON.stringify({
+const storageReadPayload = JSON.stringify({
   jsonrpc: "2.0",
-  method: "eth_call",
-  params: [
-    {
-      to: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
-      data: "0x4fe02b440000000000000000000000009051eda96db419c967189f4ac303a290f33276800028d68d90a4b1fb993957d7e5250e9fc0e6a8ec6d8c91747cc98a68aff62f53",
-    },
-    "latest",
-  ],
+  method: "eth_getCode",
+  params: ["0x000000000022D473030F116dDEE9F6B43aC78BA3", "latest"],
   id: 1,
 });
 
@@ -35,7 +29,7 @@ export class RPCService {
     });
     const startTime = performance.now();
     try {
-      const res = await instance.post(rpcUrl, isBlockReq ? getBlockNumberPayload : nonceBitmapPayload);
+      const res = await instance.post(rpcUrl, isBlockReq ? getBlockNumberPayload : storageReadPayload);
       return {
         rpcUrl,
         duration: performance.now() - startTime,
@@ -147,7 +141,7 @@ export class RPCService {
     if (result.status === "fulfilled" && result.value.success) {
       if (result.value.isBlockReq) {
         this.processBlockReqResult({ result, blockNumberCounts, blockNumberResults, rpcHandler });
-      } else if (!this.processNonceBitmapResult({ result, rpcHandler })) {
+      } else if (!this.processBytecodeResponse({ result, rpcHandler })) {
         return;
       }
       latencies[`${networkId}__${result.value.rpcUrl}`] = result.value.duration;
@@ -160,13 +154,22 @@ export class RPCService {
     }
   }
 
-  static processNonceBitmapResult({ result, rpcHandler }: { result: PromiseFulfilledResult<PromiseResult>; rpcHandler: RPCHandler }) {
+  static processBytecodeResponse({ result, rpcHandler }: { result: PromiseFulfilledResult<PromiseResult>; rpcHandler: RPCHandler }) {
     const { rpcUrl, data } = result.value;
-    const nonceBitmap = data as string;
-    if (nonceBitmap === "0x" + "00".repeat(32) || nonceBitmap === "0x") {
-      rpcHandler.log("info", `[RPCService] Detected out of sync provider: ${rpcUrl}`);
+    const bytecode = data as string;
+    const expected = "0x604060808152600";
+
+    try {
+      const subbed = bytecode.substring(0, expected.length);
+      if (subbed !== expected) {
+        rpcHandler.log("error", `[RPCService] Invalid bytecode from ${rpcUrl}`, { rpcUrl, data });
+        return false;
+      }
+    } catch (error) {
+      rpcHandler.log("error", `[RPCService] Invalid bytecode from ${rpcUrl}`, { rpcUrl, data });
       return false;
     }
+
     return true;
   }
 
