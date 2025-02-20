@@ -156,17 +156,29 @@ export class RPCService {
 
   static processBytecodeResponse({ result, rpcHandler }: { result: PromiseFulfilledResult<PromiseResult>; rpcHandler: RPCHandler }) {
     const { rpcUrl, data } = result.value;
-    const bytecode = data as string;
+    let bytecode: string | null = null;
+
+    if (typeof data === "string") {
+      bytecode = data;
+    } else if (typeof data === "object" && data && "result" in data) {
+      bytecode = String(data.result);
+    }
+
+    if (!bytecode) {
+      rpcHandler.log("error", `[RPCService] Could not find Permit2 bytecode.`, { rpcUrl, data });
+      return false;
+    }
+
     const expected = "0x604060808152600";
 
     try {
       const subbed = bytecode.substring(0, expected.length);
       if (subbed !== expected) {
-        rpcHandler.log("error", `[RPCService] Invalid bytecode from ${rpcUrl}`, { rpcUrl, data });
+        rpcHandler.log("error", `[RPCService] Permit2 bytecode mismatch.`, { rpcUrl, data });
         return false;
       }
     } catch (error) {
-      rpcHandler.log("error", `[RPCService] Invalid bytecode from ${rpcUrl}`, { rpcUrl, data });
+      rpcHandler.log("error", `[RPCService] Failed to process bytecode.`, { rpcUrl, data });
       return false;
     }
 
