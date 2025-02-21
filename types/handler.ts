@@ -63,6 +63,7 @@ export type HandlerConstructorConfig = {
   runtimeRpcs: string[] | null; // e.g "<networkId>__https://mainnet.infura.io/..." > "1__https://mainnet.infura.io/..."
   rpcTimeout: number | null; // when the RPCs are tested they are raced, this is the max time to allow for a response
   proxySettings: ProxySettings; // settings for the proxy
+  exclusions: { searchTerms: string[]; overwriteDefaultExcluded: boolean } | null; // strings used to filter RPCs from the list (E.G. "infura"/"tenderly/fork")
 };
 
 export type NetworkRPCs = typeof networkRpcs;

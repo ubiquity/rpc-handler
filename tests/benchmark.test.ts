@@ -10,6 +10,7 @@ export const testConfig: HandlerConstructorConfig = {
   rpcTimeout: 1500,
   runtimeRpcs: null,
   tracking: "yes",
+  exclusions: null,
   proxySettings: {
     retryCount: 3,
     retryDelay: 10,

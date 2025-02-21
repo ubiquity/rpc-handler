@@ -10,13 +10,14 @@ import { HandlerConstructorConfig, RPCHandler, networkIds, networkCurrencies, ne
   // not required but a good to have if main/module entry is causing issues
 
   const config: HandlerConstructorConfig = {
-    networkId: "100",
+    networkId: "1",
     rpcTimeout: 1500,
     autoStorage: false,
     cacheRefreshCycles: 10,
     networkName: null,
     networkRpcs: null,
     runtimeRpcs: null,
+    exclusions: null,
     proxySettings: {
       retryCount: 3,
       retryDelay: 500,

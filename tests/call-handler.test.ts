@@ -10,6 +10,7 @@ export const testConfig: HandlerConstructorConfig = {
   networkRpcs: null,
   rpcTimeout: 600,
   runtimeRpcs: null,
+  exclusions: null,
   proxySettings: {
     retryCount: 3,
     retryDelay: 10,
@@ -90,6 +91,7 @@ describe("Call Handler", () => {
       networkName: "anvil",
       networkId: "31337",
       rpcTimeout: 700,
+      exclusions: null,
       proxySettings: {
         retryCount: 1,
         retryDelay: 10,
@@ -147,6 +149,7 @@ describe("Call Handler", () => {
       networkName: "anvil",
       networkId: "31337",
       rpcTimeout: 700,
+      exclusions: null,
       proxySettings: {
         retryCount: 1,
         retryDelay: 10,

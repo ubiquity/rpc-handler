@@ -91,6 +91,7 @@ describe("Logs", () => {
     networkName: "anvil",
     networkId: "31337",
     rpcTimeout: 700,
+    exclusions: null,
     proxySettings: {
       retryCount: 3,
       retryDelay: 10,

@@ -44,6 +44,23 @@ export class RPCHandler implements HandlerInterface {
   constructor(config: HandlerConstructorConfig) {
     this._networkId = config.networkId;
     this._networkRpcs = this._filterRpcs(networkRpcs[this._networkId].rpcs, config.tracking || "yes");
+
+    const defaultExcluded: string[] = ["rpc.tenderly.co/fork/"];
+
+    // build default exclusion list
+    if (!config.exclusions) {
+      config.exclusions = { searchTerms: defaultExcluded, overwriteDefaultExcluded: false };
+    } else if (config.exclusions && !config.exclusions.overwriteDefaultExcluded) {
+      // add default exclusions to their list
+      config.exclusions.searchTerms = [...config.exclusions.searchTerms, ...defaultExcluded];
+    }
+
+    this._networkRpcs = this._networkRpcs.filter((rpc) => {
+      if (config.exclusions) {
+        return !config.exclusions.searchTerms.some((exclusion) => rpc.url.includes(exclusion));
+      }
+    });
+
     this._networkName = networkIds[this._networkId];
 
     this._initialize(config);

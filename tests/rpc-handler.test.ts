@@ -27,6 +27,7 @@ export const testConfig: HandlerConstructorConfig = {
   cacheRefreshCycles: 3,
   rpcTimeout: 600,
   tracking: "yes",
+  exclusions: null,
   proxySettings: {
     retryCount: 3,
     retryDelay: 10,
