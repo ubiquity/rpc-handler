@@ -95,8 +95,13 @@ export class RPCService {
     const blockNumberResults: Record<string, string> = {};
 
     rpcResults.forEach((result) => this._processRpcResult({ result, networkId, latencies, runtimeRpcs, blockNumberCounts, blockNumberResults, rpcHandler }));
+    const bncKeys = Object.keys(blockNumberCounts);
+    if (!bncKeys.length) {
+      rpcHandler.log("error", "[RPCService] No blocknumber counts found", { rpcResults });
+      return { latencies, runtimeRpcs };
+    }
 
-    const mostCommonBlockNumber = Object.keys(blockNumberCounts).reduce((a, b) => (blockNumberCounts[a] > blockNumberCounts[b] ? a : b));
+    const mostCommonBlockNumber = bncKeys.reduce((a, b) => (blockNumberCounts[a] > blockNumberCounts[b] ? a : b));
     runtimeRpcs = Object.keys(blockNumberResults).filter((rpcUrl) => {
       if (blockNumberResults[rpcUrl] !== mostCommonBlockNumber) {
         rpcHandler.log(
