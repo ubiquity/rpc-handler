@@ -94,10 +94,15 @@ export class RPCService {
     const blockNumberCounts: Record<string, number> = {};
     const blockNumberResults: Record<string, string> = {};
 
+    if (!rpcResults.length) {
+      rpcHandler.log("error", "[RPCService] No RPC results found", { rpcResults });
+      return { latencies, runtimeRpcs };
+    }
+
     rpcResults.forEach((result) => this._processRpcResult({ result, networkId, latencies, runtimeRpcs, blockNumberCounts, blockNumberResults, rpcHandler }));
     const bncKeys = Object.keys(blockNumberCounts);
     if (!bncKeys.length) {
-      rpcHandler.log("error", "[RPCService] No blocknumber counts found", { rpcResults });
+      rpcHandler.log("error", "[RPCService] No blocknumber counts found", { blockNumberCounts });
       return { latencies, runtimeRpcs };
     }
 
