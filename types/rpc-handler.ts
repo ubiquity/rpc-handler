@@ -155,7 +155,7 @@ export class RPCHandler implements HandlerInterface {
               throw handler.log(
                 "fatal",
                 `[${handler.proxySettings.moduleName}] ${NO_RPCS_AVAILABLE}`,
-                handler.metadataMaker(new Error(NO_RPCS_AVAILABLE), "createProviderProxy", args, { sortedLatencies, networks: handler._networkRpcs })
+                handler.metadataMaker(String(new Error(NO_RPCS_AVAILABLE)), "createProviderProxy", args, { sortedLatencies, networks: handler._networkRpcs })
               );
             }
 
@@ -257,14 +257,13 @@ export class RPCHandler implements HandlerInterface {
     }
 
     await this._testRpcPerformance();
-
     const fastestRpcUrl = await RPCService.findFastestRpc(this._latencies, this._networkId, this);
 
     if (!fastestRpcUrl) {
       throw this.log(
         "fatal",
         `[${this.proxySettings.moduleName}] Failed to find fastest RPC`,
-        this.metadataMaker(new Error(NO_RPCS_AVAILABLE), "testRpcPerformance", [], { latencies: this._latencies, networkId: this._networkId })
+        this.metadataMaker(String(new Error(NO_RPCS_AVAILABLE)), "testRpcPerformance", [], { latencies: this._latencies, networkId: this._networkId })
       );
     }
 
@@ -279,7 +278,7 @@ export class RPCHandler implements HandlerInterface {
       throw this.log(
         "fatal",
         `[${this.proxySettings.moduleName}] Failed to create provider`,
-        this.metadataMaker(new Error("No provider available"), "testRpcPerformance", [], {
+        this.metadataMaker(String(new Error("No provider available")), "testRpcPerformance", [], {
           latencies: this._latencies,
           fastestRpcUrl: fastestRpcUrl,
         })
@@ -294,7 +293,7 @@ export class RPCHandler implements HandlerInterface {
       throw this.log(
         "fatal",
         `[${this.proxySettings.moduleName}] Provider is not initialized`,
-        this.metadataMaker(new Error("Provider is not initialized"), "getProvider", [], {
+        this.metadataMaker(String(new Error("Provider is not initialized")), "getProvider", [], {
           networkRpcs: this._networkRpcs,
           runtimeRpcs: this._runtimeRpcs,
           latencies: this._latencies,
@@ -406,6 +405,10 @@ export class RPCHandler implements HandlerInterface {
     } else if (logTier === "verbose" || !isStrict) {
       // if strictLogs is false or tier is "verbose" log all logs
       this.proxySettings.logger?.log(tier, message, metadata);
+    }
+
+    if (tier === "fatal") {
+      throw new Error(message + JSON.stringify(metadata));
     }
   }
 
