@@ -151,7 +151,7 @@ export class RPCService {
     if (result.status === "fulfilled" && result.value.success) {
       if (result.value.isBlockReq) {
         this.processBlockReqResult({ result, blockNumberCounts, blockNumberResults, rpcHandler });
-      } else if (!this.processBytecodeResponse({ result, rpcHandler })) {
+      } else if (!this.isBytecodeValid({ result, rpcHandler })) {
         return;
       }
       latencies[`${networkId}__${result.value.rpcUrl}`] = result.value.duration;
@@ -164,7 +164,7 @@ export class RPCService {
     }
   }
 
-  static processBytecodeResponse({ result, rpcHandler }: { result: PromiseFulfilledResult<PromiseResult>; rpcHandler: RPCHandler }) {
+  static isBytecodeValid({ result, rpcHandler }: { result: PromiseFulfilledResult<PromiseResult>; rpcHandler: RPCHandler }) {
     const { rpcUrl, data } = result.value;
     let bytecode: string | null = null;
 
@@ -181,14 +181,9 @@ export class RPCService {
 
     const expected = "0x604060808152600";
 
-    try {
-      const subbed = bytecode.substring(0, expected.length);
-      if (subbed !== expected) {
-        rpcHandler.log("error", `[RPCService] Permit2 bytecode mismatch.`, { rpcUrl, data });
-        return false;
-      }
-    } catch (error) {
-      rpcHandler.log("error", `[RPCService] Failed to process bytecode.`, { rpcUrl, data });
+    const subbed = bytecode.substring(0, expected.length);
+    if (subbed !== expected) {
+      rpcHandler.log("error", `[RPCService] Permit2 bytecode mismatch.`, { rpcUrl, data });
       return false;
     }
 
