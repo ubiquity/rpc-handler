@@ -176,7 +176,7 @@ describe("Logs", () => {
     expect(cleanInfoStrings).toEqual(expect.arrayContaining([cleanLogString(INFO_CALL)]));
   });
 
-  it.only("should log only 'warn' tiered logs", async () => {
+  it("should log only 'warn' tiered logs", async () => {
     const errorSpy = jest.spyOn(console, "error");
     const consoleSpy = jest.spyOn(console, "log");
     const debugSpy = jest.spyOn(console, "debug");
