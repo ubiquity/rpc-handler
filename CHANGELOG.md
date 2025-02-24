@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.4.0](https://github.com/ubiquity/rpc-handler/compare/v1.3.0...v1.4.0) (2025-02-24)
+
+
+### Features
+
+* improved rpc health check ([fa143ae](https://github.com/ubiquity/rpc-handler/commit/fa143aefa9e61c3dedf8b86b936e1c3a55598ae3))
+* **release:** release as [@ubiquity-os](https://github.com/ubiquity-os) ([3298ebd](https://github.com/ubiquity/rpc-handler/commit/3298ebd19cfc2d74f877353270f8c98175442f31))
+
+
+### Bug Fixes
+
+* rpc response handling ([2cae766](https://github.com/ubiquity/rpc-handler/commit/2cae76695d70bc934dea4b2c51432ded52d7d0f3))
+* syntax error problem ([b3c3a7b](https://github.com/ubiquity/rpc-handler/commit/b3c3a7b9c940a7925981e78db638db725ea7d673))
+
+
+### Reverts
+
+* remove sync-template https://github.com/ubiquity/ts-template/issues/54#issuecomment-2428842723 ([ad13b88](https://github.com/ubiquity/rpc-handler/commit/ad13b8801354eed6adf3d3abdce882fd638c1548))
+
 ## [1.3.0](https://github.com/ubiquity/rpc-handler/compare/v1.2.3...v1.3.0) (2024-08-23)
 
 
