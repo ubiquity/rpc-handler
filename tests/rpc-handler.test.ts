@@ -191,16 +191,4 @@ describe("RPCHandler", () => {
       }, 10000);
     }
   });
-
-  it("Should return the first available RPC", async () => {
-    const module = await import("../types/rpc-handler");
-    const rpcHandler = new module.RPCHandler({
-      ...testConfig,
-      networkId: "1",
-      rpcTimeout: 1000,
-    });
-
-    const provider = await rpcHandler.getFirstAvailableRpcProvider();
-    expect(provider).not.toBeNull();
-  });
 });
