@@ -38,7 +38,7 @@ export type HandlerInterface = {
   getFastestRpcProvider(): Promise<JsonRpcProvider | null>;
   getFirstAvailableRpcProvider(): Promise<JsonRpcProvider | null>;
   testRpcPerformance(): Promise<JsonRpcProvider | null>;
-  consensusCall(requestPayload: RequestPayload, quorumThreshold: `0.${number}`): Promise<true | never>;
+  consensusCall<TMethodReturnData>(requestPayload: RequestPayload, quorumThreshold: `0.${number}`): Promise<TMethodReturnData>;
 };
 
 // This is log message prefix which can be used to identify the logs from this module
