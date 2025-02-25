@@ -2,6 +2,7 @@ import { JsonRpcProvider } from "@ethersproject/providers";
 import { networkCurrencies, networkExplorers, networkRpcs } from "./constants";
 import { CHAINS_IDS, EXTRA_RPCS } from "../dynamic";
 import { LogInterface, PrettyLogs, PrettyLogsWithOk } from "./logs";
+import { RequestPayload } from "./rpc-service";
 
 export type BlockExplorer = {
   name: string;
@@ -34,9 +35,10 @@ export type NativeToken = {
 
 export type HandlerInterface = {
   getProvider(): JsonRpcProvider | null;
-  clearInstance(): void;
   getFastestRpcProvider(): Promise<JsonRpcProvider | null>;
+  getFirstAvailableRpcProvider(): Promise<JsonRpcProvider | null>;
   testRpcPerformance(): Promise<JsonRpcProvider | null>;
+  consensusCall(requestPayload: RequestPayload, quorumThreshold: `0.${number}`): Promise<true | never>;
 };
 
 // This is log message prefix which can be used to identify the logs from this module
