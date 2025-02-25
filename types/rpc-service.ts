@@ -240,7 +240,15 @@ export class RPCService {
             rpcTimeout: rpcTimeout,
             rpcUrl,
           }
-        ),
+        ).catch((err) => {
+          return {
+            rpcUrl,
+            success: false,
+            duration: 0,
+            error: String(err),
+            rpcMethod: "eth_getBlockByNumber",
+          };
+        }),
         this.makeRpcRequest(
           {
             headers: { "Content-Type": "application/json" },
@@ -250,7 +258,15 @@ export class RPCService {
             rpcTimeout: rpcTimeout,
             rpcUrl,
           }
-        ),
+        ).catch((err) => {
+          return {
+            rpcUrl,
+            success: false,
+            duration: 0,
+            error: String(err),
+            rpcMethod: "eth_getCode",
+          };
+        }),
       ];
     });
   }
