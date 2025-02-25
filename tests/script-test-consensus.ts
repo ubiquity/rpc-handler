@@ -1,4 +1,5 @@
-import { HandlerConstructorConfig, RPCHandler } from "../dist/";
+import { HandlerConstructorConfig, RPCHandler } from "../dist";
+import { RequestPayload } from "../dist/types/rpc-service";
 
 /**
  * A test script to ensure that the module can be imported and used correctly
@@ -28,17 +29,17 @@ import { HandlerConstructorConfig, RPCHandler } from "../dist/";
   };
 
   const handler = new RPCHandler(config);
-  await handler.getFastestRpcProvider();
 
-  // Uncomment below to investigate the output of the build
+  const reqPayload: RequestPayload = {
+    jsonrpc: "2.0",
+    method: "eth_getBlockByNumber",
+    params: ["latest", false],
+    id: 1,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
 
-  // const latencies = handler.getLatencies();
-  // const networkRpcs = handler.getNetworkRpcs();
-  // console.log(networkIds);
-  // console.log(networkNames);
-  // console.log(networkCurrencies);
-  // console.log(networkExplorers);
-  // console.log(networkRpcs);
-  // console.log(latencies);
+  await handler.consensusCall(reqPayload, "0.5");
   process.exit(0);
 })().catch(console.error);
