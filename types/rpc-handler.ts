@@ -109,18 +109,12 @@ export class RPCHandler implements HandlerInterface {
 
     const rpcResults = results.map((res) => res.data?.result);
 
-    let hadToStringify;
-
     const matchingResults = rpcResults.reduce(
       (acc, val) => {
         if (!val) return acc;
         if (typeof val !== "string") {
           if (val instanceof Error) {
             val = val.message;
-          } else if ("error" in val) {
-            hadToStringify = typeof val.error !== "string";
-            val = hadToStringify ? JSON.stringify(val.error) : (val.error as string);
-            console.log("val", val);
           } else {
             val = val.hash;
           }
@@ -148,11 +142,12 @@ export class RPCHandler implements HandlerInterface {
 
     this.log("ok", `[${this._proxySettings.moduleName}] Consensus reached`, { consensus, confirmedNodes: matchingResults[consensus] });
 
-    if (hadToStringify) {
-      return JSON.parse(consensus) as TMethodReturnData;
-    }
-
-    return consensus as TMethodReturnData;
+    return rpcResults.find((res) => {
+      if (typeof res === "string") {
+        return res === consensus;
+      }
+      return res?.hash === consensus;
+    }) as TMethodReturnData;
   }
 
   /**

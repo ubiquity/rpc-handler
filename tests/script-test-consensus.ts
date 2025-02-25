@@ -40,6 +40,7 @@ import { RequestPayload } from "../dist/types/rpc-service";
     },
   };
 
-  await handler.consensusCall(reqPayload, "0.5");
+  const res = await handler.consensusCall(reqPayload, "0.5");
+  console.log("Final Consensus Response: ", res);
   process.exit(0);
 })().catch(console.error);
