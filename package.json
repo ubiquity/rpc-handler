@@ -25,11 +25,11 @@
     "build:index": "tsx build/esbuild-build.ts",
     "build": "run-s clean build:index build:types",
     "postinstall": "git submodule update --init --recursive",
-    "test:anvil": "npx tsx ./tests/anvil.ts",
+    "test:anvil": "bun x tsx ./tests/anvil.ts",
     "test": "jest",
     "clean": "rm -rf dist",
-    "test:script:standard": "npx tsx tests/script-test.ts",
-    "test:script:consensus": "npx tsx tests/script-test-consensus.ts"
+    "test:script:standard": "bun x tsx tests/script-test.ts",
+    "test:script:consensus": "bun x tsx tests/script-test-consensus.ts"
   },
   "keywords": [
     "typescript",
