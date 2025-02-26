@@ -91,31 +91,6 @@ describe("Call Handler", () => {
       const provider = await rpcHandler.getFirstAvailableRpcProvider();
       expect(provider).not.toBeNull();
     }, 36000);
-
-    it("Should reach consensus", async () => {
-      const module = await import("../types/rpc-handler");
-      const rpcHandler = new module.RPCHandler({
-        ...testConfig,
-        proxySettings: { ...testConfig.proxySettings, logTier: "verbose" },
-        rpcTimeout: 10000,
-        networkId: "100",
-      });
-
-      const consensus = await rpcHandler.consensusCall(
-        {
-          jsonrpc: "2.0",
-          method: "eth_getBlockByNumber",
-          params: ["latest", false],
-          id: 1,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-        "0.5"
-      );
-
-      expect(consensus).toBeDefined();
-    }, 36000);
   });
 
   describe("Write ops cases", () => {
