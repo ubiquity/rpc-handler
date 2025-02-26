@@ -87,7 +87,7 @@ export class RPCService {
     rpcTimeout: number;
   }): Promise<{ latencies: Record<string, number>; runtimeRpcs: string[] }> {
     const rpcPromises: Record<string, Promise<PromiseResult>[]> = {};
-    this.createBlockReqAndByteCodeRacePromises(runtimeRpcs, rpcPromises, rpcTimeout);
+    this.createBlockRequestAndByteCodeRacePromises(runtimeRpcs, rpcPromises, rpcTimeout);
     const rpcResults = await Promise.allSettled(Object.values(rpcPromises).flat());
 
     /**
@@ -228,7 +228,7 @@ export class RPCService {
     }
   }
 
-  createBlockReqAndByteCodeRacePromises(runtimeRpcs: string[], rpcPromises: Record<string, Promise<PromiseResult>[]>, rpcTimeout: number) {
+  createBlockRequestAndByteCodeRacePromises(runtimeRpcs: string[], rpcPromises: Record<string, Promise<PromiseResult>[]>, rpcTimeout: number) {
     runtimeRpcs.forEach((rpcUrl) => {
       rpcPromises[rpcUrl] = [
         this.makeRpcRequest(

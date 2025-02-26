@@ -159,7 +159,7 @@ export class RPCHandler implements HandlerInterface {
     const rpcPromises: Record<string, Promise<PromiseResult>[]> = {};
 
     for (const rpc of rpcList) {
-      this._rpcService.createBlockReqAndByteCodeRacePromises(this._runtimeRpcs, rpcPromises, this._rpcTimeout);
+      this._rpcService.createBlockRequestAndByteCodeRacePromises(this._runtimeRpcs, rpcPromises, this._rpcTimeout);
       const results = await Promise.allSettled(rpcPromises[rpc.url] ?? []);
       const hasPassedAllChecks = results.every((res) => res && res.status === "fulfilled" && res.value.success);
       if (hasPassedAllChecks) {
