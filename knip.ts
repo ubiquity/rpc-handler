@@ -6,6 +6,7 @@ const config: KnipConfig = {
   ignore: ["src/types/config.ts", "tests/*", ".github/workflows/**"],
   ignoreExportsUsedInFile: true,
   ignoreDependencies: ["axios", "ts-node", "node-fetch", "eslint-config-prettier", "eslint-plugin-prettier", "@types/jest", "@types/node-fetch"],
+  ignoreBinaries: ["x"],
   jest: {
     config: ["jest.config.ts"],
     entry: ["tests/*.ts"],
