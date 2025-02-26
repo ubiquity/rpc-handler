@@ -3,8 +3,11 @@ import { PrettyLogs } from "../types/logs";
 import nock from "nock";
 
 /**
- * I had to separate this into ait'#s own file as `nock` messed
+ * I had to separate this into it's own file as `nock` messed
  * up the other tests.
+ * 
+ * I didn't want to do test the method like this, but I had to. The consensus function is naturally fragile
+ * when it comes to CI environments.
  */
 
 export const testConfig: HandlerConstructorConfig = {
@@ -42,10 +45,7 @@ describe("Consensus Call", () => {
       networkRpcs: rpcUrls.map((url) => ({ url })),
     });
 
-    /**
-     * I didn't want to do this, but I had to. The consensus function is naturally fragile
-     * when it comes to CI environments.
-     */
+
 
     nock(rpcUrls[0])
       .post("/")
