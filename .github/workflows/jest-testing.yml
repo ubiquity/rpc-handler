@@ -27,14 +27,20 @@ jobs:
         with:
           version: nightly
 
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          export BUN_INSTALL="$HOME/.bun"
+          export PATH="$BUN_INSTALL/bin:$PATH"
+
       - name: Install dependencies
-        run: yarn install
+        run: bun install
 
       - name: Build
-        run: yarn build
+        run: bun run build
 
       - name: Start Anvil
-        run: yarn test:anvil &
+        run: bun test:anvil &
 
       - name: Wait for Anvil
         run: |
@@ -47,7 +53,7 @@ jobs:
           done || exit 1
 
       - name: Jest With Coverage
-        run: yarn test
+        run: bun run test
 
       - name: Add Jest Report to Summary
         if: always()
