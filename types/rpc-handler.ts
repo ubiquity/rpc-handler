@@ -103,10 +103,6 @@ export class RPCHandler implements HandlerInterface {
       }
     }
 
-    if (results.length < quorum) {
-      throw new Error(`Failed to reach consensus of ${quorum} with ${results.length} successful RPC responses`);
-    }
-
     const rpcResults = results.map((res) => res.data?.result);
 
     const matchingResults = rpcResults.reduce(
