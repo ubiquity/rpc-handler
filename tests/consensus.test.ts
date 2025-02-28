@@ -23,7 +23,7 @@ export const testConfig: HandlerConstructorConfig = {
   proxySettings: {
     retryCount: 3,
     retryDelay: 10,
-    logTier: "info",
+    logTier: "verbose",
     logger: new PrettyLogs(),
     strictLogs: true,
   },
@@ -47,12 +47,7 @@ describe("Consensus Call", () => {
 
   it("Should reach consensus", async () => {
     const module = await import("../types/rpc-handler");
-    const rpcHandler = new module.RPCHandler({
-      ...testConfig,
-      proxySettings: { ...testConfig.proxySettings, logTier: "verbose" },
-      runtimeRpcs: rpcUrls,
-      networkRpcs: rpcUrls.map((url) => ({ url })),
-    });
+    const rpcHandler = new module.RPCHandler(testConfig);
 
     nock(rpcUrls[0])
       .post("/")
@@ -84,12 +79,7 @@ describe("Consensus Call", () => {
 
   it("Should fail to reach consensus", async () => {
     const module = await import("../types/rpc-handler");
-    const rpcHandler = new module.RPCHandler({
-      ...testConfig,
-      proxySettings: { ...testConfig.proxySettings, logTier: "verbose" },
-      rpcTimeout: 10000,
-      networkId: "100",
-    });
+    const rpcHandler = new module.RPCHandler(testConfig);
 
     nock(rpcUrls[0])
       .post("/")
@@ -113,6 +103,6 @@ describe("Consensus Call", () => {
         id: 1,
       });
 
-    await expect(rpcHandler.consensusCall(testPayload, "0.5")).rejects.toThrowError();
+    await expect(rpcHandler.consensusCall(testPayload, "0.5")).rejects.toThrow();
   }, 15000);
 });
