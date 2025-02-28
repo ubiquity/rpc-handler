@@ -141,10 +141,21 @@ export class RPCHandler implements HandlerInterface {
     this.log("ok", `[${this._proxySettings.moduleName}] Consensus reached`, { consensus, confirmedNodes: matchingResults[consensus] });
 
     return rpcResults.find((res) => {
+      if (!res) return false;
+
       if (typeof res === "string") {
         return res === consensus;
+      } else if (res instanceof Error) {
+        return res.message === consensus;
       }
-      return res?.hash === consensus;
+
+      if ("hash" in res && res.hash) {
+        return res.hash === consensus;
+      } else if ("transactionHash" in res && res.transactionHash) {
+        return res.transactionHash === consensus;
+      }
+
+      return false;
     }) as TMethodReturnData;
   }
 

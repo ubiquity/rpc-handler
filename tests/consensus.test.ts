@@ -37,7 +37,7 @@ const testPayload = {
   headers: {
     "Content-Type": "application/json",
   },
-}
+};
 
 describe("Consensus Call", () => {
   afterEach(() => {

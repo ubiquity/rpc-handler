@@ -30,7 +30,7 @@ import { RequestPayload } from "../dist/types/rpc-service";
 
   const handler = new RPCHandler(config);
 
-  const reqPayload: RequestPayload = {
+  const blockByNumberPayload: RequestPayload = {
     jsonrpc: "2.0",
     method: "eth_getBlockByNumber",
     params: ["latest", false],
@@ -40,7 +40,21 @@ import { RequestPayload } from "../dist/types/rpc-service";
     },
   };
 
-  const res = await handler.consensusCall(reqPayload, "0.5");
-  console.log("Final Consensus Response: ", res);
+  const transactionReceiptPayload: RequestPayload = {
+    jsonrpc: "2.0",
+    method: "eth_getTransactionReceipt",
+    params: ["0xa49258109b0b89a6fdcf2367c6465842c785e167d8a5f57a88039fdc66bd513c"],
+    id: 1,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+
+  const blockConsensusResponse = await handler.consensusCall(blockByNumberPayload, "0.5");
+  console.log("Block Consensus Response: ", blockConsensusResponse);
+
+  const transactionConsensusResponse = await handler.consensusCall(transactionReceiptPayload, "0.5");
+  console.log("Transaction Consensus Response: ", transactionConsensusResponse);
+
   process.exit(0);
 })().catch(console.error);
