@@ -5,8 +5,8 @@ import nock from "nock";
 /**
  * I had to separate this into it's own file as `nock` messed
  * up the other tests.
- * 
- * I didn't want to test the method like this, but I had to. 
+ *
+ * I didn't want to test the method like this, but I had to.
  * The consensus function is naturally fragile when it comes
  * to CI.
  */
@@ -45,8 +45,6 @@ describe("Consensus Call", () => {
       runtimeRpcs: rpcUrls,
       networkRpcs: rpcUrls.map((url) => ({ url })),
     });
-
-
 
     nock(rpcUrls[0])
       .post("/")

@@ -51,12 +51,36 @@ export function useHandler(networkId: number) {
 }
 ```
 
+- In your app:
+
 ```typescript
 import { useHandler } from "./rpc-handler";
 const handler = useHandler(networkId);
 
 // Now the RPCs are tested
 app.provider = await handler.getFastestRpcProvider();
+```
+
+- Perform a consensus check:
+
+##### Note that this is intended for read-only operations, as it will make multiple requests to different RPCs to achieve a consensus on the response.
+
+```typescript
+const handler = new RPCHandler(config);
+
+const reqPayload: RequestPayload = {
+  jsonrpc: "2.0",
+  method: "eth_getBlockByNumber",
+  params: ["latest", false],
+  id: 1,
+  headers: {
+    "Content-Type": "application/json",
+  },
+};
+
+// This response is validated against N nodes before it's returned
+// in this case 50% of nodes need to agree otherwise it will fail and throw an error
+const requestResponse = await handler.consensusCall(reqPayload, "0.5");
 ```
 
 #### Notes
