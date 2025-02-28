@@ -3,7 +3,7 @@ import axios, { AxiosError } from "axios";
 import { RPCHandler } from "./rpc-handler";
 
 // this is similar to `ValidBlockData`, I didn't want to change it incase it's in other projects
-type JsonRpcResponse = { jsonrpc: string; id: number; result: string | { number: string; timestamp: string; hash: string } };
+type JsonRpcResponse = { jsonrpc: string; id: number; result: string | { number: string; timestamp: string; hash?: string, transactionHash?: string } };
 export type PromiseResult<T extends JsonRpcResponse = JsonRpcResponse> = {
   success: boolean;
   rpcUrl: string;
@@ -34,7 +34,7 @@ function formatHexToDecimal(hex: string): string {
 export type RequestPayload = { headers: object; method: string; params: unknown[]; jsonrpc: string; id: number };
 
 export class RPCService {
-  constructor(private readonly _rpcHandler: RPCHandler) {}
+  constructor(private readonly _rpcHandler: RPCHandler) { }
 
   async makeRpcRequest(payload: RequestPayload, raceData: { rpcUrl: string; rpcTimeout: number }): Promise<PromiseResult> {
     const instance = axios.create({

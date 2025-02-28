@@ -111,11 +111,13 @@ export class RPCHandler implements HandlerInterface {
         if (typeof val !== "string") {
           if (val instanceof Error) {
             val = val.message;
-          } else {
+          } else if ("hash" in val && val.hash) {
             val = val.hash;
+          } else if ("transactionHash" in val && val.transactionHash) {
+            val = val.transactionHash;
           }
         }
-        acc[val] = (acc[val] || 0) + 1;
+        acc[val as string] = (acc[val as string] || 0) + 1;
         return acc;
       },
       {} as Record<string, number>
