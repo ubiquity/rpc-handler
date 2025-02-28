@@ -67,9 +67,6 @@ export class RPCHandler implements HandlerInterface {
   }
 
   /**
-   * @NOTICE # This method is intended for read operations only.
-   * Performing write operations with this method is dangerous as it is executed and confirmed by potentially all supported network providers.
-   *
    * @DEV `quorumThreshold` is a template literal to enforce at the type level that the value is a decimal
    * between 0 and 1 without the need for external packages or custom classes which burden the user and codebase.
    *
