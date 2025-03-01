@@ -27,9 +27,7 @@
     "postinstall": "git submodule update --init --recursive",
     "test:anvil": "npx tsx ./tests/anvil.ts",
     "test": "jest",
-    "clean": "rm -rf dist",
-    "test:script:standard": "npx tsx tests/script-test.ts",
-    "test:script:consensus": "npx tsx tests/script-test-consensus.ts"
+    "clean": "rm -rf dist"
   },
   "keywords": [
     "typescript",
