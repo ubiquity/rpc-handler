@@ -1,9 +1,10 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { LOCAL_HOST, networkRpcs, networkIds, LOCAL_HOST_2 } from "./constants";
-import { HandlerInterface, HandlerConstructorConfig, NetworkId, NetworkName, Rpc, Tracking, getRpcUrls } from "./handler";
+import { HandlerConstructorConfig, NetworkId, NetworkName, Rpc, Tracking, getRpcUrls } from "./handler";
 import { Metadata, PrettyLogs, PrettyLogsWithOk } from "./logs";
-import { PromiseResult, RequestPayload, RPCService } from "./rpc-service";
+import { RPCService } from "./rpc-service";
 import { StorageService } from "./storage-service";
+import { Security } from "./security";
 
 const NO_RPCS_AVAILABLE = "No RPCs available";
 
@@ -14,7 +15,7 @@ function shuffleArray(array: object[]) {
   }
 }
 
-export class RPCHandler implements HandlerInterface {
+export class RPCHandler {
   private static _instance: RPCHandler | null = null;
   private _rpcService: RPCService;
   private _provider: JsonRpcProvider | null = null;
@@ -42,6 +43,8 @@ export class RPCHandler implements HandlerInterface {
     moduleName: "RPCHandler",
   };
 
+  public security: Security;
+
   constructor(config: HandlerConstructorConfig) {
     this._networkId = config.networkId;
     this._networkRpcs = this._filterRpcs(networkRpcs[this._networkId].rpcs, config.tracking || "yes");
@@ -61,99 +64,9 @@ export class RPCHandler implements HandlerInterface {
     this.getNetworkName.bind(this);
     this.getNetworkRpcs.bind(this);
     this.testRpcPerformance.bind(this);
-    this.consensusCall.bind(this);
     this.getFirstAvailableRpcProvider.bind(this);
     this._rpcService = new RPCService(this);
-  }
-
-  /**
-   * @DEV `quorumThreshold` is a template literal to enforce at the type level that the value is a decimal
-   * between 0 and 1 without the need for external packages or custom classes which burden the user and codebase.
-   *
-   * @DESCRIPTION Similar to `Ethers.FallbackProvider`, this method validates the response from multiple nodes and returns true if the response is consistent across all nodes above the quorum threshold.
-   *
-   * @EXAMPLE
-   * - `consensusCall({ method: "eth_blockNumber", params: [] }, "0.5")`
-   * - `consensusCall({ method: "eth_getTransactionByHash", params: ["0x1234"] }, "0.8")`
-   */
-  public async consensusCall<TMethodReturnData = unknown>(requestPayload: RequestPayload, quorumThreshold: `0.${number}`): Promise<TMethodReturnData> {
-    if (this._runtimeRpcs.length === 0) {
-      await this.testRpcPerformance();
-    }
-
-    if (this._runtimeRpcs.length === 1) {
-      throw new Error("Only one RPC available, could not reach consensus");
-    }
-
-    const quorum = Math.ceil(this._runtimeRpcs.length * Number(quorumThreshold));
-    const rpcs = this._runtimeRpcs;
-    const results: PromiseResult[] = [];
-
-    for (const rpc of rpcs) {
-      try {
-        const result = await this._rpcService.makeRpcRequest(requestPayload, { rpcUrl: rpc, rpcTimeout: this._rpcTimeout });
-        if (result.success) {
-          results.push(result);
-        }
-      } catch (err) {
-        this.log("error", `Failed to reach endpoint ${rpc}.\n ${String(err)}`);
-      }
-    }
-
-    const rpcResults = results.map((res) => res.data?.result);
-
-    const matchingResults = rpcResults.reduce(
-      (acc, val) => {
-        if (!val) return acc;
-        if (typeof val !== "string") {
-          if (val instanceof Error) {
-            val = val.message;
-          } else if ("hash" in val && val.hash) {
-            val = val.hash;
-          } else if ("transactionHash" in val && val.transactionHash) {
-            val = val.transactionHash;
-          }
-        }
-        acc[val as string] = (acc[val as string] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
-    const consensusResults = Object.entries(matchingResults).reduce((acc, [key, val]) => {
-      if (val >= quorum) {
-        acc.push(key);
-      }
-      return acc;
-    }, [] as string[]);
-
-    if (consensusResults.length === 0) {
-      throw new Error(`Failed to reach consensus with ${quorum} matching results`);
-    } else if (consensusResults.length > 1) {
-      throw new Error(`Multiple consensus results found: ${JSON.stringify(consensusResults)}`);
-    }
-
-    const consensus = consensusResults[0];
-
-    this.log("ok", `[${this._proxySettings.moduleName}] Consensus reached`, { consensus, confirmedNodes: matchingResults[consensus] });
-
-    return rpcResults.find((res) => {
-      if (!res) return false;
-
-      if (typeof res === "string") {
-        return res === consensus;
-      } else if (res instanceof Error) {
-        return res.message === consensus;
-      }
-
-      if ("hash" in res && res.hash) {
-        return res.hash === consensus;
-      } else if ("transactionHash" in res && res.transactionHash) {
-        return res.transactionHash === consensus;
-      }
-
-      return false;
-    }) as TMethodReturnData;
+    this.security = new Security(this, this._rpcService);
   }
 
   /**
@@ -162,10 +75,8 @@ export class RPCHandler implements HandlerInterface {
   public async getFirstAvailableRpcProvider() {
     const rpcList = [...networkRpcs[this._networkId].rpcs].filter((rpc) => rpc.url.includes("https"));
     shuffleArray(rpcList);
-    const rpcPromises: Record<string, Promise<PromiseResult>[]> = {};
-
+    const rpcPromises = this._rpcService.createBlockRequestAndByteCodeRacePromises(rpcList.map((rpc) => rpc.url));
     for (const rpc of rpcList) {
-      this._rpcService.createBlockRequestAndByteCodeRacePromises(this._runtimeRpcs, rpcPromises, this._rpcTimeout);
       const results = await Promise.allSettled(rpcPromises[rpc.url] ?? []);
       const hasPassedAllChecks = results.every((res) => res && res.status === "fulfilled" && res.value.success);
       if (hasPassedAllChecks) {
@@ -173,7 +84,7 @@ export class RPCHandler implements HandlerInterface {
       }
     }
 
-    this.log("fatal", `[${this._proxySettings.moduleName}] Failed to find a working RPC`, { rpcList });
+    this.log("fatal", `Failed to find a working RPC`, { rpcList });
     return null;
   }
 
@@ -185,8 +96,8 @@ export class RPCHandler implements HandlerInterface {
     }
 
     this._provider = this.createProviderProxy(fastest, this);
-    this.log("ok", `[${this._proxySettings.moduleName}] Provider initialized: `, { provider: this._provider?.connection.url });
-    this.log("info", `[${this._proxySettings.moduleName}]`, { runTimeRpcs: this._runtimeRpcs, latencies: this._latencies });
+    this.log("ok", `Provider initialized: `, { provider: this._provider?.connection.url });
+    this.log("info", "Initialized RPC data:", { runTimeRpcs: this._runtimeRpcs, latencies: this._latencies });
 
     return this._provider;
   }
@@ -220,7 +131,7 @@ export class RPCHandler implements HandlerInterface {
               if (response) {
                 handler.log(
                   "verbose",
-                  `[${handler._proxySettings.moduleName}] Successfully called provider method ${prop.toString()}`,
+                  `Successfully called provider method ${prop.toString()}`,
                   handler.metadataMaker(response, prop as string, args, { rpc: target.connection.url })
                 );
                 return response;
@@ -229,7 +140,7 @@ export class RPCHandler implements HandlerInterface {
               // first attempt with currently connected provider
               handler.log(
                 "error",
-                `[${handler._proxySettings.moduleName}] Failed to call provider method ${prop.toString()}, retrying...`,
+                `Failed to call provider method ${prop.toString()}, retrying...`,
                 handler.metadataMaker(e, prop as string, args, { rpc: target.connection.url })
               );
             }
@@ -240,16 +151,12 @@ export class RPCHandler implements HandlerInterface {
             if (!sortedLatencies.length) {
               throw handler.log(
                 "fatal",
-                `[${handler._proxySettings.moduleName}] ${NO_RPCS_AVAILABLE}`,
+                `${NO_RPCS_AVAILABLE}`,
                 handler.metadataMaker(String(new Error(NO_RPCS_AVAILABLE)), "createProviderProxy", args, { sortedLatencies, networks: handler._networkRpcs })
               );
             }
 
-            handler.log(
-              "debug",
-              `[${handler._proxySettings.moduleName}] Current provider failed, retrying with next fastest provider...`,
-              handler.metadataMaker({}, prop.toString(), [], args)
-            );
+            handler.log("debug", `Current provider failed, retrying with next fastest provider...`, handler.metadataMaker({}, prop.toString(), [], args));
 
             // how many times we'll loop the whole list of RPCs
             let loops = handler._proxySettings.retryCount;
@@ -258,7 +165,7 @@ export class RPCHandler implements HandlerInterface {
 
             while (loops > 0) {
               for (const [rpc] of sortedLatencies) {
-                handler.log("debug", `[${handler._proxySettings.moduleName}] Connected to: ${rpc}`);
+                handler.log("debug", `Connected to: ${rpc}`);
                 try {
                   newProvider = new JsonRpcProvider(
                     {
@@ -272,7 +179,7 @@ export class RPCHandler implements HandlerInterface {
                   if (response) {
                     handler.log(
                       "verbose",
-                      `[${handler._proxySettings.moduleName}] Successfully called provider method ${prop.toString()}`,
+                      `Successfully called provider method ${prop.toString()}`,
                       handler.metadataMaker(response, prop as string, args, { rpc })
                     );
                     res = response;
@@ -284,13 +191,13 @@ export class RPCHandler implements HandlerInterface {
                   if (loops === 1) {
                     handler.log(
                       "fatal",
-                      `[${handler._proxySettings.moduleName}] Failed to call provider method ${prop.toString()} after ${handler._proxySettings.retryCount} attempts`,
+                      `Failed to call provider method ${prop.toString()} after ${handler._proxySettings.retryCount} attempts`,
                       handler.metadataMaker(e, prop as string, args)
                     );
                     throw e;
                   } else {
-                    handler.log("debug", `[${handler._proxySettings.moduleName}] Retrying in ${handler._proxySettings.retryDelay}ms...`);
-                    handler.log("debug", `[${handler._proxySettings.moduleName}] Call number: ${handler._proxySettings.retryCount - loops + 1}`);
+                    handler.log("debug", `Retrying in ${handler._proxySettings.retryDelay}ms...`);
+                    handler.log("debug", `Call number: ${handler._proxySettings.retryCount - loops + 1}`);
 
                     // delays here should be kept rather small
                     await new Promise((resolve) => setTimeout(resolve, handler._proxySettings.retryDelay));
@@ -348,7 +255,7 @@ export class RPCHandler implements HandlerInterface {
     if (!fastestRpcUrl) {
       throw this.log(
         "fatal",
-        `[${this._proxySettings.moduleName}] Failed to find fastest RPC`,
+        `Failed to find fastest RPC`,
         this.metadataMaker(String(new Error(NO_RPCS_AVAILABLE)), "testRpcPerformance", [], { latencies: this._latencies, networkId: this._networkId })
       );
     }
@@ -363,7 +270,7 @@ export class RPCHandler implements HandlerInterface {
     if (!this._provider) {
       throw this.log(
         "fatal",
-        `[${this._proxySettings.moduleName}] Failed to create provider`,
+        `Failed to create provider`,
         this.metadataMaker(String(new Error("No provider available")), "testRpcPerformance", [], {
           latencies: this._latencies,
           fastestRpcUrl: fastestRpcUrl,
@@ -378,7 +285,7 @@ export class RPCHandler implements HandlerInterface {
     if (!this._provider) {
       throw this.log(
         "fatal",
-        `[${this._proxySettings.moduleName}] Provider is not initialized`,
+        `Provider is not initialized`,
         this.metadataMaker(String(new Error("Provider is not initialized")), "getProvider", [], {
           networkRpcs: this._networkRpcs,
           runtimeRpcs: this._runtimeRpcs,
@@ -424,6 +331,22 @@ export class RPCHandler implements HandlerInterface {
     return this._latencies;
   }
 
+  public getRpcTimeout(): number {
+    return this._rpcTimeout;
+  }
+
+  updateRpcProviderLatency(rpcUrl: string, latency: number): void {
+    this._latencies[`${this._networkId}__${rpcUrl}`] = latency;
+  }
+
+  updateRuntimeRpc(rpcUrl: string, action: "add" | "remove"): void {
+    if (action === "add") {
+      this._runtimeRpcs.push(rpcUrl);
+    } else {
+      this._runtimeRpcs = this._runtimeRpcs.filter((rpc) => rpc !== rpcUrl);
+    }
+  }
+
   public getRefreshLatencies(): number {
     return this._refreshLatencies;
   }
@@ -433,13 +356,7 @@ export class RPCHandler implements HandlerInterface {
   }
 
   private async _testRpcPerformance(): Promise<void> {
-    const { latencies, runtimeRpcs } = await this._rpcService.testRpcPerformance({
-      latencies: this._latencies,
-      networkId: this._networkId,
-      rpcTimeout: this._rpcTimeout,
-      runtimeRpcs: this._runtimeRpcs,
-    });
-
+    const { latencies, runtimeRpcs } = await this._rpcService.testRpcPerformance();
     this._runtimeRpcs = runtimeRpcs;
     this._latencies = latencies;
     this._refreshLatencies++;
@@ -482,6 +399,8 @@ export class RPCHandler implements HandlerInterface {
     }
 
     const isStrict = this._proxySettings.strictLogs;
+
+    message = `[${this._proxySettings.moduleName}] ` + message;
 
     if (isStrict && logTier === tier) {
       // if strictLogs is true, only log the tier specified
@@ -581,7 +500,7 @@ export class RPCHandler implements HandlerInterface {
         .reduce((a, b) => (validLatencies[a] < validLatencies[b] ? a : b))
         .split("__")[1];
     } catch (error) {
-      this.log("error", "[RPCService] Failed to find fastest RPC", { er: String(error) });
+      this.log("error", "Failed to find fastest RPC", { er: String(error) });
       return null;
     }
   }
