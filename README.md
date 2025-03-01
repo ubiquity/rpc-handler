@@ -80,7 +80,7 @@ const reqPayload: RequestPayload = {
 
 // This response is validated against N nodes before it's returned
 // in this case 50% of nodes need to agree otherwise it will fail and throw an error
-const requestResponse = await handler.consensusCall(reqPayload, "0.5");
+const requestResponse = await handler.security.consensusCall(reqPayload, "0.5");
 ```
 
 #### Notes

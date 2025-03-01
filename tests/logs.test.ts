@@ -128,10 +128,6 @@ describe("Logs", () => {
     expect(warnSpy).toBeCalledTimes(0);
 
     const cleanLogStrings = cleanSpyLogs(logSpy);
-    /**
-     *  Expected: ArrayContaining [StringContaining "✓[RPCHandler-Unit-Tests][RPCService]Detectedmostcommonblocknumber:", "✓[RPCHandler-Unit-Tests]Providerinitialized:{\"provider\":\"http://127.0.0.1:8545\"}"]
-    Received: ["✓[RPCHandler-Unit-Tests][RPCService]Detectedmostcommonblocknumber:38811110with1providersinsync", "✓[RPCHandler-Unit-Tests]RPCHandlerProviderinitialized:{\"provider\":\"http://127.0.0.1:8545\"}"]
-     */
     expect(cleanLogStrings).toEqual(expect.arrayContaining([expect.stringMatching(IN_SYNC_PROVIDERS), cleanLogString(INITIALIZED)]));
   });
 
