@@ -27,4 +27,11 @@ describe("RPCHandler E2E Tests", () => {
     expect(networkRpcs.length).toBeGreaterThan(0);
     expect(networkRpcs.every((rpc) => !!rpc.url)).toBeTruthy();
   }, 15000);
+
+  it("should return non-null runtime RPCs", async () => {
+    const runtimeRpcs = handler.getRuntimeRpcs();
+    expect(runtimeRpcs).toBeDefined();
+    expect(runtimeRpcs.length).toBeGreaterThan(0);
+    expect(runtimeRpcs.every((rpc) => !!rpc)).toBeTruthy();
+  }, 15000);
 });

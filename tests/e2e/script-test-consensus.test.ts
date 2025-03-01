@@ -2,7 +2,7 @@ import { RPCHandler } from "../../dist";
 import { RequestPayload } from "../../dist/types/rpc-service";
 import { e2eConfig } from "./config";
 
-describe("RPCHandler E2E Tests", () => {
+describe("RPCHandler Security E2E Tests", () => {
   let handler: RPCHandler;
 
   beforeAll(() => {
@@ -20,7 +20,7 @@ describe("RPCHandler E2E Tests", () => {
       },
     };
 
-    const blockConsensusResponse = await handler.security.consensusCall(blockByNumberPayload, "0.33"); // 33% to reduce flakiness for CI
+    const blockConsensusResponse = await handler.security.consensusCall(blockByNumberPayload, "0.33"); // to reduce flakiness for CI
     expect(blockConsensusResponse).toBeDefined();
     expect(blockConsensusResponse).toHaveProperty("baseFeePerGas");
     expect(blockConsensusResponse).toHaveProperty("blobGasUsed");
@@ -38,7 +38,7 @@ describe("RPCHandler E2E Tests", () => {
       },
     };
 
-    const transactionConsensusResponse = await handler.security.consensusCall(transactionReceiptPayload, "0.33"); // 33% to reduce flakiness for CI
+    const transactionConsensusResponse = await handler.security.consensusCall(transactionReceiptPayload, "0.33"); // reduce flakiness for CI
     expect(transactionConsensusResponse).toBeDefined();
     expect(transactionConsensusResponse).toHaveProperty("blockHash");
     expect(transactionConsensusResponse).toHaveProperty("blockNumber");
