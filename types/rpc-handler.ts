@@ -356,11 +356,8 @@ export class RPCHandler {
   }
 
   private async _testRpcPerformance(): Promise<void> {
-    const { latencies, runtimeRpcs } = await this._rpcService.testRpcPerformance();
-    this._runtimeRpcs = runtimeRpcs;
-    this._latencies = latencies;
+    await this._rpcService.testRpcPerformance();
     this._refreshLatencies++;
-
     StorageService.setLatencies(this._env, this._latencies);
     StorageService.setRefreshLatencies(this._env, this._refreshLatencies);
   }

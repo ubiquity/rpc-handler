@@ -40,13 +40,12 @@ export class RPCService {
   private _blockNumberCounts: Record<string, number> = {};
   private _blockNumberResults: Record<string, string> = {};
 
-  constructor(private readonly _rpcHandler: RPCHandler) {}
+  constructor(private readonly _rpcHandler: RPCHandler) { }
 
-  public async testRpcPerformance(): Promise<{ latencies: Record<string, number>; runtimeRpcs: string[] }> {
+  public async testRpcPerformance() {
     let runtimeRpcs = this._rpcHandler.getRuntimeRpcs();
     const rpcPromises = this.createBlockRequestAndByteCodeRacePromises(runtimeRpcs);
     const rpcResults = await Promise.allSettled(Object.values(rpcPromises).flat());
-    const handlerLatencies = this._rpcHandler.getLatencies();
 
     /**
      * We need to detect providers which are out of sync. This is done
@@ -59,20 +58,21 @@ export class RPCService {
 
     if (!rpcResults.length) {
       this._rpcHandler.log("error", "[RPCService] No RPC results found", { rpcResults });
-      return { latencies: handlerLatencies, runtimeRpcs };
+      return;
     }
 
     rpcResults.forEach((result) => this._processRpcResult(result));
     const bncKeys = Object.keys(this._blockNumberCounts);
     if (!bncKeys.length) {
       this._rpcHandler.log("error", "[RPCService] No block number counts found", { blockNumberCounts: this._blockNumberCounts });
-      return { latencies: handlerLatencies, runtimeRpcs };
+      return;
     }
 
     const mostCommonBlockNumber = bncKeys.reduce((a, b) => (this._blockNumberCounts[a] > this._blockNumberCounts[b] ? a : b));
 
-    runtimeRpcs = Object.keys(this._blockNumberResults).filter((rpcUrl) => {
+    Object.keys(this._blockNumberResults).forEach((rpcUrl) => {
       if (this._blockNumberResults[rpcUrl] !== mostCommonBlockNumber) {
+        this._rpcHandler.updateRuntimeRpc(rpcUrl, "remove");
         this._rpcHandler.log(
           "info",
           `[RPCService] Detected out of sync provider: ${rpcUrl} with block number: ${formatHexToDecimal(this._blockNumberResults[rpcUrl])} vs ${formatHexToDecimal(mostCommonBlockNumber)}`,
@@ -82,17 +82,13 @@ export class RPCService {
             mostCommonBlockNumber,
           }
         );
-        return false;
       }
-      return true;
     });
 
     this._rpcHandler.log(
       "ok",
       `[RPCService] Detected most common blocknumber: ${formatHexToDecimal(mostCommonBlockNumber)} with ${runtimeRpcs.length} providers in sync`
     );
-
-    return { latencies: handlerLatencies, runtimeRpcs };
   }
 
   private _processRpcResult(result: PromiseSettledResult<RpcPromiseResult>) {
