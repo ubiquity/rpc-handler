@@ -42,7 +42,7 @@ export type HandlerInterface = {
 };
 
 // This is log message prefix which can be used to identify the logs from this module
-type ModuleName = "[RPCHandler Provider Proxy] - ";
+type ModuleName = "RPCHandler Provider Proxy";
 
 type ProxySettings = {
   retryCount: number; // how many times we'll loop the list of RPCs retrying the request before failing
