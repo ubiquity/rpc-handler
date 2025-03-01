@@ -4,6 +4,7 @@ import { RPCHandler } from "../types/rpc-handler";
 import { HandlerConstructorConfig, Rpc } from "../types/handler";
 import { PrettyLogs } from "../types/logs";
 import { LOCAL_HOST } from "../types/constants";
+import { testConfig } from "./constants";
 
 const nonceBitmapData = {
   to: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
@@ -13,18 +14,19 @@ const nonceBitmapData = {
 const rpcList = [{ url: LOCAL_HOST }] as Rpc[];
 const ansiEscapeCodes = /\x1b\[\d+m|\s/g;
 
-const INITIALIZED = `✓[RPCHandler] Provider initialized: {"provider": "http://127.0.0.1:8545" }`;
-const BLOCK_NUMBER_CALL = `💬[RPCHandler] Successfully called provider method send ${JSON.stringify({
+const IN_SYNC_PROVIDERS = /✓\[RPCHandler-Unit-Tests\]\[RPCService\]Detectedmostcommonblocknumber:\d+with\d+providersinsync/;
+const INITIALIZED = `✓[RPCHandler-Unit-Tests] Provider initialized: {"provider": "http://127.0.0.1:8545" }`;
+const BLOCK_NUMBER_CALL = `💬[RPCHandler-Unit-Tests] Successfully called provider method send ${JSON.stringify({
   method: "send",
   args: ["eth_blockNumber", []],
   metadata: {
     rpc: "http://127.0.0.1:8545",
   },
 })}`;
-const DEBUG_RETRY_IN_20 = `›› [RPCHandler] Retrying in 20ms...`;
-const DEBUG_CALL_NUMBER = `›› [RPCHandler] Call number: `;
-const DEBUG_CONNECT_TO = `›› [RPCHandler] Connected to: 31337__http://127.0.0.1:8545`;
-const DEBUG_RETRY = `›› [RPCHandler] Current provider failed, retrying with next fastest provider... ${JSON.stringify({
+const DEBUG_RETRY_IN_20 = `›› [RPCHandler-Unit-Tests] Retrying in 20ms...`;
+const DEBUG_CALL_NUMBER = `›› [RPCHandler-Unit-Tests] Call number: `;
+const DEBUG_CONNECT_TO = `›› [RPCHandler-Unit-Tests] Connected to: 31337__http://127.0.0.1:8545`;
+const DEBUG_RETRY = `›› [RPCHandler-Unit-Tests] Current provider failed, retrying with next fastest provider... ${JSON.stringify({
   method: "send",
   args: [],
   metadata: ["eth_call", [null, null, null, "latest"]],
@@ -63,7 +65,7 @@ const NULL_ARG_TX_CALL_RETRY = `⚠${JSON.stringify({
   },
 })}`;
 
-const NONCE_BITMAP_ETH_CALL = `💬 [RPCHandler] Successfully called provider method send ${JSON.stringify({
+const NONCE_BITMAP_ETH_CALL = `💬 [RPCHandler-Unit-Tests] Successfully called provider method send ${JSON.stringify({
   method: "send",
   args: [
     "eth_call",
@@ -84,21 +86,13 @@ describe("Logs", () => {
   let handler: RPCHandler;
   let provider: JsonRpcProvider;
 
-  const mods: HandlerConstructorConfig = {
+  const logsConfig: HandlerConstructorConfig = {
+    ...testConfig,
     runtimeRpcs: [LOCAL_HOST],
     networkRpcs: rpcList,
-    autoStorage: false,
     cacheRefreshCycles: 1,
     networkName: "anvil",
     networkId: "31337",
-    rpcTimeout: 700,
-    proxySettings: {
-      retryCount: 3,
-      retryDelay: 10,
-      logTier: "ok",
-      logger: new PrettyLogs(),
-      strictLogs: true,
-    },
   };
 
   afterEach(() => {
@@ -114,7 +108,7 @@ describe("Logs", () => {
     const debugSpy = jest.spyOn(console, "debug");
     const warnSpy = jest.spyOn(console, "warn");
 
-    handler = new RPCHandler({ ...mods, proxySettings: { ...mods.proxySettings, logTier: "ok" } });
+    handler = new RPCHandler({ ...logsConfig, proxySettings: { ...logsConfig.proxySettings, logTier: "ok" } });
     provider = await handler.getFastestRpcProvider();
     const blockNumberResponse = await provider.send("eth_blockNumber", []);
     expect(blockNumberResponse).toBeDefined();
@@ -134,7 +128,11 @@ describe("Logs", () => {
     expect(warnSpy).toBeCalledTimes(0);
 
     const cleanLogStrings = cleanSpyLogs(logSpy);
-    expect(cleanLogStrings).toEqual(expect.arrayContaining([cleanLogString(INITIALIZED)]));
+    /**
+     *  Expected: ArrayContaining [StringContaining "✓[RPCHandler-Unit-Tests][RPCService]Detectedmostcommonblocknumber:", "✓[RPCHandler-Unit-Tests]Providerinitialized:{\"provider\":\"http://127.0.0.1:8545\"}"]
+    Received: ["✓[RPCHandler-Unit-Tests][RPCService]Detectedmostcommonblocknumber:38811110with1providersinsync", "✓[RPCHandler-Unit-Tests]RPCHandlerProviderinitialized:{\"provider\":\"http://127.0.0.1:8545\"}"]
+     */
+    expect(cleanLogStrings).toEqual(expect.arrayContaining([expect.stringMatching(IN_SYNC_PROVIDERS), cleanLogString(INITIALIZED)]));
   });
 
   it("should log only 'info' tiered logs", async () => {
@@ -143,7 +141,7 @@ describe("Logs", () => {
     const debugSpy = jest.spyOn(console, "debug");
     const warnSpy = jest.spyOn(console, "warn");
     const infoSpy = jest.spyOn(console, "info");
-    handler = new RPCHandler({ ...mods, proxySettings: { ...mods.proxySettings, logTier: "info" } });
+    handler = new RPCHandler({ ...logsConfig, proxySettings: { ...logsConfig.proxySettings, logTier: "info" } });
     provider = await handler.getFastestRpcProvider();
     const blockNumberResponse = await provider.send("eth_blockNumber", []);
     expect(blockNumberResponse).toBeDefined();
@@ -165,7 +163,7 @@ describe("Logs", () => {
 
     const latencies = handler.getLatencies();
     const rpcLatency = latencies["31337__http://127.0.0.1:8545"];
-    const INFO_CALL = `› [RPCHandler] ${JSON.stringify({
+    const INFO_CALL = `› [RPCHandler-Unit-Tests] Initialized RPC data:${JSON.stringify({
       runTimeRpcs: ["http://127.0.0.1:8545"],
       latencies: {
         "31337__http://127.0.0.1:8545": rpcLatency,
@@ -181,7 +179,7 @@ describe("Logs", () => {
     const consoleSpy = jest.spyOn(console, "log");
     const debugSpy = jest.spyOn(console, "debug");
     const warnSpy = jest.spyOn(console, "warn");
-    handler = new RPCHandler({ ...mods, proxySettings: { ...mods.proxySettings, logTier: "error" } });
+    handler = new RPCHandler({ ...logsConfig, proxySettings: { ...logsConfig.proxySettings, logTier: "error" } });
     provider = await handler.getFastestRpcProvider();
 
     try {
@@ -206,9 +204,8 @@ describe("Logs", () => {
     const errorSpy = jest.spyOn(console, "error");
     const consoleSpy = jest.spyOn(console, "log");
     const debugSpy = jest.spyOn(console, "debug");
-    const warnSpy = jest.spyOn(console, "warn");
 
-    handler = new RPCHandler({ ...mods, proxySettings: { ...mods.proxySettings, logTier: "fatal" } });
+    handler = new RPCHandler({ ...logsConfig, proxySettings: { ...logsConfig.proxySettings, logTier: "fatal" } });
     provider = await handler.getFastestRpcProvider();
     const response = await provider.send("eth_blockNumber", []);
     expect(response).toBeDefined();
@@ -241,7 +238,7 @@ describe("Logs", () => {
     const logSpy = jest.spyOn(console, "log");
     const errorSpy = jest.spyOn(console, "error");
     const debugSpy = jest.spyOn(console, "debug");
-    handler = new RPCHandler({ ...mods, proxySettings: { ...mods.proxySettings, logTier: "verbose" } });
+    handler = new RPCHandler({ ...logsConfig, proxySettings: { ...logsConfig.proxySettings, logTier: "verbose" } });
     provider = await handler.getFastestRpcProvider();
     const response = await provider.send("eth_blockNumber", []);
     expect(response).toBeDefined();
@@ -273,7 +270,7 @@ describe("Logs", () => {
     const logSpy = jest.spyOn(console, "log");
     const errorSpy = jest.spyOn(console, "error");
     const debugSpy = jest.spyOn(console, "debug");
-    handler = new RPCHandler({ ...mods, proxySettings: { ...mods.proxySettings, strictLogs: false, logTier: "info" } });
+    handler = new RPCHandler({ ...logsConfig, proxySettings: { ...logsConfig.proxySettings, strictLogs: false, logTier: "info" } });
     provider = await handler.getFastestRpcProvider();
 
     const response = await provider.send("eth_blockNumber", []);
@@ -305,9 +302,9 @@ describe("Logs", () => {
     ];
 
     handler = new RPCHandler({
-      ...mods,
+      ...logsConfig,
       networkRpcs: badRpcs,
-      proxySettings: { ...mods.proxySettings, logTier: "verbose", strictLogs: false, retryCount: 5, retryDelay: 20 },
+      proxySettings: { ...logsConfig.proxySettings, logTier: "verbose", strictLogs: false, retryCount: 5, retryDelay: 20 },
     });
     provider = await handler.getFastestRpcProvider();
 

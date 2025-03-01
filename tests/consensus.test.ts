@@ -1,6 +1,6 @@
 import { HandlerConstructorConfig } from "../types/handler";
-import { PrettyLogs } from "../types/logs";
 import nock from "nock";
+import { testConfig } from "./constants";
 
 /**
  * I had to separate this into it's own file as `nock` messed
@@ -11,22 +11,10 @@ import nock from "nock";
  * to CI.
  */
 const rpcUrls = ["http://127.0.0.1:8545", "http://127.0.0.1:8546", "http://127.0.0.1:8547"];
-
-export const testConfig: HandlerConstructorConfig = {
-  networkId: "100",
-  autoStorage: false,
-  cacheRefreshCycles: 3,
-  networkName: null,
-  rpcTimeout: 10000,
+const consensusConfig: HandlerConstructorConfig = {
+  ...testConfig,
   runtimeRpcs: rpcUrls,
   networkRpcs: rpcUrls.map((url) => ({ url })),
-  proxySettings: {
-    retryCount: 3,
-    retryDelay: 10,
-    logTier: "verbose",
-    logger: new PrettyLogs(),
-    strictLogs: true,
-  },
 };
 
 const testPayload = {
@@ -47,62 +35,39 @@ describe("Consensus Call", () => {
 
   it("Should reach consensus", async () => {
     const module = await import("../types/rpc-handler");
-    const rpcHandler = new module.RPCHandler(testConfig);
+    const rpcHandler = new module.RPCHandler(consensusConfig);
 
-    nock(rpcUrls[0])
-      .post("/")
-      .reply(200, {
-        jsonrpc: "2.0",
-        result: { number: "0x1b4", hash: "0x1b4" },
-        id: 1,
-      });
+    for (const url of rpcUrls) {
+      nock(url)
+        .post("/")
+        .reply(200, {
+          jsonrpc: "2.0",
+          result: { number: "0x1b4", hash: "0x1b4" },
+          id: 1,
+        });
+    }
 
-    nock(rpcUrls[1])
-      .post("/")
-      .reply(200, {
-        jsonrpc: "2.0",
-        result: { number: "0x1b4", hash: "0x1b4" },
-        id: 1,
-      });
-
-    nock(rpcUrls[2])
-      .post("/")
-      .reply(200, {
-        jsonrpc: "2.0",
-        result: { number: "0x1b4", hash: "0x1b4" },
-        id: 1,
-      });
-
-    const consensus = await rpcHandler.consensusCall(testPayload, "0.5");
+    const consensus = await rpcHandler.security.consensusCall(testPayload, "0.5");
     expect(consensus).toBeDefined();
   }, 15000);
 
   it("Should fail to reach consensus", async () => {
     const module = await import("../types/rpc-handler");
-    const rpcHandler = new module.RPCHandler(testConfig);
+    const rpcHandler = new module.RPCHandler(consensusConfig);
 
-    nock(rpcUrls[0])
-      .post("/")
-      .reply(200, {
-        jsonrpc: "2.0",
-        result: { number: "0x1b4", hash: "0x1b4" },
-        id: 1,
-      });
-    nock(rpcUrls[1])
-      .post("/")
-      .reply(200, {
-        jsonrpc: "2.0",
-        result: { number: "0x01", hash: "0x01" },
-        id: 1,
-      });
-    nock(rpcUrls[2])
-      .post("/")
-      .reply(200, {
-        jsonrpc: "2.0",
-        result: { number: "0x", hash: "0x" },
-        id: 1,
-      });
+    const responses = [
+      { number: "0x1b4", hash: "0x1b4" },
+      { number: "0x01", hash: "0x01" },
+      { number: "0x", hash: "0x" },
+    ];
 
-    await expect(rpcHandler.consensusCall(testPayload, "0.5")).rejects.toThrow();
+    for (const url of rpcUrls) {
+      nock(url).post("/").reply(200, {
+        jsonrpc: "2.0",
+        result: responses.shift(),
+        id: 1,
+      });
+    }
+    await expect(rpcHandler.security.consensusCall(testPayload, "0.5")).rejects.toThrow();
   }, 15000);
 });

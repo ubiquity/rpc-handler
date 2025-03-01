@@ -1,8 +1,8 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { networkRpcs } from "../types/constants";
 import { RPCHandler } from "../types/rpc-handler";
-import { HandlerConstructorConfig, getRpcUrls, Rpc, Tracking } from "../types/handler";
-import { PrettyLogs } from "../types/logs";
+import { getRpcUrls, NetworkId, NetworkName, Rpc, Tracking } from "../types/handler";
+import { testConfig } from "./constants";
 
 const rpcList: { url: string; tracking?: Tracking }[] = [
   { url: "http://127.0.0.1:85451", tracking: "none" },
@@ -18,22 +18,12 @@ const rpcList: { url: string; tracking?: Tracking }[] = [
   { url: "http://127.0.0.1:8545", tracking: "none" },
 ];
 
-export const testConfig: HandlerConstructorConfig = {
-  networkName: "anvil",
-  networkId: "31337",
-  runtimeRpcs: rpcList.map((rpc) => rpc.url),
+const rpcHandlerConfig = {
+  ...testConfig,
   networkRpcs: rpcList,
-  autoStorage: false,
-  cacheRefreshCycles: 3,
-  rpcTimeout: 600,
-  tracking: "yes",
-  proxySettings: {
-    retryCount: 3,
-    retryDelay: 10,
-    logTier: "info",
-    logger: new PrettyLogs(),
-    strictLogs: true,
-  },
+  networkName: "anvil" as NetworkName,
+  networkId: "31337" as NetworkId,
+  runtimeRpcs: rpcList.map((rpc) => rpc.url),
 };
 
 describe("RPCHandler", () => {
@@ -46,7 +36,7 @@ describe("RPCHandler", () => {
 
   describe("Initialization", () => {
     function setup() {
-      return new RPCHandler(testConfig);
+      return new RPCHandler(rpcHandlerConfig);
     }
 
     it("should be instance of RPCHandler", () => {
@@ -56,12 +46,12 @@ describe("RPCHandler", () => {
 
     it("should initialize with correct networkId", () => {
       const rpcHandler = setup();
-      expect(rpcHandler["_networkId"]).toBe(testConfig.networkId);
+      expect(rpcHandler["_networkId"]).toBe(rpcHandlerConfig.networkId);
     });
 
     it("should initialize with correct cacheRefreshCycles", () => {
       const rpcHandler = setup();
-      expect(rpcHandler["_cacheRefreshCycles"]).toBe(testConfig.cacheRefreshCycles);
+      expect(rpcHandler["_cacheRefreshCycles"]).toBe(rpcHandlerConfig.cacheRefreshCycles);
     });
 
     it("should initialize with correct autoStorage", () => {
@@ -113,7 +103,7 @@ describe("RPCHandler", () => {
 
     it("should initialize with correct rpcTimeout", () => {
       const rpcHandler = setup();
-      expect(rpcHandler["_rpcTimeout"]).toBe(testConfig.rpcTimeout);
+      expect(rpcHandler["_rpcTimeout"]).toBe(rpcHandlerConfig.rpcTimeout);
     });
   });
 
@@ -121,20 +111,20 @@ describe("RPCHandler", () => {
     it("should return the fastest RPC compared to the latencies", async () => {
       const module = await import("../types/rpc-handler");
       const rpcHandler = new module.RPCHandler({
-        ...testConfig,
+        ...rpcHandlerConfig,
         rpcTimeout: 10000,
       });
 
       provider = await rpcHandler.getFastestRpcProvider();
       const fastestRpc = rpcHandler.getProvider();
       const latencies = rpcHandler.getLatencies();
-      expect(provider._network.chainId).toBe(Number(testConfig.networkId));
+      expect(provider._network.chainId).toBe(Number(rpcHandlerConfig.networkId));
       expect(provider.connection.url).toMatch(/(https|wss|http):\/\//);
       const latArrLen = Array.from(Object.entries(latencies)).length;
       const runtime = rpcHandler.getRuntimeRpcs();
       expect(runtime.length).toBeGreaterThan(0);
       expect(runtime.length).toBe(latArrLen);
-      expect(runtime.length).toBeLessThanOrEqual(getRpcUrls(networkRpcs[testConfig.networkId].rpcs).length);
+      expect(runtime.length).toBeLessThanOrEqual(getRpcUrls(networkRpcs[rpcHandlerConfig.networkId].rpcs).length);
       expect(latArrLen).toBeGreaterThanOrEqual(1);
 
       if (latArrLen > 1) {
@@ -175,7 +165,6 @@ describe("RPCHandler", () => {
           return rpc.url;
         });
 
-        const rpcHandlerConfig = { ...testConfig };
         if (trackingOption == "undefined") {
           delete rpcHandlerConfig.tracking;
         } else {
