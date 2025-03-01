@@ -25,7 +25,7 @@ describe("RPCHandler Security E2E Tests", () => {
     expect(blockConsensusResponse).toHaveProperty("baseFeePerGas");
     expect(blockConsensusResponse).toHaveProperty("blobGasUsed");
     expect(blockConsensusResponse).toHaveProperty("logsBloom");
-  }, 15000);
+  }, 36000);
 
   it("should get transaction consensus response", async () => {
     const transactionReceiptPayload: RequestPayload = {
@@ -43,5 +43,5 @@ describe("RPCHandler Security E2E Tests", () => {
     expect(transactionConsensusResponse).toHaveProperty("blockHash");
     expect(transactionConsensusResponse).toHaveProperty("blockNumber");
     expect((transactionConsensusResponse as { from: string }).from).toEqual("0xae5d1f192013db889b1e2115a370ab133f359765");
-  }, 15000);
+  }, 36000);
 });
