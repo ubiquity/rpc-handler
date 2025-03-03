@@ -16,7 +16,7 @@
 ## Installation
 
 ```bash
-yarn add @ubiquity-dao/rpc-handler
+bun add @ubiquity-dao/rpc-handler
 ```
 
 ## Usage
@@ -74,19 +74,19 @@ app.provider = await handler.getFastestRpcProvider();
 1. Build the package:
 
 ```bash
-yarn build
+bun run build
 ```
 
 2. In terminal A run the following command to start a local Anvil instance:
 
 ```bash
-yarn test:anvil
+bun test:anvil
 ```
 
 3. In terminal B run the following command to run the tests:
 
 ```bash
-yarn test
+bun run test
 ```
 
 ## Say goodbye to slow RPCs

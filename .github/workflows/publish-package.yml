@@ -41,13 +41,13 @@ jobs:
 
       - name: Build
         run: |
-          yarn install --immutable --check-cache
-          yarn build
-          yarn pack
+          bun install --frozen-lockfile
+          bun run build
+          bunx npm pack
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Publish
-        run: yarn publish --access public
+        run: bunx npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         if: ${{ steps.release.outputs.release_created }}
