@@ -14,7 +14,7 @@
     "node": ">=20.10.0"
   },
   "scripts": {
-    "format": "bun format:lint && bun format:prettier && bun format:cspell",
+    "format": "run-s format:lint format:prettier format:cspell",
     "format:lint": "eslint --fix .",
     "format:prettier": "prettier --write .",
     "format:cspell": "npx tsx .github/cspell.ts",
@@ -23,7 +23,7 @@
     "prepare": "husky install",
     "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
     "build:index": "tsx build/esbuild-build.ts",
-    "build": "bun run clean && bun build:index && bun build:types",
+    "build": "run-s clean build:index build:types",
     "postinstall": "git submodule update --init --recursive",
     "test:anvil": "npx tsx ./tests/anvil.ts",
     "test": "jest",
