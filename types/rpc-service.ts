@@ -40,10 +40,10 @@ export class RPCService {
   private _blockNumberCounts: Record<string, number> = {};
   private _blockNumberResults: Record<string, string> = {};
 
-  constructor(private readonly _rpcHandler: RPCHandler) { }
+  constructor(private readonly _rpcHandler: RPCHandler) {}
 
   public async testRpcPerformance() {
-    let runtimeRpcs = this._rpcHandler.getRuntimeRpcs();
+    const runtimeRpcs = this._rpcHandler.getRuntimeRpcs();
     const rpcPromises = this.createBlockRequestAndByteCodeRacePromises(runtimeRpcs);
     const rpcResults = await Promise.allSettled(Object.values(rpcPromises).flat());
 
