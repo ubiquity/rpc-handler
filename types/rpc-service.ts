@@ -1,85 +1,50 @@
-import { NetworkId, ValidBlockData } from "./handler";
+import { ValidBlockData } from "./handler";
 import axios, { AxiosError } from "axios";
 import { RPCHandler } from "./rpc-handler";
-type PromiseResult = { success: boolean; rpcUrl: string; duration: number; isBlockReq: boolean; error?: string; data?: unknown };
 
-const getBlockNumberPayload = JSON.stringify({
+// this is similar to `ValidBlockData`, I didn't want to change it incase it's in other projects
+export type JsonRpcResponseData = {
+  jsonrpc: string;
+  id: number;
+  result: string | { number: string; timestamp: string; hash?: string; transactionHash?: string };
+};
+export type RequestPayload = { headers: object; method: string; params: unknown[]; jsonrpc: string; id: number };
+export type RpcPromiseResult<T extends JsonRpcResponseData = JsonRpcResponseData> = {
+  success: boolean;
+  rpcUrl: string;
+  duration: number;
+  rpcMethod: string;
+  error?: string;
+  data?: T;
+};
+
+const getBlockNumberPayload = {
   jsonrpc: "2.0",
   method: "eth_getBlockByNumber",
   params: ["latest", false],
   id: 1,
-});
+};
 
-const storageReadPayload = JSON.stringify({
+const storageReadPayload = {
   jsonrpc: "2.0",
   method: "eth_getCode",
   params: ["0x000000000022D473030F116dDEE9F6B43aC78BA3", "latest"],
   id: 1,
-});
+};
 
 function formatHexToDecimal(hex: string): string {
   return parseInt(hex, 16).toString(10);
 }
 
 export class RPCService {
-  static async makeRpcRequest(rpcUrl: string, rpcTimeout: number, rpcHeader: object, isBlockReq = true): Promise<PromiseResult> {
-    const instance = axios.create({
-      timeout: rpcTimeout,
-      headers: rpcHeader,
-    });
-    const startTime = performance.now();
-    try {
-      const res = await instance.post(rpcUrl, isBlockReq ? getBlockNumberPayload : storageReadPayload);
-      return {
-        rpcUrl,
-        duration: performance.now() - startTime,
-        success: true,
-        data: res?.data || null,
-        isBlockReq,
-      };
-    } catch (err) {
-      if (err instanceof AxiosError) {
-        const isTimeout = err.code === "ECONNABORTED";
-        return {
-          rpcUrl,
-          success: false,
-          duration: isTimeout ? performance.now() - startTime : 0,
-          error: isTimeout ? "timeout" : err.message,
-          isBlockReq,
-        };
-      }
-      return {
-        rpcUrl,
-        success: false,
-        duration: 0,
-        error: `${err}`,
-        isBlockReq,
-      };
-    }
-  }
+  private _blockNumberCounts: Record<string, number> = {};
+  private _blockNumberResults: Record<string, string> = {};
 
-  static async testRpcPerformance(
-    networkId: NetworkId,
-    latencies: Record<string, number>,
-    runtimeRpcs: string[],
-    rpcHeader: object,
-    rpcTimeout: number,
-    rpcHandler: RPCHandler
-  ): Promise<{ latencies: Record<string, number>; runtimeRpcs: string[] }> {
-    async function requestEndpoint(rpcUrl: string, isBlockReq = true): Promise<PromiseResult> {
-      try {
-        return await RPCService.makeRpcRequest(rpcUrl, rpcTimeout, rpcHeader, isBlockReq);
-      } catch (err) {
-        rpcHandler.log("error", "[RPCService] Failed to make RPC request", { rpcUrl, err: String(err) });
-        throw new Error(rpcUrl);
-      }
-    }
+  constructor(private readonly _rpcHandler: RPCHandler) {}
 
-    const rpcPromises: Record<string, Promise<PromiseResult>[]> = {};
-    runtimeRpcs.forEach((rpcUrl) => {
-      rpcPromises[rpcUrl] = [requestEndpoint(rpcUrl, true), requestEndpoint(rpcUrl, false)];
-    });
-
+  public async testRpcPerformance() {
+    const runtimeRpcs = this._rpcHandler.getRuntimeRpcs();
+    const rpcPromises = this.createBlockRequestAndByteCodeRacePromises(runtimeRpcs);
     const rpcResults = await Promise.allSettled(Object.values(rpcPromises).flat());
 
     /**
@@ -91,80 +56,60 @@ export class RPCService {
      * we assume this is the correct blocknumber.
      */
 
-    const blockNumberCounts: Record<string, number> = {};
-    const blockNumberResults: Record<string, string> = {};
-
     if (!rpcResults.length) {
-      rpcHandler.log("error", "[RPCService] No RPC results found", { rpcResults });
-      return { latencies, runtimeRpcs };
+      this._rpcHandler.log("error", "[RPCService] No RPC results found", { rpcResults });
+      return;
     }
 
-    rpcResults.forEach((result) => this._processRpcResult({ result, networkId, latencies, runtimeRpcs, blockNumberCounts, blockNumberResults, rpcHandler }));
-    const bncKeys = Object.keys(blockNumberCounts);
+    rpcResults.forEach((result) => this._processRpcResult(result));
+    const bncKeys = Object.keys(this._blockNumberCounts);
     if (!bncKeys.length) {
-      rpcHandler.log("error", "[RPCService] No blocknumber counts found", { blockNumberCounts });
-      return { latencies, runtimeRpcs };
+      this._rpcHandler.log("error", "[RPCService] No block number counts found", { blockNumberCounts: this._blockNumberCounts });
+      return;
     }
 
-    const mostCommonBlockNumber = bncKeys.reduce((a, b) => (blockNumberCounts[a] > blockNumberCounts[b] ? a : b));
-    runtimeRpcs = Object.keys(blockNumberResults).filter((rpcUrl) => {
-      if (blockNumberResults[rpcUrl] !== mostCommonBlockNumber) {
-        rpcHandler.log(
+    const mostCommonBlockNumber = bncKeys.reduce((a, b) => (this._blockNumberCounts[a] > this._blockNumberCounts[b] ? a : b));
+
+    Object.keys(this._blockNumberResults).forEach((rpcUrl) => {
+      if (this._blockNumberResults[rpcUrl] !== mostCommonBlockNumber) {
+        this._rpcHandler.updateRuntimeRpc(rpcUrl, "remove");
+        this._rpcHandler.log(
           "info",
-          `[RPCService] Detected out of sync provider: ${rpcUrl} with blocknumber: ${formatHexToDecimal(blockNumberResults[rpcUrl])} vs ${formatHexToDecimal(mostCommonBlockNumber)}`,
+          `[RPCService] Detected out of sync provider: ${rpcUrl} with block number: ${formatHexToDecimal(this._blockNumberResults[rpcUrl])} vs ${formatHexToDecimal(mostCommonBlockNumber)}`,
           {
             rpcUrl,
-            blockNumber: blockNumberResults[rpcUrl],
+            blockNumber: this._blockNumberResults[rpcUrl],
             mostCommonBlockNumber,
           }
         );
-        return false;
       }
-      return true;
     });
 
-    rpcHandler.log(
+    this._rpcHandler.log(
       "ok",
       `[RPCService] Detected most common blocknumber: ${formatHexToDecimal(mostCommonBlockNumber)} with ${runtimeRpcs.length} providers in sync`
     );
-
-    return { latencies, runtimeRpcs };
   }
 
-  static _processRpcResult({
-    result,
-    networkId,
-    latencies,
-    runtimeRpcs,
-    blockNumberCounts,
-    blockNumberResults,
-    rpcHandler,
-  }: {
-    result: PromiseSettledResult<PromiseResult>;
-    networkId: NetworkId;
-    latencies: Record<string, number>;
-    runtimeRpcs: string[];
-    blockNumberCounts: Record<string, number>;
-    blockNumberResults: Record<string, string>;
-    rpcHandler: RPCHandler;
-  }) {
+  private _processRpcResult(result: PromiseSettledResult<RpcPromiseResult>) {
     if (result.status === "fulfilled" && result.value.success) {
-      if (result.value.isBlockReq) {
-        this.processBlockReqResult({ result, blockNumberCounts, blockNumberResults, rpcHandler });
-      } else if (!this.isBytecodeValid({ result, rpcHandler })) {
-        return;
-      }
-      latencies[`${networkId}__${result.value.rpcUrl}`] = result.value.duration;
+      this._processSuccessResponse(result);
+      this._rpcHandler.updateRpcProviderLatency(result.value.rpcUrl, result.value.duration);
     } else if (result.status === "fulfilled") {
-      const fulfilledResult = result.value;
-      const index = runtimeRpcs.indexOf(fulfilledResult.rpcUrl);
-      if (index > -1) {
-        runtimeRpcs.splice(index, 1);
-      }
+      this._rpcHandler.updateRuntimeRpc(result.value.rpcUrl, "remove");
     }
   }
 
-  static isBytecodeValid({ result, rpcHandler }: { result: PromiseFulfilledResult<PromiseResult>; rpcHandler: RPCHandler }) {
+  private _processSuccessResponse(result: PromiseFulfilledResult<RpcPromiseResult<JsonRpcResponseData>>) {
+    const { rpcMethod } = result.value;
+    if (rpcMethod === "eth_getBlockByNumber") {
+      this._processBlockRequestResult(result);
+    } else {
+      this._isBytecodeValid(result);
+    }
+  }
+
+  private _isBytecodeValid(result: PromiseFulfilledResult<RpcPromiseResult>) {
     const { rpcUrl, data } = result.value;
     let bytecode: string | null = null;
 
@@ -175,7 +120,7 @@ export class RPCService {
     }
 
     if (!bytecode) {
-      rpcHandler.log("error", `[RPCService] Could not find Permit2 bytecode.`, { rpcUrl, data });
+      this._rpcHandler.log("error", `[RPCService] Could not find Permit2 bytecode.`, { rpcUrl, data });
       return false;
     }
 
@@ -183,65 +128,111 @@ export class RPCService {
 
     const subbed = bytecode.substring(0, expected.length);
     if (subbed !== expected) {
-      rpcHandler.log("error", `[RPCService] Permit2 bytecode mismatch.`, { rpcUrl, data });
+      this._rpcHandler.log("error", `[RPCService] Permit2 bytecode mismatch.`, { rpcUrl, data });
       return false;
     }
 
     return true;
   }
 
-  static processBlockReqResult({
-    result,
-    blockNumberCounts,
-    blockNumberResults,
-    rpcHandler,
-  }: {
-    result: PromiseFulfilledResult<PromiseResult>;
-    blockNumberCounts: Record<string, number>;
-    blockNumberResults: Record<string, string>;
-    rpcHandler: RPCHandler;
-  }) {
+  private _processBlockRequestResult(result: PromiseFulfilledResult<RpcPromiseResult>) {
     const { rpcUrl, data } = result.value;
     const blockData = data as ValidBlockData;
-    if (RPCService._verifyBlock(blockData)) {
+    if (this._verifyBlock(blockData)) {
       const blockNumber = blockData.result.number;
-      blockNumberResults[rpcUrl] = blockNumber;
-      blockNumberCounts[blockNumber] = blockNumberCounts[blockNumber] ? blockNumberCounts[blockNumber] + 1 : 1;
+      this._blockNumberResults[rpcUrl] = blockNumber;
+      this._blockNumberCounts[blockNumber] = this._blockNumberCounts[blockNumber] ? this._blockNumberCounts[blockNumber] + 1 : 1;
     } else {
-      rpcHandler.log("error", `[RPCService] Invalid block data from ${rpcUrl}`, { rpcUrl, data });
+      this._rpcHandler.log("error", `[RPCService] Invalid block data from ${rpcUrl}`, { rpcUrl, data });
     }
   }
 
-  static async findFastestRpc(latencies: Record<string, number>, networkId: NetworkId, rpcHandler: RPCHandler): Promise<string | null> {
-    try {
-      const validLatencies: Record<string, number> = Object.entries(latencies)
-        .filter(([key]) => key.startsWith(`${networkId}__`))
-        .reduce(
-          (acc, [key, value]) => {
-            acc[key] = value;
-            return acc;
-          },
-          {} as Record<string, number>
-        );
-
-      return Object.keys(validLatencies)
-        .reduce((a, b) => (validLatencies[a] < validLatencies[b] ? a : b))
-        .split("__")[1];
-    } catch (error) {
-      rpcHandler.log("error", "[RPCService] Failed to find fastest RPC", { er: String(error) });
-      return null;
-    }
-  }
-
-  static _verifyBlock(data: ValidBlockData): boolean {
+  private _verifyBlock(data: ValidBlockData): boolean {
     try {
       const { jsonrpc, id, result } = data;
       const { number, timestamp, hash } = result;
-      return (
-        jsonrpc === "2.0" && id === 1 && parseInt(number, 16) > 0 && parseInt(timestamp, 16) > 0 && hash.match(/[0-9|a-f|A-F|x]/gm)?.join("").length === 66
-      );
+      const isValidBlockNumber = jsonrpc === "2.0" && id === 1 && parseInt(number, 16) > 0 && parseInt(timestamp, 16) > 0;
+      return isValidBlockNumber && hash.match(/[0-9|a-f|A-F|x]/gm)?.join("").length === 66;
     } catch (error) {
       return false;
     }
+  }
+
+  async makeRpcRequest(payload: RequestPayload, rpcUrl: string): Promise<RpcPromiseResult> {
+    const instance = axios.create({
+      timeout: this._rpcHandler.getRpcTimeout(),
+      headers: payload.headers,
+    });
+    Reflect.deleteProperty(payload, "headers");
+    const payloadString = JSON.stringify(payload);
+    const startTime = performance.now();
+    try {
+      const res = await instance.post(rpcUrl, payloadString);
+      return {
+        rpcUrl,
+        duration: performance.now() - startTime,
+        success: !!("result" in (res?.data ?? {})),
+        data: res?.data || null,
+        rpcMethod: payload.method,
+      };
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        const isTimeout = err.code === "ECONNABORTED";
+        return {
+          rpcUrl,
+          success: false,
+          duration: isTimeout ? performance.now() - startTime : 0,
+          error: isTimeout ? "timeout" : err.message,
+          rpcMethod: payload.method,
+        };
+      }
+      return {
+        rpcUrl,
+        success: false,
+        duration: 0,
+        error: String(err),
+        rpcMethod: payload.method,
+      };
+    }
+  }
+
+  createBlockRequestAndByteCodeRacePromises(runtimeRpcs: string[]): Record<string, Promise<RpcPromiseResult>[]> {
+    const rpcPromises: Record<string, Promise<RpcPromiseResult>[]> = {};
+    runtimeRpcs.forEach((rpcUrl) => {
+      rpcPromises[rpcUrl] = [
+        this.makeRpcRequest(
+          {
+            headers: { "Content-Type": "application/json" },
+            ...getBlockNumberPayload,
+          },
+          rpcUrl
+        ).catch((err) => {
+          return {
+            rpcUrl,
+            success: false,
+            duration: 0,
+            error: String(err),
+            rpcMethod: "eth_getBlockByNumber",
+          };
+        }),
+        this.makeRpcRequest(
+          {
+            headers: { "Content-Type": "application/json" },
+            ...storageReadPayload,
+          },
+          rpcUrl
+        ).catch((err) => {
+          return {
+            rpcUrl,
+            success: false,
+            duration: 0,
+            error: String(err),
+            rpcMethod: "eth_getCode",
+          };
+        }),
+      ];
+    });
+
+    return rpcPromises;
   }
 }
