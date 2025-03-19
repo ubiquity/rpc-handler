@@ -16,9 +16,9 @@ jobs:
           node-version: 20.10.0
 
       - name: Install Bun
-        run: |
-          curl -fsSL https://bun.sh/install | bash
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       - name: Install toolchain
         run: bun install

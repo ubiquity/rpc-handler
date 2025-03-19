@@ -40,9 +40,9 @@ jobs:
           registry-url: https://registry.npmjs.org/
 
       - name: Install Bun
-        run: |
-          curl -fsSL https://bun.sh/install | bash
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       - name: Build
         run: |
@@ -54,5 +54,5 @@ jobs:
       - name: Publish
         run: bunx npm publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         if: ${{ steps.release.outputs.release_created }}
