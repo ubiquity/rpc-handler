@@ -39,7 +39,7 @@ jobs:
         run: bun run build
 
       - name: Start Anvil
-        run: bun test:anvil &
+        run: bun run test:anvil &
 
       - name: Wait for Anvil
         run: |
