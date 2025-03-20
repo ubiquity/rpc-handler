@@ -1,2 +1,0 @@
-[install]
-lockfile = "bun.lock"  # Force Bun to use the text-based lockfile
