@@ -27,14 +27,19 @@ jobs:
         with:
           version: nightly
 
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Install dependencies
-        run: yarn install
+        run: bun install
 
       - name: Build
-        run: yarn build
+        run: bun run build
 
       - name: Start Anvil
-        run: yarn test:anvil &
+        run: bun run test:anvil &
 
       - name: Wait for Anvil
         run: |
@@ -47,7 +52,7 @@ jobs:
           done || exit 1
 
       - name: Jest With Coverage
-        run: yarn test
+        run: bun run test
 
       - name: Add Jest Report to Summary
         if: always()

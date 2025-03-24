@@ -39,15 +39,20 @@ jobs:
           node-version: "20.10.0"
           registry-url: https://registry.npmjs.org/
 
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Build
         run: |
-          yarn install --immutable --check-cache
-          yarn build
-          yarn pack
+          bun install --frozen-lockfile
+          bun run build
+          bun pm pack
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Publish
-        run: yarn publish --access public
+        run: bun publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
         if: ${{ steps.release.outputs.release_created }}

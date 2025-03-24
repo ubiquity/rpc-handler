@@ -9,6 +9,9 @@ node_modules
 .env
 dist
 
+# Bun cache directory
+.bun
+
 coverage
 junit.xml
 dynamic.ts
