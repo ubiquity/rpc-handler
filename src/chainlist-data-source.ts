@@ -1,5 +1,5 @@
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import * as fs from "fs/promises";
+import * as path from "path";
 
 // Interface for the structure of rpc-whitelist.json
 interface RpcWhitelist {
@@ -12,7 +12,7 @@ interface RpcWhitelist {
 const RPC_DATA_PATH = path.join(
   __dirname,
   // '..', // No longer need to go up if whitelist is in src
-  'rpc-whitelist.json',
+  "rpc-whitelist.json"
 );
 
 export class ChainlistDataSource {
@@ -28,20 +28,19 @@ export class ChainlistDataSource {
     }
     try {
       console.log(`Loading RPC whitelist data from: ${RPC_DATA_PATH}`);
-      const rawData = await fs.readFile(RPC_DATA_PATH, 'utf-8');
+      const rawData = await fs.readFile(RPC_DATA_PATH, "utf-8");
       const jsonData = JSON.parse(rawData) as RpcWhitelist;
 
       // Transform the loaded data into the desired internal format
       this.whitelistData = Object.entries(jsonData.rpcs).map(([chainIdStr, urls]) => ({
         chainId: parseInt(chainIdStr, 10),
-        rpcUrls: urls.filter(url => typeof url === 'string' && url.startsWith('https://') && !url.includes('${')), // Pre-filter valid URLs
+        rpcUrls: urls.filter((url) => typeof url === "string" && url.startsWith("https://") && !url.includes("${")), // Pre-filter valid URLs
       }));
 
       this.initialized = true;
       console.log(`Successfully loaded whitelist data for ${this.whitelistData.length} chains.`);
-
     } catch (error) {
-      console.error('Failed to load or parse RPC whitelist data:', error);
+      console.error("Failed to load or parse RPC whitelist data:", error);
       this.whitelistData = [];
       this.initialized = true; // Prevent retries on error
     }
@@ -63,6 +62,6 @@ export class ChainlistDataSource {
 
   async getAllChainIds(): Promise<number[]> {
     await this.loadData();
-    return this.whitelistData.map(chain => chain.chainId);
+    return this.whitelistData.map((chain) => chain.chainId);
   }
 }

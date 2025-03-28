@@ -1,5 +1,5 @@
-import { RpcHandler, readContract } from '../src/index.js';
-import type { Abi } from 'viem';
+import { RpcHandler, readContract } from "../src/index.js";
+import type { Abi } from "viem";
 
 // Minimal ABI for symbol() function
 const abi: Abi = [
@@ -9,12 +9,12 @@ const abi: Abi = [
     outputs: [
       {
         name: "",
-        type: "string"
-      }
+        type: "string",
+      },
     ],
     stateMutability: "view",
-    type: "function"
-  }
+    type: "function",
+  },
 ];
 
 async function main() {
@@ -26,14 +26,14 @@ async function main() {
     const symbol = await readContract({
       handler,
       chainId: 100, // Gnosis Chain
-      address: '0xc6ed4f520f6a4e4dc27273509239b7f8a68d2068' as `0x${string}`,
+      address: "0xc6ed4f520f6a4e4dc27273509239b7f8a68d2068" as `0x${string}`,
       abi,
-      functionName: 'symbol'
+      functionName: "symbol",
     });
 
-    console.log('Token Symbol:', symbol);
+    console.log("Token Symbol:", symbol);
   } catch (error) {
-    console.error('Error fetching token symbol:', error);
+    console.error("Error fetching token symbol:", error);
   }
 }
 

@@ -6,7 +6,7 @@ This project involves a complete rewrite of the existing `rpc-handler`. The prim
 
 ## 2. Core Requirements
 
-- **Automatic RPC Selection:** The handler must automatically select the fastest *valid* RPC endpoint from a curated whitelist for a given blockchain network before each request.
+- **Automatic RPC Selection:** The handler must automatically select the fastest _valid_ RPC endpoint from a curated whitelist for a given blockchain network before each request.
 - **Whitelisting:** Use a configurable `src/rpc-whitelist.json` file as the source for potential RPC endpoints.
 - **Validity & Performance Testing:** Implement a mechanism to test whitelisted RPCs for latency, sync status (`eth_syncing`), and specific contract bytecode (`eth_getCode` for Permit2). This test runs when the cache is stale or missing.
 - **Caching:** Use caching (`.rpc-cache.json` for Node.js, `localStorage` for browser) to store detailed latency test results (including status/errors) and the currently selected fastest valid RPC for each chain.
