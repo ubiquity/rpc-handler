@@ -11,12 +11,34 @@ Developers building decentralized applications (dApps) often need to interact wi
 
 ## 2. Proposed Solution
 
-The rewritten `rpc-handler` aims to solve these problems by providing an intelligent, automated RPC management layer. It will:
+The rewritten `rpc-handler` solves these problems by providing an intelligent, automated RPC management layer:
 
-- **Abstract Complexity:** Offer a simple interface (`RpcHandler.send`) for making raw RPC calls and a helper (`readContract`) for easy read-only contract interactions, hiding the underlying endpoint selection and management.
-- **Optimize Performance:** Dynamically identify and use the fastest *valid* (synced, correct bytecode) RPC endpoint from a curated whitelist, based on periodic latency tests.
-- **Enhance Reliability:** Automatically route requests through the best-performing available endpoint, with basic fallback logic for failed requests.
-- **Leverage Chainlist:** Utilize Chainlist as a comprehensive source of free, public RPC endpoints.
+-   **Abstract Complexity:**
+    - Simple interface (`RpcHandler.send`) for making raw RPC calls
+    - Helper function (`readContract`) for easy read-only contract interactions
+    - Hides complex endpoint selection and validation logic
+    - Transparent fallback system that adapts to operation requirements
+
+-   **Smart Selection:**
+    - Tests RPCs for latency, sync status, and Permit2 bytecode
+    - Priority-based selection system:
+      1. Fastest fully compliant RPC (synced + correct bytecode)
+      2. Fastest synced RPC with incorrect bytecode (for basic operations)
+      3. Fastest syncing RPC (as last resort)
+    - Different selection criteria based on operation needs
+    - Detailed status tracking and error reporting
+
+-   **Enhanced Reliability:**
+    - Automatically routes through optimal endpoint
+    - Intelligent fallback between different RPC tiers
+    - Caches test results for quick recovery
+    - Handles chain upgrades and reorgs gracefully
+
+-   **Curated Sources:**
+    - Uses maintained whitelist of reliable RPCs
+    - Integrates with Chainlist data
+    - Focus on free, public endpoints
+    - Supports easy addition of custom RPCs
 
 ## 3. Target Users
 
@@ -26,7 +48,25 @@ The rewritten `rpc-handler` aims to solve these problems by providing an intelli
 
 ## 4. User Experience Goals
 
-- **Simplicity:** Developers should be able to integrate and use the handler with minimal configuration.
-- **Transparency (Optional):** While abstracting details, potentially offer ways to inspect the current fastest endpoint or performance metrics for debugging/monitoring.
-- **Performance:** Users of applications built with this handler should experience faster interaction times due to optimized RPC routing.
-- **Reliability:** Reduce errors and application failures caused by RPC endpoint issues.
+- **Simplicity:**
+  - Minimal configuration required
+  - Works out of the box for basic operations
+  - Clear error messages and status reporting
+
+- **Transparency:**
+  - Optional inspection of RPC status and selection
+  - Detailed logging for debugging
+  - Performance metrics and error tracking
+  - Visibility into fallback behavior
+
+- **Performance:**
+  - Optimized RPC routing based on operation type
+  - Quick response times through caching
+  - Efficient handling of node state changes
+  - Minimal overhead from validation checks
+
+- **Reliability:**
+  - Reduced errors from RPC issues
+  - Graceful handling of node sync states
+  - Smart fallback between RPC tiers
+  - Stable operation during chain events

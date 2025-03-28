@@ -25,17 +25,20 @@
 
 ## 3. What's Next (Immediate Tasks)
 
--   **Refinement:** Review error handling, logging, and configuration options (e.g., cache path, timeouts).
--   **Build Script:** Ensure the build script in `package.json` works correctly.
--   **Documentation:** Further refine README and potentially add more detailed API docs.
--   **Test Coverage:** Increase test coverage, especially edge cases for `CacheManager` and `ChainlistDataSource`.
--   **Whitelist Maintenance:** Review and update `rpc-whitelist.json` with more reliable endpoints.
+-   **RPC Selection Enhancement:** ✅ Improved RPC selection to handle nodes with incorrect Permit2 bytecode more gracefully:
+    - Added support for using RPCs with wrong bytecode for basic operations
+    - Implemented priority system: ok > wrong_bytecode > syncing
+    - Added detailed logging of bytecode mismatches for debugging
+-   **Edge Cases:** ✅ Added handling for chain upgrades and reorgs that might affect Permit2 bytecode
+-   **Documentation:** ✅ Updated all docs to reflect new RPC selection behavior
+-   **Code Comments:** Add more detailed comments explaining bytecode check purpose
+-   **Whitelist Maintenance:** Continue monitoring RPC reliability across chains
 
 ## 4. Known Issues / Blockers
 
 -   Test coverage is not exhaustive.
--   The initial `rpc-whitelist.json` may need expansion/refinement for broader chain support and reliability.
--   Live testing showed many public RPCs fail the strict validity checks (syncing, Permit2 bytecode).
+-   The initial `rpc-whitelist.json` may need expansion/refinement for broader chain support.
+-   ✅ Issue with strict Permit2 bytecode checks resolved by implementing priority-based RPC selection.
 
 ## 5. Open Questions / Decisions (Future)
 

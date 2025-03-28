@@ -4,7 +4,18 @@ This document summarizes the state, architecture, and key decisions of the RPC H
 
 *(Note: This differs from `active-context.md`, which tracks the immediate focus and recent changes during ongoing work.)*
 
-## 1. Project Goal & Core Problem Solved
+## 1. Recent Key Updates
+
+-   **RPC Selection Enhancement:** Improved RPC selection logic to better handle nodes with incorrect Permit2 bytecode:
+    -   Now prioritizes: ok > wrong_bytecode > syncing
+    -   Allows basic operations to work on any responsive RPC
+    -   Maintains strict checks only for Permit2-specific operations
+-   **Bytecode Validation:** Enhanced understanding of Permit2 bytecode checking:
+    -   Uses first 13995 bytes for exact comparison
+    -   Tolerates deployment differences across chains
+    -   Added detailed logging for bytecode mismatches
+
+## 2. Project Goal & Core Problem Solved
 
 -   **Goal:** Create an intelligent RPC handler that automatically selects the fastest, *valid* RPC for EVM chains, abstracting complexity and improving reliability/performance compared to manual endpoint management.
 -   **Problem:** Public RPCs are often unreliable, slow, or out-of-sync. Managing them manually is complex.

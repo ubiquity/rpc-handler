@@ -2,9 +2,22 @@
 
 ## 1. Current Focus
 
-The core implementation is complete. Focus is now on refinement, documentation finalization, and addressing next steps identified in `docs/progress.md`.
+The project is in refinement phase, with recent focus on improving RPC selection and validation logic, particularly around Permit2 bytecode checking and handling nodes in various states (synced, syncing, wrong bytecode).
 
-## 2. Recent Activities
+## 2. Recent Activities & Findings
+
+-   **RPC Selection Enhancement:**
+    -   Improved RPC selection to handle nodes with incorrect Permit2 bytecode
+    -   Implemented priority system: ok > wrong_bytecode > syncing
+    -   Added detailed logging of bytecode mismatches for debugging
+    -   Validated approach works with test token (UUSD) on Gnosis Chain
+
+-   **Permit2 Bytecode Understanding:**
+    -   Confirmed exact matching of first 13995 bytes works correctly
+    -   Added detailed logging to compare expected vs received bytecode
+    -   Observed some RPCs pass bytecode check while others fail
+
+-   **Previous Activities:**
 
 -   Completed core component implementation (`ChainlistDataSource`, `CacheManager`, `LatencyTester`, `RpcSelector`, `RpcHandler`).
 -   Switched data source from full Chainlist data to a curated `src/rpc-whitelist.json`.
@@ -28,11 +41,22 @@ The core implementation is complete. Focus is now on refinement, documentation f
 
 ## 4. Decisions Made & Considerations
 
--   **Data Source:** Using a curated whitelist (`rpc-whitelist.json`) instead of the full Chainlist data for improved reliability.
--   **Latency Testing:** Includes Permit2 bytecode check (`eth_getCode`) and sync status check (`eth_syncing`).
--   **Caching Strategy (Node.js):** Using `.rpc-cache.json` file for persistence.
--   **Caching Strategy (Browser):** Using `localStorage`.
--   **RPC Selection:** Prioritizes RPCs passing strict checks (`status: 'ok'`). Falls back to fastest RPC passing only bytecode check (`status: 'syncing'`) if no 'ok' RPCs are found. Never uses RPCs failing bytecode check.
--   **Error Handling:** Basic fallback implemented (retry once with next fastest valid RPC). Detailed test results (including failures) stored in cache.
--   **Contract Interaction:** Provided via `readContract` helper using `viem`, requiring user-provided ABI. Dynamic ABI fetching was deemed too complex for V1.
--   **Environment Detection:** Using standard checks (`typeof window`, `typeof process`) for cache strategy selection.
+-   **Data Source:** Using curated whitelist (`rpc-whitelist.json`) for reliability.
+-   **Latency Testing:** Now includes more granular status reporting:
+    -   `ok`: Fully synced with correct Permit2 bytecode
+    -   `wrong_bytecode`: Synced but incorrect Permit2 bytecode
+    -   `syncing`: Not fully synced (may have correct bytecode)
+    -   Various error states (timeout, network, etc.)
+-   **RPC Selection Priority:**
+    1. Fastest `ok` RPC (fully compliant)
+    2. Fastest `wrong_bytecode` RPC (for basic operations)
+    3. Fastest `syncing` RPC (last resort)
+    4. No selection if all RPCs have critical errors
+-   **Error Handling:**
+    -   Basic fallback with next fastest RPC within same tier
+    -   Detailed error logging for bytecode mismatches
+    -   Cache stores full test results for analysis
+-   **Contract Interaction:**
+    -   `readContract` helper with viem integration
+    -   Works with any RPC status for basic calls
+    -   Requires matching bytecode for Permit2 operations

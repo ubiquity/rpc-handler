@@ -34,6 +34,19 @@
 ## 5. Constraints & Considerations
 
 -   **RPC Whitelist:** Uses `src/rpc-whitelist.json` to define the pool of RPCs to test per chain.
--   **Latency Testing:** Uses concurrent `eth_getCode` (checking Permit2 bytecode prefix) and `eth_syncing` calls. Returns detailed status (`ok`, `syncing`, `wrong_bytecode`, `timeout`, etc.). Network conditions influence latency results.
--   **RPC Selection:** Prioritizes RPCs with `status: 'ok'`. Falls back to fastest with `status: 'syncing'` if no 'ok' RPCs are found. Never uses RPCs failing the bytecode check or other errors.
--   **`bun` Usage:** Adhere to user's instruction to use `bun run` for executing TypeScript files and `bun install` for dependencies.
+-   **Latency Testing:**
+    -   Uses concurrent `eth_getCode` and `eth_syncing` calls
+    -   Exact comparison of first 13995 bytes of Permit2 bytecode
+    -   Returns detailed status and latency measurements
+    -   Network conditions may affect test results
+    -   Added bytecode comparison logging for debugging
+-   **RPC Selection Priority:**
+    -   `status: 'ok'`: Fully synced and correct bytecode
+    -   `status: 'wrong_bytecode'`: Synced but incorrect bytecode
+    -   `status: 'syncing'`: Still syncing
+    -   Within each tier, selects fastest by latency
+    -   Other error states exclude RPC from selection
+-   **`bun` Usage:**
+    -   Use `bun run` for executing TypeScript files
+    -   Use `bun install` for dependencies
+    -   Use `bun test` for testing
