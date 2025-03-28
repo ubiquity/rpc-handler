@@ -16,23 +16,30 @@
 -   `RpcSelector` implemented to find the fastest RPC using cache and testing.
 -   `RpcHandler` (main API) implemented, integrating all components and providing `send` method with fallback logic.
 -   `src/index.ts` created as the library entry point.
--   Initial tests using `bun test` added for `LatencyTester`, `RpcSelector`, and `RpcHandler` (all passing).
+-   Initial tests using `bun test` added for `LatencyTester`, `RpcSelector`, `RpcHandler`, and `readContract` helper (all passing).
+-   `readContract` helper function added for contract interactions using `viem`.
+-   Switched from testing all Chainlist RPCs to using a curated `src/rpc-whitelist.json`.
+-   Latency testing enhanced to check Permit2 bytecode and `eth_syncing`.
+-   Cache stores detailed `LatencyTestResult` including failure status/reasons.
+-   `README.md` created with usage examples.
 
 ## 3. What's Next (Immediate Tasks)
 
 -   **Refinement:** Review error handling, logging, and configuration options (e.g., cache path, timeouts).
--   **Build Script:** Ensure the build script in `package.json` works correctly (`bun build ./src/index.ts --outdir ./dist --target node`).
--   **Documentation:** Add usage examples and API documentation (e.g., in README).
--   **Test Coverage:** Increase test coverage, potentially adding tests for `CacheManager` and `ChainlistDataSource`.
--   **Cleanup:** Remove any old/unused code (if applicable).
+-   **Build Script:** Ensure the build script in `package.json` works correctly.
+-   **Documentation:** Further refine README and potentially add more detailed API docs.
+-   **Test Coverage:** Increase test coverage, especially edge cases for `CacheManager` and `ChainlistDataSource`.
+-   **Whitelist Maintenance:** Review and update `rpc-whitelist.json` with more reliable endpoints.
 
 ## 4. Known Issues / Blockers
 
 -   Test coverage is not exhaustive.
--   The `lib/chainlist` submodule needs occasional manual updates (`git submodule update --remote` followed by regenerating `rpcs.json`).
+-   The initial `rpc-whitelist.json` may need expansion/refinement for broader chain support and reliability.
+-   Live testing showed many public RPCs fail the strict validity checks (syncing, Permit2 bytecode).
 
-## 5. Open Questions / Decisions (During Implementation/Refinement)
+## 5. Open Questions / Decisions (Future)
 
 -   Finalize configuration options (cache path, timeouts).
--   Refine the strategy for de-prioritizing failed RPCs (currently just falls back once per `send` call).
+-   Refine the strategy for handling/retrying failed RPCs beyond the current single fallback.
 -   Determine best approach for library distribution (e.g., publishing to npm).
+-   Consider adding support for `eth_sendRawTransaction` (requires handling nonces, gas, etc.).

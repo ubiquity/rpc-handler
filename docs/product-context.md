@@ -13,9 +13,9 @@ Developers building decentralized applications (dApps) often need to interact wi
 
 The rewritten `rpc-handler` aims to solve these problems by providing an intelligent, automated RPC management layer. It will:
 
-- **Abstract Complexity:** Offer a simple interface for making RPC calls, hiding the underlying endpoint selection and management.
-- **Optimize Performance:** Dynamically identify and use the fastest *free* RPC endpoint available for the target chain, based on periodic latency tests.
-- **Enhance Reliability:** Automatically route requests through the best-performing available endpoint, implicitly handling temporary slowdowns or outages of specific nodes (by preferring faster alternatives).
+- **Abstract Complexity:** Offer a simple interface (`RpcHandler.send`) for making raw RPC calls and a helper (`readContract`) for easy read-only contract interactions, hiding the underlying endpoint selection and management.
+- **Optimize Performance:** Dynamically identify and use the fastest *valid* (synced, correct bytecode) RPC endpoint from a curated whitelist, based on periodic latency tests.
+- **Enhance Reliability:** Automatically route requests through the best-performing available endpoint, with basic fallback logic for failed requests.
 - **Leverage Chainlist:** Utilize Chainlist as a comprehensive source of free, public RPC endpoints.
 
 ## 3. Target Users

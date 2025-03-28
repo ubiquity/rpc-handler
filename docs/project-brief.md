@@ -6,12 +6,12 @@ This project involves a complete rewrite of the existing `rpc-handler`. The prim
 
 ## 2. Core Requirements
 
-- **Automatic RPC Selection:** The handler must automatically select the fastest available *free* RPC endpoint for a given blockchain network before each request.
-- **Chainlist Integration:** Utilize the list of RPC endpoints provided by Chainlist ([https://chainlist.org/](https://chainlist.org/)) as the source for available endpoints.
-- **Performance Testing:** Implement a mechanism to test the latency of available RPC endpoints. This test should run periodically (e.g., once per session or at a configurable interval) to identify the current fastest endpoint.
-- **Caching:** Use caching (localStorage for frontend, suitable backend storage otherwise) to store the results of performance tests and the currently selected fastest RPC for each chain. This avoids re-testing for every request.
-- **Abstraction:** Provide a simple interface for users to make RPC calls without needing to manage or specify individual RPC URLs. The handler should manage the underlying endpoint selection transparently.
-- **Focus on Free RPCs:** Prioritize and exclusively use RPCs marked as free on Chainlist.
+- **Automatic RPC Selection:** The handler must automatically select the fastest *valid* RPC endpoint from a curated whitelist for a given blockchain network before each request.
+- **Whitelisting:** Use a configurable `src/rpc-whitelist.json` file as the source for potential RPC endpoints.
+- **Validity & Performance Testing:** Implement a mechanism to test whitelisted RPCs for latency, sync status (`eth_syncing`), and specific contract bytecode (`eth_getCode` for Permit2). This test runs when the cache is stale or missing.
+- **Caching:** Use caching (`.rpc-cache.json` for Node.js, `localStorage` for browser) to store detailed latency test results (including status/errors) and the currently selected fastest valid RPC for each chain.
+- **Abstraction:** Provide a simple `send` interface for raw JSON-RPC calls and a `readContract` helper (using `viem`) for read-only contract interactions.
+- **Fallback:** Implement basic fallback to the next fastest valid RPC if the primary choice fails.
 
 ## 3. Goals
 
@@ -21,11 +21,12 @@ This project involves a complete rewrite of the existing `rpc-handler`. The prim
 
 ## 4. Scope
 
-- Rewrite the core logic of the `rpc-handler`.
-- Integrate with Chainlist data (potentially fetching/updating the list).
-- Implement latency testing logic.
-- Implement caching strategy.
-- Define a clear API for the new handler.
+- Rewrite the core logic into modular components (`RpcHandler`, `RpcSelector`, `LatencyTester`, `CacheManager`, `ChainlistDataSource`).
+- Use a curated whitelist (`rpc-whitelist.json`) instead of full Chainlist data.
+- Implement enhanced latency/validity testing logic.
+- Implement caching strategy for detailed results.
+- Define a clear API (`send`, `readContract`).
+- Add basic unit/integration tests.
 
 ## 5. Non-Goals (Initially)
 

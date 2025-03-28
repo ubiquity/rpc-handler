@@ -1,39 +1,37 @@
-# Active Context: RPC Handler Rewrite Kickoff
+# Active Context: RPC Handler Rewrite - Post-Implementation
 
 ## 1. Current Focus
 
-The immediate focus is on initiating the rewrite of the `rpc-handler` based on the requirements outlined in `project-brief.md` and the architecture defined in `system-patterns.md`.
+The core implementation is complete. Focus is now on refinement, documentation finalization, and addressing next steps identified in `docs/progress.md`.
 
 ## 2. Recent Activities
 
--   Project requirements and goals defined (`project-brief.md`).
--   Product context and problem statement established (`product-context.md`).
--   High-level system architecture and patterns designed (`system-patterns.md`).
--   Technical stack and dependencies identified (`tech-context.md`).
--   Initial documentation structure created.
+-   Completed core component implementation (`ChainlistDataSource`, `CacheManager`, `LatencyTester`, `RpcSelector`, `RpcHandler`).
+-   Switched data source from full Chainlist data to a curated `src/rpc-whitelist.json`.
+-   Enhanced `LatencyTester` to check Permit2 bytecode (`eth_getCode`) and sync status (`eth_syncing`).
+-   Updated `CacheManager` to store detailed `LatencyTestResult` objects.
+-   Added `readContract` helper function using `viem` for contract interactions.
+-   Added unit/integration tests for all core components using `bun test`. All tests are passing.
+-   Created initial `README.md`.
+-   Updated documentation (`docs/progress.md`, `docs/system-patterns.md`, `docs/tech-context.md`).
 
-## 3. Next Steps (High-Level Plan)
+## 3. Next Steps (Refinement & Future)
 
-1.  **Setup Chainlist Data:**
-    *   Confirm the output format of `lib/chainlist/generate-json.js`.
-    *   Run the script to generate the initial RPC list JSON file.
-    *   Create the `Chainlist Data Source` component to read and parse this file.
-2.  **Implement Core Components:**
-    *   Develop the `Cache Manager` (in-memory for Node.js initially, potentially `localStorage` detection later).
-    *   Develop the `Latency Tester` component.
-    *   Develop the `RPC Selector` logic.
-    *   Develop the `Chain Manager`.
-3.  **Define API Interface:** Create the main entry point/class for the handler.
-4.  **Integrate Components:** Wire up all the components according to the architecture.
-5.  **Testing:** Implement unit and potentially integration tests.
-6.  **Refactor/Cleanup:** Remove old `rpc-handler` code and replace it with the new implementation.
-7.  **Documentation Update:** Refine documentation based on implementation details.
+-   Review error handling and logging.
+-   Finalize configuration options (cache path, timeouts).
+-   Improve test coverage (edge cases).
+-   Refine `README.md` and potentially add detailed API docs.
+-   Maintain/expand `rpc-whitelist.json`.
+-   Consider more sophisticated retry/fallback strategies.
+-   Consider adding support for write operations (`eth_sendRawTransaction`).
+-   Plan for library distribution (npm).
 
 ## 4. Decisions Made & Considerations
 
--   **Chainlist Data Generation:** Will be run manually initially via a script/command. Frequency TBD based on usage.
--   **Caching Strategy (Node.js):** Use a JSON file for persistence across restarts. Location TBD (configurable or default).
--   **Caching Strategy (Browser):** Use `localStorage`.
--   **Error Handling:** If the primary selected RPC fails, the handler will automatically retry the request with the next fastest available RPC. The failed RPC might be temporarily deprioritized.
--   **Latency Test Method:** Tentatively `eth_blockNumber`. Needs confirmation during implementation.
--   **Environment Detection:** Required to select the correct caching strategy (`localStorage` vs. JSON file). Standard checks like `typeof window !== 'undefined'` can be used.
+-   **Data Source:** Using a curated whitelist (`rpc-whitelist.json`) instead of the full Chainlist data for improved reliability.
+-   **Latency Testing:** Includes Permit2 bytecode check (`eth_getCode`) and sync status check (`eth_syncing`).
+-   **Caching Strategy (Node.js):** Using `.rpc-cache.json` file for persistence.
+-   **Caching Strategy (Browser):** Using `localStorage`.
+-   **Error Handling:** Basic fallback implemented (retry once with next fastest). Detailed results stored in cache.
+-   **Contract Interaction:** Provided via `readContract` helper using `viem`, requiring user-provided ABI. Dynamic ABI fetching was deemed too complex for V1.
+-   **Environment Detection:** Using standard checks (`typeof window`, `typeof process`) for cache strategy selection.
