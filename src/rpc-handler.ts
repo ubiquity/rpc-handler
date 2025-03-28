@@ -117,26 +117,50 @@ export class RpcHandler {
 
 // --- Example Usage ---
 
-// Minimal ERC20 ABI for balanceOf
+// Standard ERC20 ABI subset
 const erc20Abi = [
   {
-    constant: true,
-    inputs: [{ name: '_owner', type: 'address' }],
-    name: 'balanceOf',
-    outputs: [{ name: 'balance', type: 'uint256' }],
-    stateMutability: 'view', // Added missing field
-    type: 'function',
+    "constant": true, "inputs": [], "name": "name",
+    "outputs": [{ "name": "", "type": "string" }], "payable": false,
+    "stateMutability": "view", "type": "function"
   },
-] as const; // Use 'as const' for better type inference with viem
+  {
+    "constant": true, "inputs": [], "name": "symbol",
+    "outputs": [{ "name": "", "type": "string" }], "payable": false,
+    "stateMutability": "view", "type": "function"
+  },
+  {
+    "constant": true, "inputs": [], "name": "decimals",
+    "outputs": [{ "name": "", "type": "uint8" }], "payable": false,
+    "stateMutability": "view", "type": "function"
+  },
+  {
+    "constant": true, "inputs": [], "name": "totalSupply",
+    "outputs": [{ "name": "", "type": "uint256" }], "payable": false,
+    "stateMutability": "view", "type": "function"
+  },
+] as const;
 
-// Example address (replace with a real address holding USDC)
-const exampleAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'; // USDC contract address itself (for demo)
-const addressToCheck = '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503'; // An address holding some USDC
+// Token Addresses (DAI where possible, USDC/cUSD otherwise)
+const tokenInfo: Record<number, { address: Address, expectedSymbol: string }> = {
+    1:   { address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', expectedSymbol: 'DAI' }, // DAI on Ethereum
+    10:  { address: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1', expectedSymbol: 'DAI' }, // DAI on Optimism
+    100: { address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', expectedSymbol: 'DAI' }, // DAI on Gnosis
+    137: { address: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063', expectedSymbol: 'DAI' }, // DAI on Polygon
+    42161: { address: '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1', expectedSymbol: 'DAI' }, // DAI on Arbitrum
+    8453: { address: '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb', expectedSymbol: 'DAI' }, // DAI on Base
+    56:  { address: '0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3', expectedSymbol: 'DAI' }, // DAI on BNB Chain
+    43114: { address: '0xd586E7F844cEa2F87f50152665BCbc2C279D8d70', expectedSymbol: 'DAI.e'}, // DAI.e on Avalanche
+    42220: { address: '0x765DE816845861e75A25fCA122bb6898B8B1282a', expectedSymbol: 'cUSD' }, // Celo Dollar (cUSD) on Celo
+    81457: { address: '0x4300000000000000000000000000000000000003', expectedSymbol: 'USDB' }, // USDB on Blast (Native Stable)
+    324: { address: '0x3355df6D4c9C3035724Fd0e3914dE96A5a83aaf4', expectedSymbol: 'USDC' }, // USDC on ZKsync Era
+    7777777: { address: '0x6C2C06790b3E3E3c38e12Ee22F84Ac8230Be8309', expectedSymbol: 'DAI' }, // DAI on Zora
+};
 
 async function main() {
     console.log("--- Starting RpcHandler Example ---");
-    const handler = new RpcHandler({ latencyTimeoutMs: 5000, requestTimeoutMs: 10000 });
-    const chainIdsToTest = [1, 10, 100]; // Ethereum, Optimism, Gnosis
+    const handler = new RpcHandler({ latencyTimeoutMs: 7000, requestTimeoutMs: 15000 }); // Increased timeouts slightly
+    const chainIdsToTest = [1, 10, 100, 137, 42161, 8453, 56, 43114, 42220, 81457, 324, 7777777];
 
     for (const chainId of chainIdsToTest) {
         try {
@@ -144,18 +168,25 @@ async function main() {
             const blockNumber = await handler.send<string>(chainId, 'eth_blockNumber');
             console.log(`Chain ${chainId} - Latest Block Number: ${parseInt(blockNumber, 16)} (${blockNumber})`);
 
-            // Only try ERC20 example on Ethereum (chain 1) for simplicity
-            if (chainId === 1) {
-                console.log(`\n--- Testing readContract on Chain ID: ${chainId} ---`);
-                const balance = await readContract<bigint>({
-                    handler,
-                    chainId,
-                    address: exampleAddress as Address, // USDC Contract
-                    abi: erc20Abi,
-                    functionName: 'balanceOf',
-                    args: [addressToCheck as Address],
-                });
-                console.log(`Chain ${chainId} - USDC Balance of ${addressToCheck}: ${balance.toString()}`);
+            const token = tokenInfo[chainId];
+            if (token) {
+                 console.log(`\n--- Testing readContract (${token.expectedSymbol}) on Chain ID: ${chainId} ---`);
+                 const [symbol, totalSupply] = await Promise.all([
+                     readContract<string>({
+                        handler, chainId, address: token.address, abi: erc20Abi, functionName: 'symbol',
+                     }),
+                     readContract<bigint>({
+                        handler, chainId, address: token.address, abi: erc20Abi, functionName: 'totalSupply',
+                     }),
+                 ]);
+                 console.log(`Chain ${chainId} - Token Symbol: ${symbol} (Expected: ${token.expectedSymbol})`);
+                 console.log(`Chain ${chainId} - Token Total Supply: ${totalSupply.toString()}`);
+                 // Basic check
+                 if (symbol !== token.expectedSymbol && !(chainId === 43114 && symbol === 'DAI')) { // Allow DAI for DAI.e mismatch
+                    console.warn(`Symbol mismatch for chain ${chainId}! Got ${symbol}, expected ${token.expectedSymbol}`);
+                 }
+            } else {
+                 console.log(`Chain ${chainId} - Token address not defined in example.`);
             }
 
         } catch (error) {
@@ -165,9 +196,8 @@ async function main() {
     console.log("\n--- Example Finished ---");
 }
 
-/* // Comment out example execution for tests
+// Uncomment to run the example
 main().catch(err => {
     console.error("Example failed:", err);
     process.exit(1);
 });
-*/

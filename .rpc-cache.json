@@ -1,0 +1,446 @@
+{
+  "1": {
+    "fastestRpc": null,
+    "latencyMap": {
+      "https://cloudflare-eth.com": {
+        "url": "https://cloudflare-eth.com",
+        "latency": null,
+        "status": "rpc_error",
+        "error": "eth_getCode RPC error -32603 - Internal error"
+      },
+      "https://rpc.ankr.com/eth": {
+        "url": "https://rpc.ankr.com/eth",
+        "latency": null,
+        "status": "rpc_error",
+        "error": "eth_getCode RPC error -32000 - Unauthorized: You must authenticate your request with an API key. Create an account on https://www.ankr.com/rpc/ and generate your personal API key for free."
+      },
+      "https://eth.llamarpc.com": {
+        "url": "https://eth.llamarpc.com",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://ethereum-rpc.publicnode.com": {
+        "url": "https://ethereum-rpc.publicnode.com",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://eth.drpc.org": {
+        "url": "https://eth.drpc.org",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://1rpc.io/eth": {
+        "url": "https://1rpc.io/eth",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      }
+    },
+    "lastTested": 1743164088931
+  },
+  "10": {
+    "fastestRpc": null,
+    "latencyMap": {
+      "https://mainnet.optimism.io": {
+        "url": "https://mainnet.optimism.io",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://optimism-rpc.publicnode.com": {
+        "url": "https://optimism-rpc.publicnode.com",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://optimism.llamarpc.com": {
+        "url": "https://optimism.llamarpc.com",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://optimism.drpc.org": {
+        "url": "https://optimism.drpc.org",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://rpc.ankr.com/optimism": {
+        "url": "https://rpc.ankr.com/optimism",
+        "latency": null,
+        "status": "rpc_error",
+        "error": "eth_getCode RPC error -32000 - Unauthorized: You must authenticate your request with an API key. Create an account on https://www.ankr.com/rpc/ and generate your personal API key for free."
+      },
+      "https://1rpc.io/op": {
+        "url": "https://1rpc.io/op",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      }
+    },
+    "lastTested": 1743164090183
+  },
+  "56": {
+    "fastestRpc": null,
+    "latencyMap": {
+      "https://bsc-dataseed1.binance.org": {
+        "url": "https://bsc-dataseed1.binance.org",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://bsc-dataseed.bnbchain.org": {
+        "url": "https://bsc-dataseed.bnbchain.org",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://bsc-rpc.publicnode.com": {
+        "url": "https://bsc-rpc.publicnode.com",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://bsc.drpc.org": {
+        "url": "https://bsc.drpc.org",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://rpc.ankr.com/bsc": {
+        "url": "https://rpc.ankr.com/bsc",
+        "latency": null,
+        "status": "rpc_error",
+        "error": "eth_getCode RPC error -32000 - Unauthorized: You must authenticate your request with an API key. Create an account on https://www.ankr.com/rpc/ and generate your personal API key for free."
+      },
+      "https://1rpc.io/bnb": {
+        "url": "https://1rpc.io/bnb",
+        "latency": null,
+        "status": "timeout",
+        "error": "The operation was aborted."
+      }
+    },
+    "lastTested": 1743164109289
+  },
+  "100": {
+    "fastestRpc": null,
+    "latencyMap": {
+      "https://rpc.gnosischain.com": {
+        "url": "https://rpc.gnosischain.com",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://gnosis-rpc.publicnode.com": {
+        "url": "https://gnosis-rpc.publicnode.com",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://gnosis.drpc.org": {
+        "url": "https://gnosis.drpc.org",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://rpc.ankr.com/gnosis": {
+        "url": "https://rpc.ankr.com/gnosis",
+        "latency": null,
+        "status": "rpc_error",
+        "error": "eth_getCode RPC error -32000 - Unauthorized: You must authenticate your request with an API key. Create an account on https://www.ankr.com/rpc/ and generate your personal API key for free."
+      },
+      "https://gnosis.blockpi.network/v1/rpc/public": {
+        "url": "https://gnosis.blockpi.network/v1/rpc/public",
+        "latency": null,
+        "status": "timeout",
+        "error": "The operation was aborted."
+      },
+      "https://1rpc.io/gnosis": {
+        "url": "https://1rpc.io/gnosis",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      }
+    },
+    "lastTested": 1743164097399
+  },
+  "137": {
+    "fastestRpc": null,
+    "latencyMap": {
+      "https://polygon-rpc.com": {
+        "url": "https://polygon-rpc.com",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://polygon.llamarpc.com": {
+        "url": "https://polygon.llamarpc.com",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://polygon-bor-rpc.publicnode.com": {
+        "url": "https://polygon-bor-rpc.publicnode.com",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://polygon.drpc.org": {
+        "url": "https://polygon.drpc.org",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://rpc.ankr.com/polygon": {
+        "url": "https://rpc.ankr.com/polygon",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://1rpc.io/matic": {
+        "url": "https://1rpc.io/matic",
+        "latency": null,
+        "status": "rpc_error",
+        "error": "eth_syncing RPC error -32000 - invalid character 'T' looking for beginning of value"
+      }
+    },
+    "lastTested": 1743164099096
+  },
+  "324": {
+    "fastestRpc": null,
+    "latencyMap": {
+      "https://mainnet.era.zksync.io": {
+        "url": "https://mainnet.era.zksync.io",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://zksync-era.drpc.org": {
+        "url": "https://zksync-era.drpc.org",
+        "latency": null,
+        "status": "network_error",
+        "error": "HTTP error 400 Bad Request"
+      },
+      "https://zksync.meowrpc.com": {
+        "url": "https://zksync.meowrpc.com",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://1rpc.io/zksync2-era": {
+        "url": "https://1rpc.io/zksync2-era",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      }
+    },
+    "lastTested": 1743164122092
+  },
+  "8453": {
+    "fastestRpc": null,
+    "latencyMap": {
+      "https://mainnet.base.org": {
+        "url": "https://mainnet.base.org",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://base.llamarpc.com": {
+        "url": "https://base.llamarpc.com",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://base-rpc.publicnode.com": {
+        "url": "https://base-rpc.publicnode.com",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://base.drpc.org": {
+        "url": "https://base.drpc.org",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://1rpc.io/base": {
+        "url": "https://1rpc.io/base",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      }
+    },
+    "lastTested": 1743164102128
+  },
+  "42161": {
+    "fastestRpc": null,
+    "latencyMap": {
+      "https://arbitrum-one.public.blastapi.io": {
+        "url": "https://arbitrum-one.public.blastapi.io",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://arb1.arbitrum.io/rpc": {
+        "url": "https://arb1.arbitrum.io/rpc",
+        "latency": null,
+        "status": "rpc_error",
+        "error": "eth_syncing RPC error -32601 - the method eth_syncing does not exist/is not available"
+      },
+      "https://arbitrum.llamarpc.com": {
+        "url": "https://arbitrum.llamarpc.com",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://arbitrum-rpc.publicnode.com": {
+        "url": "https://arbitrum-rpc.publicnode.com",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://arbitrum.drpc.org": {
+        "url": "https://arbitrum.drpc.org",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://1rpc.io/arb": {
+        "url": "https://1rpc.io/arb",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      }
+    },
+    "lastTested": 1743164100470
+  },
+  "42220": {
+    "fastestRpc": null,
+    "latencyMap": {
+      "https://forno.celo.org": {
+        "url": "https://forno.celo.org",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://rpc.ankr.com/celo": {
+        "url": "https://rpc.ankr.com/celo",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://1rpc.io/celo": {
+        "url": "https://1rpc.io/celo",
+        "latency": null,
+        "status": "rpc_error",
+        "error": "eth_getCode RPC error 19 - Unable to perform request"
+      },
+      "https://celo.drpc.org": {
+        "url": "https://celo.drpc.org",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      }
+    },
+    "lastTested": 1743164112846
+  },
+  "43114": {
+    "fastestRpc": null,
+    "latencyMap": {
+      "https://api.avax.network/ext/bc/C/rpc": {
+        "url": "https://api.avax.network/ext/bc/C/rpc",
+        "latency": null,
+        "status": "rpc_error",
+        "error": "eth_syncing RPC error -32000 - not implemented in coreth"
+      },
+      "https://avalanche-c-chain-rpc.publicnode.com": {
+        "url": "https://avalanche-c-chain-rpc.publicnode.com",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://avax.drpc.org": {
+        "url": "https://avax.drpc.org",
+        "latency": null,
+        "status": "network_error",
+        "error": "HTTP error 400 Bad Request"
+      },
+      "https://rpc.ankr.com/avalanche": {
+        "url": "https://rpc.ankr.com/avalanche",
+        "latency": null,
+        "status": "rpc_error",
+        "error": "eth_getCode RPC error -32000 - Unauthorized: You must authenticate your request with an API key. Create an account on https://www.ankr.com/rpc/ and generate your personal API key for free."
+      },
+      "https://1rpc.io/avax": {
+        "url": "https://1rpc.io/avax",
+        "latency": null,
+        "status": "network_error",
+        "error": "HTTP error 400 Bad Request"
+      }
+    },
+    "lastTested": 1743164111482
+  },
+  "81457": {
+    "fastestRpc": null,
+    "latencyMap": {
+      "https://rpc.blast.io": {
+        "url": "https://rpc.blast.io",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://blast.blockpi.network/v1/rpc/public": {
+        "url": "https://blast.blockpi.network/v1/rpc/public",
+        "latency": null,
+        "status": "timeout",
+        "error": "The operation was aborted."
+      },
+      "https://blast.din.dev/rpc": {
+        "url": "https://blast.din.dev/rpc",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://blastl2-mainnet.public.blastapi.io": {
+        "url": "https://blastl2-mainnet.public.blastapi.io",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://blast.drpc.org": {
+        "url": "https://blast.drpc.org",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      }
+    },
+    "lastTested": 1743164120618
+  },
+  "7777777": {
+    "fastestRpc": null,
+    "latencyMap": {
+      "https://rpc.zora.energy": {
+        "url": "https://rpc.zora.energy",
+        "latency": null,
+        "status": "wrong_bytecode",
+        "error": "Invalid or incorrect Permit2 bytecode returned."
+      },
+      "https://zora.rpc.subquery.network/public": {
+        "url": "https://zora.rpc.subquery.network/public",
+        "latency": null,
+        "status": "network_error",
+        "error": "Unable to connect. Is the computer able to access the url?"
+      },
+      "https://1rpc.io/zora": {
+        "url": "https://1rpc.io/zora",
+        "latency": null,
+        "status": "network_error",
+        "error": "HTTP error 400 Bad Request"
+      }
+    },
+    "lastTested": 1743164123176
+  }
+}
