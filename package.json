@@ -1,27 +1,54 @@
 {
-  "name": "rpc-handler-rewrite",
+  "name": "@pavlovcik/permit2-rpc-manager",
   "version": "0.1.0",
-  "author": "",
-  "devDependencies": {
-    "@types/node": "^22.13.14",
-    "bun-types": "^1.2.7"
-  },
-  "description": "Intelligent RPC handler using Chainlist",
+  "author": "0x4007",
+  "description": "Intelligent RPC manager with Permit2 validation and advanced fallback strategy",
   "keywords": [
     "rpc",
     "blockchain",
     "chainlist",
-    "ethers"
+    "ethereum",
+    "viem",
+    "web3"
   ],
   "license": "MIT",
-  "private": true,
-  "scripts": {
-    "build": "bun build ./src/index.ts --outdir ./dist --target node",
-    "start": "bun run src/index.ts",
-    "test": "bun test"
-  },
+  "private": false,
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src/rpc-whitelist.json"
+  ],
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist --target node && tsc --emitDeclarationOnly --outDir dist",
+    "start": "bun run src/index.ts",
+    "test": "bun test",
+    "prepublishOnly": "bun run build"
+  },
   "dependencies": {
     "viem": "^2.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.14",
+    "bun-types": "^1.2.7",
+    "typescript": "^5.4.2"
+  },
+  "engines": {
+    "node": ">=20.10.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pavlovcik/rpc-handler"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

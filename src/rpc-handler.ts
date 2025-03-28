@@ -154,9 +154,6 @@ const tokenInfo: Record<number, { address: Address, expectedSymbol: string }> = 
     42220: { address: '0x765DE816845861e75A25fCA122bb6898B8B1282a', expectedSymbol: 'cUSD' }, // Celo Dollar (cUSD) on Celo
     81457: { address: '0x4300000000000000000000000000000000000003', expectedSymbol: 'USDB' }, // USDB on Blast (Native Stable)
     324: { address: '0x3355df6D4c9C3035724Fd0e3914dE96A5a83aaf4', expectedSymbol: 'USDC' }, // USDC on ZKsync Era
-    // Note: Gnosis DAI address is same as Ethereum's
-    100: { address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', expectedSymbol: 'DAI' },
-    // ... add others if needed for broader testing later
 };
 
 // Define COW Token specific info

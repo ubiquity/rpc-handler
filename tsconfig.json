@@ -14,21 +14,21 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitAny": true,
 
-    /* If NOT transpiling with TypeScript: */
+    /* Module Resolution */
     "moduleResolution": "NodeNext",
     "module": "NodeNext",
-    "noEmit": true, // Set to true if using Bun/esbuild directly for building/running
 
-    /* If transpiling with TypeScript: */
-    // "module": "NodeNext",
-    // "outDir": "dist",
-    // "sourceMap": true,
+    /* Declaration Files */
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": true,
+    "outDir": "dist",
 
     /* Lib */
-    "lib": ["ESNext", "DOM"], // Include DOM types for browser globals
+    "lib": ["ESNext", "DOM"],
 
     /* Types */
-    "types": ["node", "bun-types"], // Add bun-types
+    "types": ["node", "bun-types"],
 
     /* Path Aliases */
     "baseUrl": ".",
@@ -36,6 +36,6 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"], // Include src and tests
-  "exclude": ["node_modules", "dist", "lib"] // Exclude build/dependency folders
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "lib", "tests"]
 }
