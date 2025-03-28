@@ -20,5 +20,8 @@
     "start": "bun run src/index.ts",
     "test": "bun test"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "viem": "^2.24.1"
+  }
 }

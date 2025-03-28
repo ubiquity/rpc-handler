@@ -1,7 +1,10 @@
+import type { ReadContractOptions } from './contract-utils.js'; // Export type
+import { readContract } from './contract-utils.js';
+import type { RpcHandlerOptions } from './rpc-handler.js'; // Export type
 import { RpcHandler } from './rpc-handler.js';
 
-// Export the main handler class
-export { RpcHandler };
+// Export the main handler class and helper function
+export { readContract, RpcHandler };
 
-// Optionally, export types or interfaces if needed for consumers
-// export type { RpcHandlerOptions } from './rpc-handler.js';
+// Export types
+    export type { ReadContractOptions, RpcHandlerOptions };
