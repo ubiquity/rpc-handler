@@ -4,7 +4,9 @@ An intelligent RPC handler for EVM-compatible chains that automatically selects 
 
 ## Features
 
--   **Automatic RPC Selection:** Dynamically tests whitelisted RPCs for latency, sync status (`eth_syncing`), and specific contract bytecode (Permit2 via `eth_getCode`) to find the best endpoint. Prioritizes fully valid ('ok') RPCs, but falls back to the fastest 'syncing' RPC if no 'ok' options are available. Never uses RPCs with incorrect bytecode.
+-   **Automatic RPC Selection:** Dynamically tests whitelisted RPCs for latency, sync status (`eth_syncing`), and specific contract bytecode (Permit2 via `eth_getCode`) to find the best endpoint. Uses an intelligent fallback system that adapts to operation requirements:
+    - For standard operations: Can use any responsive RPC in order of preference: fully synced > wrong Permit2 bytecode > syncing
+    - For Permit2-related operations: Only uses RPCs with correct Permit2 bytecode
 -   **Whitelisting:** Uses a configurable `src/rpc-whitelist.json` to manage the pool of RPCs to test.
 -   **Caching:** Caches detailed latency test results (including status/errors) in `.rpc-cache.json` (Node.js) or `localStorage` (browser) to speed up subsequent requests (default 1-hour TTL).
 -   **Fallback:** Automatically retries requests with the next fastest valid RPC (using the same 'ok' > 'syncing' priority) if the primary choice fails.
@@ -116,11 +118,24 @@ Modify `src/rpc-whitelist.json` to add/remove RPC endpoints for specific chain I
 ## Latency Testing & Selection
 
 The `LatencyTester` performs the following checks concurrently for each whitelisted RPC:
-1.  **Permit2 Bytecode:** Sends `eth_getCode` to the Permit2 address (`0x000000000022D473030F116dDEE9F6B43aC78BA3`) and verifies the returned bytecode prefix. Failure results in `status: 'wrong_bytecode'`.
+1.  **Permit2 Bytecode:** Sends `eth_getCode` to the Permit2 address (`0x000000000022D473030F116dDEE9F6B43aC78BA3`) and verifies the returned bytecode matches the first 13995 bytes. The prefix check ensures the Permit2 contract is correctly deployed, but allows for potential minor deployment differences across chains. The byte comparison is exact, and any mismatch results in `status: 'wrong_bytecode'`.
 2.  **Sync Status:** Sends `eth_syncing` and verifies the result is `false`. Failure results in `status: 'syncing'`.
 3.  **Connectivity/Timeout:** Checks for network errors, HTTP errors, RPC errors, or timeouts during the above calls.
 
-The `RpcSelector` then uses these results:
--   It prioritizes the RPC with the lowest latency that has `status: 'ok'` (passed both checks).
--   If no RPC has `status: 'ok'`, it falls back to selecting the RPC with the lowest latency that has `status: 'syncing'` (passed bytecode check, failed sync check).
--   If no RPC meets either of these criteria, no endpoint is selected.
+The `RpcSelector` uses these test results to select an endpoint based on operation needs:
+-   Priority 1: RPCs with `status: 'ok'` (fully synced, correct bytecode) - sorted by latency
+-   Priority 2: RPCs with `status: 'wrong_bytecode'` (synced but incorrect Permit2 bytecode) - sorted by latency
+    - These RPCs are fully functional for most operations
+    - Only excluded when Permit2-specific functionality is needed
+-   Priority 3: RPCs with `status: 'syncing'` (not fully synced) - sorted by latency
+    - May have correct bytecode but need time to sync
+    - Useful as last resort for basic calls
+-   Excluded: RPCs with network errors, timeouts, or authentication failures
+
+This prioritization ensures:
+-   Basic operations (like `eth_call` for token symbol) work reliably by using any responsive RPC
+-   Permit2-related operations only use RPCs with exact bytecode match
+-   Performance is optimized by selecting the fastest RPC within each priority level
+-   Maximum availability through intelligent fallback between priority levels
+
+Note: RPCs may temporarily report incorrect bytecode during chain upgrades or reorgs. The handler's caching and priority system handles such transient states gracefully.
