@@ -2,28 +2,36 @@
 
 ## 1. Current Status (March 28, 2025)
 
--   **Phase:** Planning & Setup
--   **Overall Progress:** 5% (Initial documentation and planning complete)
+-   **Phase:** Implementation
+-   **Overall Progress:** 80% (Core components implemented)
 
 ## 2. What Works
 
--   Core documentation structure (`project-brief.md`, `product-context.md`, `system-patterns.md`, `tech-context.md`, `active-context.md`, `progress.md`) has been established in the `docs/` directory.
--   High-level plan and architecture are defined.
--   Project dependencies and technical stack are understood.
+-   Core documentation structure created.
+-   Project configuration (`package.json`, `tsconfig.json`) set up.
+-   Chainlist RPC data generated (`lib/chainlist/out/rpcs.json`).
+-   `ChainlistDataSource` implemented to load RPC data.
+-   `CacheManager` implemented with support for `localStorage` (browser) and JSON file (Node.js).
+-   `LatencyTester` implemented using native `fetch` with timeouts.
+-   `RpcSelector` implemented to find the fastest RPC using cache and testing.
+-   `RpcHandler` (main API) implemented, integrating all components and providing `send` method with fallback logic.
+-   `src/index.ts` created as the library entry point.
 
 ## 3. What's Next (Immediate Tasks)
 
--   **Generate Chainlist Data:** Execute `lib/chainlist/generate-json.js` to create the initial RPC data file.
--   **Implement `ChainlistDataSource`:** Create the component to load and parse the generated JSON data.
--   **Implement `CacheManager`:** Basic implementation (in-memory Map for Node.js).
+-   **Testing:** Implement unit/integration tests for the components, especially `RpcHandler` and `RpcSelector`.
+-   **Refinement:** Review error handling, logging, and configuration options (e.g., cache path).
+-   **Build Script:** Ensure the build script in `package.json` works correctly.
+-   **Documentation:** Add usage examples and API documentation (e.g., in README).
+-   **Cleanup:** Remove any old/unused code (if applicable, though we started fresh).
 
 ## 4. Known Issues / Blockers
 
--   None currently identified.
+-   No automated tests yet.
+-   The `lib/chainlist` submodule needs occasional manual updates (`git submodule update --remote` followed by regenerating `rpcs.json`).
 
-## 5. Open Questions / Decisions (During Implementation)
+## 5. Open Questions / Decisions (During Implementation/Refinement)
 
--   Optimal frequency for updating the Chainlist data file (manual for now).
--   Specific implementation details for browser vs. Node.js environment detection.
--   Exact mechanism for de-prioritizing failed RPCs in the error handling flow.
--   Configuration options for cache file location (Node.js).
+-   Finalize configuration options (cache path, timeouts).
+-   Refine the strategy for de-prioritizing failed RPCs (currently just falls back once per `send` call).
+-   Determine best approach for library distribution (e.g., publishing to npm).

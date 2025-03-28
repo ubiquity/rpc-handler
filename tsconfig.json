@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    /* Base Options: */
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "ES2022",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+    "isolatedModules": true,
+
+    /* Strictness */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitAny": true,
+
+    /* If NOT transpiling with TypeScript: */
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext",
+    "noEmit": true, // Set to true if using Bun/esbuild directly for building/running
+
+    /* If transpiling with TypeScript: */
+    // "module": "NodeNext",
+    // "outDir": "dist",
+    // "sourceMap": true,
+
+    /* Lib */
+    "lib": ["ESNext", "DOM"], // Include DOM types for browser globals
+
+    /* Types */
+    "types": ["node"], // Explicitly include node types
+
+    /* Path Aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src/**/*.ts"], // Include all TS files in src
+  "exclude": ["node_modules", "dist", "lib"] // Exclude build/dependency folders
+}

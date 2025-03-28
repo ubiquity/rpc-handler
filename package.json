@@ -1,0 +1,23 @@
+{
+  "name": "rpc-handler-rewrite",
+  "version": "0.1.0",
+  "author": "",
+  "devDependencies": {
+    "@types/node": "^22.13.14"
+  },
+  "description": "Intelligent RPC handler using Chainlist",
+  "keywords": [
+    "rpc",
+    "blockchain",
+    "chainlist",
+    "ethers"
+  ],
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist --target node",
+    "start": "bun run src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module"
+}
