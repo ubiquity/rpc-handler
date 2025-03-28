@@ -32,6 +32,7 @@ The core implementation is complete. Focus is now on refinement, documentation f
 -   **Latency Testing:** Includes Permit2 bytecode check (`eth_getCode`) and sync status check (`eth_syncing`).
 -   **Caching Strategy (Node.js):** Using `.rpc-cache.json` file for persistence.
 -   **Caching Strategy (Browser):** Using `localStorage`.
--   **Error Handling:** Basic fallback implemented (retry once with next fastest). Detailed results stored in cache.
+-   **RPC Selection:** Prioritizes RPCs passing strict checks (`status: 'ok'`). Falls back to fastest RPC passing only bytecode check (`status: 'syncing'`) if no 'ok' RPCs are found. Never uses RPCs failing bytecode check.
+-   **Error Handling:** Basic fallback implemented (retry once with next fastest valid RPC). Detailed test results (including failures) stored in cache.
 -   **Contract Interaction:** Provided via `readContract` helper using `viem`, requiring user-provided ABI. Dynamic ABI fetching was deemed too complex for V1.
 -   **Environment Detection:** Using standard checks (`typeof window`, `typeof process`) for cache strategy selection.

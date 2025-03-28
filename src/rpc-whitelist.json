@@ -22,7 +22,8 @@
       "https://gnosis.drpc.org",
       "https://rpc.ankr.com/gnosis",
       "https://gnosis.blockpi.network/v1/rpc/public",
-      "https://1rpc.io/gnosis"
+      "https://1rpc.io/gnosis",
+      "https://rpc.ap-southeast-1.gateway.fm/v4/gnosis/non-archival/mainnet"
     ],
     "137": [
       "https://polygon-rpc.com",

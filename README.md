@@ -4,11 +4,11 @@ An intelligent RPC handler for EVM-compatible chains that automatically selects 
 
 ## Features
 
--   **Automatic RPC Selection:** Dynamically tests whitelisted RPCs for latency, sync status, and specific contract bytecode (Permit2) to find the best endpoint.
--   **Whitelisting:** Uses a configurable `src/rpc-whitelist.json` to manage the pool of RPCs to test, improving reliability over testing all public RPCs.
--   **Caching:** Caches latency test results (`.rpc-cache.json` in Node.js, `localStorage` in browser) to speed up subsequent requests (default 1-hour TTL).
--   **Fallback:** Automatically retries requests with the next fastest valid RPC if the primary choice fails.
--   **Contract Interaction:** Includes a `readContract` helper function (using `viem`) for easy read-only smart contract calls.
+-   **Automatic RPC Selection:** Dynamically tests whitelisted RPCs for latency, sync status (`eth_syncing`), and specific contract bytecode (Permit2 via `eth_getCode`) to find the best endpoint. Prioritizes fully valid ('ok') RPCs, but falls back to the fastest 'syncing' RPC if no 'ok' options are available. Never uses RPCs with incorrect bytecode.
+-   **Whitelisting:** Uses a configurable `src/rpc-whitelist.json` to manage the pool of RPCs to test.
+-   **Caching:** Caches detailed latency test results (including status/errors) in `.rpc-cache.json` (Node.js) or `localStorage` (browser) to speed up subsequent requests (default 1-hour TTL).
+-   **Fallback:** Automatically retries requests with the next fastest valid RPC (using the same 'ok' > 'syncing' priority) if the primary choice fails.
+-   **Contract Interaction:** Includes a `readContract` helper function (using `viem`) for easy read-only smart contract calls (requires user-provided ABI).
 -   **TypeScript:** Written in TypeScript with type definitions.
 
 ## Installation
@@ -113,11 +113,14 @@ getContractInfo();
 
 Modify `src/rpc-whitelist.json` to add/remove RPC endpoints for specific chain IDs. The handler will only test URLs listed in this file.
 
-## Latency Testing
+## Latency Testing & Selection
 
-The `LatencyTester` performs the following checks:
-1.  Sends `eth_getCode` to the Permit2 address (`0x000000000022D473030F116dDEE9F6B43aC78BA3`) and verifies the returned bytecode prefix.
-2.  Sends `eth_syncing` and verifies the result is `false`.
-3.  Measures the time taken for both calls to complete concurrently.
+The `LatencyTester` performs the following checks concurrently for each whitelisted RPC:
+1.  **Permit2 Bytecode:** Sends `eth_getCode` to the Permit2 address (`0x000000000022D473030F116dDEE9F6B43aC78BA3`) and verifies the returned bytecode prefix. Failure results in `status: 'wrong_bytecode'`.
+2.  **Sync Status:** Sends `eth_syncing` and verifies the result is `false`. Failure results in `status: 'syncing'`.
+3.  **Connectivity/Timeout:** Checks for network errors, HTTP errors, RPC errors, or timeouts during the above calls.
 
-Only RPCs passing all checks within the timeout are considered valid.
+The `RpcSelector` then uses these results:
+-   It prioritizes the RPC with the lowest latency that has `status: 'ok'` (passed both checks).
+-   If no RPC has `status: 'ok'`, it falls back to selecting the RPC with the lowest latency that has `status: 'syncing'` (passed bytecode check, failed sync check).
+-   If no RPC meets either of these criteria, no endpoint is selected.

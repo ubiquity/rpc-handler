@@ -154,45 +154,46 @@ const tokenInfo: Record<number, { address: Address, expectedSymbol: string }> = 
     42220: { address: '0x765DE816845861e75A25fCA122bb6898B8B1282a', expectedSymbol: 'cUSD' }, // Celo Dollar (cUSD) on Celo
     81457: { address: '0x4300000000000000000000000000000000000003', expectedSymbol: 'USDB' }, // USDB on Blast (Native Stable)
     324: { address: '0x3355df6D4c9C3035724Fd0e3914dE96A5a83aaf4', expectedSymbol: 'USDC' }, // USDC on ZKsync Era
-    7777777: { address: '0x6C2C06790b3E3E3c38e12Ee22F84Ac8230Be8309', expectedSymbol: 'DAI' }, // DAI on Zora
+    // Note: Gnosis DAI address is same as Ethereum's
+    100: { address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', expectedSymbol: 'DAI' },
+    // ... add others if needed for broader testing later
 };
 
+// Define COW Token specific info
+const cowTokenAddressGnosis: Address = '0xC6ed4f520f6A4e4DC27273509239b7F8A68d2068';
+const gnosisChainId = 100;
+
 async function main() {
-    console.log("--- Starting RpcHandler Example ---");
-    const handler = new RpcHandler({ latencyTimeoutMs: 7000, requestTimeoutMs: 15000 }); // Increased timeouts slightly
-    const chainIdsToTest = [1, 10, 100, 137, 42161, 8453, 56, 43114, 42220, 81457, 324, 7777777];
+    console.log("--- Starting RpcHandler Example for Gnosis COW Token ---");
+    // Use slightly longer timeouts for real network calls
+    const handler = new RpcHandler({ latencyTimeoutMs: 7000, requestTimeoutMs: 15000 });
 
-    for (const chainId of chainIdsToTest) {
-        try {
-            console.log(`\n--- Testing Chain ID: ${chainId} ---`);
-            const blockNumber = await handler.send<string>(chainId, 'eth_blockNumber');
-            console.log(`Chain ${chainId} - Latest Block Number: ${parseInt(blockNumber, 16)} (${blockNumber})`);
+    try {
+        console.log(`\n--- Testing Chain ID: ${gnosisChainId} (Gnosis) ---`);
+        // Optional: Fetch block number first to ensure basic connectivity
+        // const blockNumber = await handler.send<string>(gnosisChainId, 'eth_blockNumber');
+        // console.log(`Gnosis Chain - Latest Block Number: ${parseInt(blockNumber, 16)} (${blockNumber})`);
 
-            const token = tokenInfo[chainId];
-            if (token) {
-                 console.log(`\n--- Testing readContract (${token.expectedSymbol}) on Chain ID: ${chainId} ---`);
-                 const [symbol, totalSupply] = await Promise.all([
-                     readContract<string>({
-                        handler, chainId, address: token.address, abi: erc20Abi, functionName: 'symbol',
-                     }),
-                     readContract<bigint>({
-                        handler, chainId, address: token.address, abi: erc20Abi, functionName: 'totalSupply',
-                     }),
-                 ]);
-                 console.log(`Chain ${chainId} - Token Symbol: ${symbol} (Expected: ${token.expectedSymbol})`);
-                 console.log(`Chain ${chainId} - Token Total Supply: ${totalSupply.toString()}`);
-                 // Basic check
-                 if (symbol !== token.expectedSymbol && !(chainId === 43114 && symbol === 'DAI')) { // Allow DAI for DAI.e mismatch
-                    console.warn(`Symbol mismatch for chain ${chainId}! Got ${symbol}, expected ${token.expectedSymbol}`);
-                 }
-            } else {
-                 console.log(`Chain ${chainId} - Token address not defined in example.`);
-            }
+        console.log(`\n--- Fetching COW Token Symbol on Gnosis ---`);
+        const symbol = await readContract<string>({
+            handler,
+            chainId: gnosisChainId,
+            address: cowTokenAddressGnosis,
+            abi: erc20Abi, // Using the standard ERC20 ABI subset
+            functionName: 'symbol',
+        });
 
-        } catch (error) {
-            console.error(`RPC Handler Example Failed for Chain ${chainId}:`, error);
+        console.log(`>>> RESULT: Chain ${gnosisChainId} - Token ${cowTokenAddressGnosis} Symbol: ${symbol}`);
+        if (symbol === 'COW') {
+            console.log(">>> SUCCESS: Correct symbol 'COW' received.");
+        } else {
+            console.error(`>>> FAILURE: Expected symbol 'COW', but received '${symbol}'`);
         }
+
+    } catch (error) {
+        console.error(`RPC Handler Example Failed for Chain ${gnosisChainId}:`, error);
     }
+
     console.log("\n--- Example Finished ---");
 }
 

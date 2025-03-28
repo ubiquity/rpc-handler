@@ -1,0 +1,45 @@
+{
+  "100": {
+    "fastestRpc": "https://gnosis-rpc.publicnode.com",
+    "latencyMap": {
+      "https://rpc.gnosischain.com": {
+        "url": "https://rpc.gnosischain.com",
+        "latency": 1044,
+        "status": "ok"
+      },
+      "https://gnosis-rpc.publicnode.com": {
+        "url": "https://gnosis-rpc.publicnode.com",
+        "latency": 960,
+        "status": "ok"
+      },
+      "https://gnosis.drpc.org": {
+        "url": "https://gnosis.drpc.org",
+        "latency": 1013,
+        "status": "ok"
+      },
+      "https://rpc.ankr.com/gnosis": {
+        "url": "https://rpc.ankr.com/gnosis",
+        "latency": null,
+        "status": "rpc_error",
+        "error": "eth_getCode RPC error -32000 - Unauthorized: You must authenticate your request with an API key. Create an account on https://www.ankr.com/rpc/ and generate your personal API key for free."
+      },
+      "https://gnosis.blockpi.network/v1/rpc/public": {
+        "url": "https://gnosis.blockpi.network/v1/rpc/public",
+        "latency": null,
+        "status": "timeout",
+        "error": "The operation was aborted."
+      },
+      "https://1rpc.io/gnosis": {
+        "url": "https://1rpc.io/gnosis",
+        "latency": 1621,
+        "status": "ok"
+      },
+      "https://rpc.ap-southeast-1.gateway.fm/v4/gnosis/non-archival/mainnet": {
+        "url": "https://rpc.ap-southeast-1.gateway.fm/v4/gnosis/non-archival/mainnet",
+        "latency": 1949,
+        "status": "ok"
+      }
+    },
+    "lastTested": 1743174923316
+  }
+}

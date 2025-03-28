@@ -29,15 +29,15 @@ flowchart TD
 -   **API Interface:** The public-facing interface for the handler. It will expose methods for making RPC calls (e.g., `send(chainId, method, params)`). It abstracts the underlying complexity from the user.
 -   **Chain Manager:** Responsible for managing information about different blockchain networks (Chain IDs, known RPC endpoints).
 -   **Chainlist Data Source:** Responsible for fetching and potentially updating the list of RPC endpoints from Chainlist. It filters for free endpoints and provides this data to the `RPC Selector`. This might involve fetching a pre-generated list or interacting with the Chainlist API/data source directly.
-    -   **Latency Tester:** Periodically tests the response time and validity of available RPC endpoints. It performs concurrent `eth_getCode` (checking against Permit2 bytecode) and `eth_syncing` calls. Only RPCs that respond correctly to both within the timeout are considered valid.
-    -   **Cache Manager:** Stores the results of latency tests (latency, validity) and the currently determined fastest valid RPC endpoint for each chain. Uses `localStorage` (browser) or a JSON file (Node.js) for persistence.
+    -   **Latency Tester:** Periodically tests the response time and validity of whitelisted RPC endpoints. It performs concurrent `eth_getCode` (checking Permit2 bytecode) and `eth_syncing` calls. Returns detailed results including status (`ok`, `syncing`, `wrong_bytecode`, `timeout`, etc.).
+    -   **Cache Manager:** Stores the detailed `LatencyTestResult` map and the currently selected fastest valid RPC endpoint for each chain. Uses `localStorage` (browser) or a JSON file (Node.js) for persistence.
     -   **RPC Selector:** The core logic unit. For a given `chainId`:
     1.  Checks the cache for the current fastest RPC.
     2.  If not cached or cache is stale, consults the `Chainlist Data Source` for available free endpoints.
-    3.  Triggers the `Latency Tester` if needed (e.g., first call in a session, or periodically).
-    4.  Uses latency results (from cache or tester) to select the fastest endpoint.
-    5.  Updates the cache via the `Cache Manager`.
-    6.  Returns the selected RPC endpoint URL to the `Chain Manager` or `API Interface` to execute the actual call.
+    3.  Triggers the `Latency Tester` if needed (cache miss/expired).
+    4.  Uses latency results (from cache or tester) to select the fastest endpoint, prioritizing `status: 'ok'`, but falling back to the fastest with `status: 'syncing'` if no 'ok' endpoints are found. It will *never* select an endpoint with `status: 'wrong_bytecode'` or other errors.
+    5.  Updates the cache with the detailed results and the selected endpoint (if any) via the `Cache Manager`.
+    6.  Returns the selected RPC endpoint URL (or null) to the `RpcHandler`.
 
 ## 3. Key Design Patterns
 
