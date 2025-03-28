@@ -196,8 +196,9 @@ async function main() {
     console.log("\n--- Example Finished ---");
 }
 
-// Uncomment to run the example
+/* // Comment out example execution for tests
 main().catch(err => {
     console.error("Example failed:", err);
     process.exit(1);
 });
+*/
