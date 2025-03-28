@@ -34,6 +34,6 @@
 ## 5. Constraints & Considerations
 
 -   **Chainlist Submodule:** Requires `git submodule update --init --recursive` after cloning or pulling updates. The `generate-json.js` script needs to be run periodically (manual trigger or part of a build step) to keep the RPC list fresh.
--   **Latency Testing:** The chosen RPC method for testing (e.g., `eth_blockNumber`) should be lightweight and supported by most nodes. Network conditions can heavily influence results. Testing needs timeouts and error handling.
+-   **Latency Testing:** Uses concurrent `eth_getCode` (checking Permit2 bytecode prefix) and `eth_syncing` calls. Only nodes that respond correctly to both within the timeout are considered valid. Network conditions influence latency results.
 -   **Free RPCs Only:** Logic must filter Chainlist data to include only free endpoints. The definition of "free" might need clarification based on Chainlist's data structure.
 -   **`bun` Usage:** Adhere to user's instruction to use `bun run` for executing TypeScript files and `bun install` for dependencies.

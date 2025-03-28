@@ -1,11 +1,13 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+// Import the detailed result type using 'import type' for type-only imports
+import type { LatencyTestResult } from './latency-tester.js';
 
 // Define the structure for cached data per chain
 interface ChainCache {
   fastestRpc: string | null;
-  latencyMap: Record<string, number>; // Map of RPC URL -> latency in ms
+  latencyMap: Record<string, LatencyTestResult>; // Store detailed results
   lastTested: number; // Timestamp of the last test run for this chain
 }
 
@@ -53,11 +55,10 @@ export class CacheManager {
         this.cache = JSON.parse(rawData);
       } catch (error: any) {
         if (error.code === 'ENOENT') {
-          // File doesn't exist, which is fine on first run
           this.cache = {};
         } else {
           console.error('Failed to load cache from file:', error);
-          this.cache = {}; // Reset cache on error
+          this.cache = {};
         }
       }
     }
@@ -65,7 +66,7 @@ export class CacheManager {
   }
 
   private async saveCache(): Promise<void> {
-    if (!this.cacheLoaded) return; // Don't save if not loaded
+    if (!this.cacheLoaded) return;
 
     if (isBrowser) {
       try {
@@ -75,6 +76,7 @@ export class CacheManager {
       }
     } else if (isNode && nodeCachePath) {
       try {
+        // Save detailed latency map
         await fs.writeFile(nodeCachePath, JSON.stringify(this.cache, null, 2));
       } catch (error) {
         console.error('Failed to save cache to file:', error);
@@ -82,34 +84,41 @@ export class CacheManager {
     }
   }
 
-  async getChainCache(chainId: number): Promise<ChainCache | null> {
-    await this.loadCache();
-    const chainCache = this.cache[chainId];
+  // Internal helper to get potentially expired cache
+  private async getRawChainCache(chainId: number): Promise<ChainCache | null> {
+      await this.loadCache();
+      return this.cache[chainId] ?? null;
+  }
 
+  // Public method to get valid (non-expired) cache
+  async getChainCache(chainId: number): Promise<ChainCache | null> {
+    const chainCache = await this.getRawChainCache(chainId);
     if (chainCache && Date.now() - chainCache.lastTested < this.cacheTtlMs) {
       return chainCache;
     }
-    // Cache is expired or doesn't exist
     return null;
   }
 
-  async updateChainCache(chainId: number, latencyMap: Record<string, number>, fastestRpc: string | null): Promise<void> {
+  // Update method signature to accept the detailed map
+  async updateChainCache(chainId: number, latencyMap: Record<string, LatencyTestResult>, fastestRpc: string | null): Promise<void> {
     await this.loadCache();
     this.cache[chainId] = {
       fastestRpc,
-      latencyMap,
+      latencyMap: latencyMap || {}, // Ensure we save an object even if null/undefined passed
       lastTested: Date.now(),
     };
     await this.saveCache();
   }
 
   async getFastestRpc(chainId: number): Promise<string | null> {
-    const chainCache = await this.getChainCache(chainId);
+    const chainCache = await this.getChainCache(chainId); // Uses TTL check
     return chainCache?.fastestRpc ?? null;
   }
 
-  async getLatencyMap(chainId: number): Promise<Record<string, number> | null> {
-     const chainCache = await this.getChainCache(chainId);
+  // Update return type
+  async getLatencyMap(chainId: number): Promise<Record<string, LatencyTestResult> | null> {
+     // Return the map even if expired, RpcSelector might want old data if tests fail
+     const chainCache = await this.getRawChainCache(chainId);
      return chainCache?.latencyMap ?? null;
   }
 }

@@ -1,0 +1,36 @@
+{
+  "rpcs": {
+    "1": [
+      "https://cloudflare-eth.com",
+      "https://rpc.ankr.com/eth",
+      "https://eth.llamarpc.com",
+      "https://ethereum-rpc.publicnode.com",
+      "https://eth.drpc.org",
+      "https://1rpc.io/eth"
+    ],
+    "10": [
+      "https://mainnet.optimism.io",
+      "https://optimism-rpc.publicnode.com",
+      "https://optimism.llamarpc.com",
+      "https://optimism.drpc.org",
+      "https://rpc.ankr.com/optimism",
+      "https://1rpc.io/op"
+    ],
+    "100": [
+      "https://rpc.gnosischain.com",
+      "https://gnosis-rpc.publicnode.com",
+      "https://gnosis.drpc.org",
+      "https://rpc.ankr.com/gnosis",
+      "https://gnosis.blockpi.network/v1/rpc/public",
+      "https://1rpc.io/gnosis"
+    ],
+    "137": [
+      "https://polygon-rpc.com",
+      "https://polygon.llamarpc.com",
+      "https://polygon-bor-rpc.publicnode.com",
+      "https://polygon.drpc.org",
+      "https://rpc.ankr.com/polygon",
+      "https://1rpc.io/matic"
+    ]
+  }
+}

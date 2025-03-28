@@ -141,25 +141,34 @@ export class RpcHandler {
 }
 
 // Example Usage (Optional)
-/*
+
 async function main() {
-    const handler = new RpcHandler({ latencyTimeoutMs: 3000 }); // 3s timeout for latency tests
+    console.log("--- Starting RpcHandler Example ---");
+    // Use slightly longer timeouts for real network calls
+    const handler = new RpcHandler({ latencyTimeoutMs: 5000, requestTimeoutMs: 10000 });
+    const chainIdsToTest = [1, 10, 100]; // Ethereum, Optimism, Gnosis
 
-    try {
-        // Example: Get latest block number for Ethereum (chainId 1)
-        const chainId = 1;
-        const blockNumber = await handler.send<string>(chainId, 'eth_blockNumber');
-        console.log(`Chain ${chainId} - Latest Block Number: ${parseInt(blockNumber, 16)} (${blockNumber})`);
+    for (const chainId of chainIdsToTest) {
+        try {
+            console.log(`\n--- Testing Chain ID: ${chainId} ---`);
+            const blockNumber = await handler.send<string>(chainId, 'eth_blockNumber');
+            console.log(`Chain ${chainId} - Latest Block Number: ${parseInt(blockNumber, 16)} (${blockNumber})`);
 
-        // Example: Get balance (replace with actual address)
-        // const address = "0x...";
-        // const balance = await handler.send<string>(chainId, 'eth_getBalance', [address, 'latest']);
-        // console.log(`Chain ${chainId} - Balance: ${balance}`);
+            // Optional: Add a small delay between chains if needed
+            // await new Promise(resolve => setTimeout(resolve, 500));
 
-    } catch (error) {
-        console.error("RPC Handler Example Failed:", error);
+        } catch (error) {
+            console.error(`RPC Handler Example Failed for Chain ${chainId}:`, error);
+            // Continue to the next chain even if one fails
+        }
     }
+    console.log("\n--- Example Finished ---");
+    // Removed stray catch block from previous version
 }
 
-main();
+/* // Comment out example execution for tests
+main().catch(err => {
+    console.error("Example failed:", err);
+    process.exit(1);
+});
 */

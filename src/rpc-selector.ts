@@ -1,6 +1,6 @@
 import { CacheManager } from './cache-manager.js';
 import { ChainlistDataSource } from './chainlist-data-source.js';
-import { LatencyTester } from './latency-tester.js';
+import { LatencyTester, LatencyTestResult } from './latency-tester.js'; // Import LatencyTestResult
 
 export class RpcSelector {
   private dataSource: ChainlistDataSource;
@@ -48,13 +48,12 @@ export class RpcSelector {
     let minLatency = Infinity;
 
     for (const url in latencyMap) {
-      // Check if the key actually exists on the object
       if (Object.prototype.hasOwnProperty.call(latencyMap, url)) {
-        const latency = latencyMap[url];
-        // Ensure latency is a valid number and less than current min
-        if (typeof latency === 'number' && latency < minLatency) {
-          minLatency = latency;
-          fastestRpc = url;
+        const result: LatencyTestResult | undefined = latencyMap[url];
+        // Check if the result is valid ('ok' status) and faster than current min
+        if (result && result.status === 'ok' && result.latency < minLatency) {
+          minLatency = result.latency;
+          fastestRpc = url; // url is the key, which is the RPC URL
         }
       }
     }
@@ -77,8 +76,9 @@ export class RpcSelector {
    * Excludes the currently known fastest RPC.
    */
   async findNextFastestRpc(chainId: number): Promise<string | null> {
+    // Use getLatencyMap which might return expired data if needed
     const latencyMap = await this.cacheManager.getLatencyMap(chainId);
-    const currentFastest = await this.cacheManager.getFastestRpc(chainId);
+    const currentFastest = await this.cacheManager.getFastestRpc(chainId); // This uses TTL
 
     if (!latencyMap) {
         console.warn(`No latency map found in cache for chain ${chainId} to determine next fastest.`);
@@ -90,14 +90,15 @@ export class RpcSelector {
 
     for (const url in latencyMap) {
         if (Object.prototype.hasOwnProperty.call(latencyMap, url)) {
-            // Skip the current fastest RPC
+            // Skip the currently known fastest RPC
             if (url === currentFastest) {
                 continue;
             }
 
-            const latency = latencyMap[url];
-            if (typeof latency === 'number' && latency < minLatency) {
-                minLatency = latency;
+            const result: LatencyTestResult | undefined = latencyMap[url];
+            // Check if the result is valid ('ok') and faster than current min
+            if (result && result.status === 'ok' && result.latency < minLatency) {
+                minLatency = result.latency;
                 nextFastestRpc = url;
             }
         }

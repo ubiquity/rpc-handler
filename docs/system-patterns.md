@@ -29,9 +29,9 @@ flowchart TD
 -   **API Interface:** The public-facing interface for the handler. It will expose methods for making RPC calls (e.g., `send(chainId, method, params)`). It abstracts the underlying complexity from the user.
 -   **Chain Manager:** Responsible for managing information about different blockchain networks (Chain IDs, known RPC endpoints).
 -   **Chainlist Data Source:** Responsible for fetching and potentially updating the list of RPC endpoints from Chainlist. It filters for free endpoints and provides this data to the `RPC Selector`. This might involve fetching a pre-generated list or interacting with the Chainlist API/data source directly.
--   **Latency Tester:** Periodically tests the response time of available RPC endpoints for relevant chains. Uses a lightweight RPC call (e.g., `eth_blockNumber`) to measure latency.
--   **Cache Manager:** Stores the results of latency tests and the currently determined fastest RPC endpoint for each chain. Uses `localStorage` (for browser environments) or a suitable alternative (for backend environments) to persist this information within a session or across sessions.
--   **RPC Selector:** The core logic unit. For a given `chainId`:
+    -   **Latency Tester:** Periodically tests the response time and validity of available RPC endpoints. It performs concurrent `eth_getCode` (checking against Permit2 bytecode) and `eth_syncing` calls. Only RPCs that respond correctly to both within the timeout are considered valid.
+    -   **Cache Manager:** Stores the results of latency tests (latency, validity) and the currently determined fastest valid RPC endpoint for each chain. Uses `localStorage` (browser) or a JSON file (Node.js) for persistence.
+    -   **RPC Selector:** The core logic unit. For a given `chainId`:
     1.  Checks the cache for the current fastest RPC.
     2.  If not cached or cache is stale, consults the `Chainlist Data Source` for available free endpoints.
     3.  Triggers the `Latency Tester` if needed (e.g., first call in a session, or periodically).

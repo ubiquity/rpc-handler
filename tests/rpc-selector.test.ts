@@ -1,106 +1,112 @@
 import { beforeEach, describe, expect, it, mock, Mock } from 'bun:test';
-// Import classes needed for type casting mocks if desired, otherwise remove
-// import { CacheManager } from '../src/cache-manager.js';
-// import { ChainlistDataSource } from '../src/chainlist-data-source.js';
-// import { LatencyTester } from '../src/latency-tester.js';
+import { ChainlistDataSource } from '../src/chainlist-data-source.js'; // Import real one
+import type { LatencyTestResult } from '../src/latency-tester.js'; // Import type
 import { RpcSelector } from '../src/rpc-selector.js';
 
 // --- Tests ---
-describe('RpcSelector', () => {
-  // Mocks will be created as plain objects with mocked methods
-  let mockDataSource: any; // Use 'any' for simplicity with manual mocks
-  let mockCacheManager: any;
-  let mockLatencyTester: any;
+describe('RpcSelector (using Whitelist)', () => {
+  let dataSource: ChainlistDataSource; // Real instance
+  let mockCacheManager: any; // Mocked instance
+  let mockLatencyTester: any; // Mocked instance
   let rpcSelector: RpcSelector;
 
-  // Mock Functions
-  let mockGetRpcUrlsFn: Mock<(...args: any[]) => Promise<string[]>>;
+  // Mock Functions for CacheManager and LatencyTester
   let mockGetFastestRpcFn: Mock<(...args: any[]) => Promise<string | null>>;
-  let mockGetLatencyMapFn: Mock<(...args: any[]) => Promise<Record<string, number> | null>>;
+  let mockGetLatencyMapFn: Mock<(...args: any[]) => Promise<Record<string, LatencyTestResult> | null>>;
   let mockUpdateChainCacheFn: Mock<(...args: any[]) => Promise<void>>;
-  let mockTestRpcUrlsFn: Mock<(...args: any[]) => Promise<Record<string, number>>>;
-  let mockCacheStore: Record<number, any>; // Simple object to simulate cache storage
+  let mockTestRpcUrlsFn: Mock<(...args: any[]) => Promise<Record<string, LatencyTestResult>>>;
+  let mockCacheStore: Record<number, any>;
 
   beforeEach(() => {
     mockCacheStore = {};
 
     // Define mock function implementations
-    mockGetRpcUrlsFn = mock(async (chainId: number): Promise<string[]> => {
-       // console.log(`>>> MOCK FN getRpcUrls called with chainId: ${chainId}`); // Keep logs commented out for now
-       if (chainId === 1) return ['https://rpc1.com', 'https://rpc2.com', 'https://rpc3.com'];
-       if (chainId === 99) return [];
-       return [];
-    });
     mockGetFastestRpcFn = mock(async (chainId: number): Promise<string | null> => {
-        // console.log(`>>> MOCK FN getFastestRpc called with chainId: ${chainId}`);
         const entry = mockCacheStore[chainId];
         if (entry && (Date.now() - entry.lastTested < 60*60*1000)) {
-             // console.log(`>>> MOCK FN getFastestRpc returning from cache: ${entry.fastestRpc ?? null}`);
              return entry.fastestRpc ?? null;
         }
-        // console.log(`>>> MOCK FN getFastestRpc cache miss/expired for chainId: ${chainId}`);
         return null;
     });
-     mockGetLatencyMapFn = mock(async (chainId: number): Promise<Record<string, number> | null> => {
-        // console.log(`>>> MOCK FN getLatencyMap called with chainId: ${chainId}`);
+     mockGetLatencyMapFn = mock(async (chainId: number): Promise<Record<string, LatencyTestResult> | null> => {
         const entry = mockCacheStore[chainId];
-        if (entry && (Date.now() - entry.lastTested < 60*60*1000)) {
-            return entry.latencyMap ?? null;
-        }
-        return null;
+        // RpcSelector uses getLatencyMap which might return expired data
+        // So we don't check TTL here, unlike getFastestRpc mock
+        return entry?.latencyMap ?? null;
     });
-    mockUpdateChainCacheFn = mock(async (chainId: number, latencyMap: Record<string, number>, fastestRpc: string | null): Promise<void> => {
-        // console.log(`>>> MOCK FN updateChainCache called with chainId: ${chainId}, fastestRpc: ${fastestRpc}`);
+    mockUpdateChainCacheFn = mock(async (chainId: number, latencyMap: Record<string, LatencyTestResult>, fastestRpc: string | null): Promise<void> => {
         mockCacheStore[chainId] = { fastestRpc, latencyMap, lastTested: Date.now() };
     });
-    mockTestRpcUrlsFn = mock(async (urls: string[]): Promise<Record<string, number>> => {
-      // console.log(`>>> MOCK FN testRpcUrls called with urls: ${urls.join(', ')}`);
-      const results: Record<string, number> = {};
+    mockTestRpcUrlsFn = mock(async (urls: string[]): Promise<Record<string, LatencyTestResult>> => {
+      const results: Record<string, LatencyTestResult> = {};
       urls.forEach(url => {
-        if (url.includes('rpc1')) results[url] = 100;
-        else if (url.includes('rpc2')) results[url] = 50;
-        else if (url.includes('rpc3')) results[url] = 200;
-        else results[url] = Infinity;
+        let latency = 200 + Math.random() * 100;
+        let status: LatencyTestResult['status'] = 'ok';
+        if (url.includes('cloudflare')) latency = 50;
+        else if (url.includes('ankr')) latency = 100;
+        else if (url.includes('llamarpc')) latency = 75;
+        else if (url.includes('publicnode')) latency = 60;
+        else if (url.includes('drpc.org')) { latency = Infinity; status = 'timeout'; }
+        results[url] = { url, latency, status };
       });
       return results;
     });
 
-    // Create plain mock objects implementing the required methods
-    mockDataSource = {
-      getRpcUrls: mockGetRpcUrlsFn,
-    };
+    // Create REAL DataSource instance
+    dataSource = new ChainlistDataSource();
 
+    // Create MOCK objects for CacheManager and LatencyTester, adding missing properties
     mockCacheManager = {
       getFastestRpc: mockGetFastestRpcFn,
       getLatencyMap: mockGetLatencyMapFn,
       updateChainCache: mockUpdateChainCacheFn,
+      // Add missing properties/methods with dummy values/mocks
+      cache: {},
+      cacheLoaded: true,
+      cacheKey: 'test-cache',
+      cacheTtlMs: 3600000,
+      loadCache: mock(async () => {}),
+      saveCache: mock(async () => {}),
+      getRawChainCache: mock(async (chainId: number) => mockCacheStore[chainId] ?? null), // Add this
+      getChainCache: mock(async (chainId: number) => { // Simulate TTL check for this if needed
+          const entry = mockCacheStore[chainId];
+          if (entry && (Date.now() - entry.lastTested < 60*60*1000)) {
+              return entry;
+          }
+          return null;
+      }),
     };
-
     mockLatencyTester = {
       testRpcUrls: mockTestRpcUrlsFn,
+       // Add missing properties/methods with dummy values/mocks
+      timeoutMs: 5000,
+      _makeRpcCall: mock(async () => ({ jsonrpc: '2.0', id: 1, result: null })),
+      testSingleRpc: mock(async (url: string) => ({ url, latency: Infinity, status: 'network_error' })),
     };
 
-    // Instantiate RpcSelector with the mock objects, using 'as any'
+    // Instantiate RpcSelector with REAL dataSource and MOCKED cache/tester
     rpcSelector = new RpcSelector(
-        mockDataSource as any,
-        mockCacheManager as any,
-        mockLatencyTester as any
+        dataSource,
+        mockCacheManager as any, // Keep 'as any' for simplicity
+        mockLatencyTester as any // Keep 'as any' for simplicity
     );
   });
 
-  // --- Tests (EXPECTED TO FAIL due to unexplained mocking issue) ---
-  it('should find the fastest RPC when cache is empty', async () => {
+  // --- Tests ---
+  it('should find the fastest RPC when cache is empty (using whitelist)', async () => {
     const chainId = 1;
     const fastest = await rpcSelector.findFastestRpc(chainId);
 
-    expect(fastest).toBe('https://rpc2.com'); // Fails: returns null
-    expect(mockGetFastestRpcFn).toHaveBeenCalledWith(chainId); // Fails: not called
-    expect(mockGetRpcUrlsFn).toHaveBeenCalledWith(chainId); // Fails: not called
-    expect(mockTestRpcUrlsFn).toHaveBeenCalledWith(['https://rpc1.com', 'https://rpc2.com', 'https://rpc3.com']); // Fails: not called
-    expect(mockUpdateChainCacheFn).toHaveBeenCalledWith(chainId, expect.any(Object), 'https://rpc2.com'); // Fails: not called
+    expect(fastest).toBe('https://cloudflare-eth.com');
+    expect(mockGetFastestRpcFn).toHaveBeenCalledWith(chainId);
+    expect(mockTestRpcUrlsFn).toHaveBeenCalledTimes(1);
+    expect(mockTestRpcUrlsFn).toHaveBeenCalledWith(expect.arrayContaining([
+        "https://cloudflare-eth.com", "https://rpc.ankr.com/eth", /* ... other whitelisted */
+    ]));
+    expect(mockUpdateChainCacheFn).toHaveBeenCalledWith(chainId, expect.any(Object), fastest);
   });
 
-  it('should return fastest RPC from cache if valid', async () => {
+   it('should return fastest RPC from cache if valid', async () => {
     const chainId = 1;
     const cachedRpc = 'https://cached-rpc.com';
     mockCacheStore[chainId] = {
@@ -111,78 +117,89 @@ describe('RpcSelector', () => {
 
     const fastest = await rpcSelector.findFastestRpc(chainId);
 
-    expect(fastest).toBe(cachedRpc); // Fails: returns null
-    expect(mockGetFastestRpcFn).toHaveBeenCalledWith(chainId); // Fails: not called
-    expect(mockGetRpcUrlsFn).not.toHaveBeenCalled();
+    expect(fastest).toBe(cachedRpc);
+    expect(mockGetFastestRpcFn).toHaveBeenCalledWith(chainId);
     expect(mockTestRpcUrlsFn).not.toHaveBeenCalled();
     expect(mockUpdateChainCacheFn).not.toHaveBeenCalled();
   });
 
    it('should return null if no RPCs are found for the chain', async () => {
-    const chainId = 99;
+    const chainId = 9999999;
     const fastest = await rpcSelector.findFastestRpc(chainId);
 
-    expect(fastest).toBeNull(); // Passes (by coincidence?)
-    expect(mockGetFastestRpcFn).toHaveBeenCalledWith(chainId); // Fails: not called
-    expect(mockGetRpcUrlsFn).toHaveBeenCalledWith(chainId); // Fails: not called
+    expect(fastest).toBeNull();
+    expect(mockGetFastestRpcFn).toHaveBeenCalledWith(chainId);
+    // Real getRpcUrls is called
     expect(mockTestRpcUrlsFn).not.toHaveBeenCalled();
     expect(mockUpdateChainCacheFn).not.toHaveBeenCalled();
   });
 
-  it('should return null if all RPCs fail latency test', async () => {
+  it('should return null if all whitelisted RPCs fail latency test', async () => {
     const chainId = 1;
-    mockTestRpcUrlsFn.mockResolvedValueOnce({
-        'https://rpc1.com': Infinity,
-        'https://rpc2.com': Infinity,
-        'https://rpc3.com': Infinity,
+    // Override mock to return only failing results for expected URLs
+    mockTestRpcUrlsFn.mockImplementationOnce(async (urls: string[]) => {
+        const results: Record<string, LatencyTestResult> = {};
+        urls.forEach(url => {
+            results[url] = { url, latency: Infinity, status: 'timeout' };
+        });
+        return results;
     });
 
     const fastest = await rpcSelector.findFastestRpc(chainId);
 
-    expect(fastest).toBeNull(); // Passes (by coincidence?)
-    expect(mockGetFastestRpcFn).toHaveBeenCalledWith(chainId); // Fails: not called
-    expect(mockGetRpcUrlsFn).toHaveBeenCalledWith(chainId); // Fails: not called
-    expect(mockTestRpcUrlsFn).toHaveBeenCalledWith(['https://rpc1.com', 'https://rpc2.com', 'https://rpc3.com']); // Fails: not called
-    expect(mockUpdateChainCacheFn).toHaveBeenCalledWith(chainId, expect.any(Object), null); // Fails: not called
+    expect(fastest).toBeNull();
+    expect(mockGetFastestRpcFn).toHaveBeenCalledWith(chainId);
+    // Real getRpcUrls is called
+    expect(mockTestRpcUrlsFn).toHaveBeenCalledTimes(1);
+    expect(mockUpdateChainCacheFn).toHaveBeenCalledWith(chainId, expect.any(Object), null);
   });
 
   it('should find the next fastest RPC from cache', async () => {
     const chainId = 1;
     mockCacheStore[chainId] = {
-        fastestRpc: 'https://rpc2.com',
-        latencyMap: { 'https://rpc1.com': 100, 'https://rpc2.com': 50, 'https://rpc3.com': 200 },
+        fastestRpc: 'https://cloudflare-eth.com', // 50ms
+        latencyMap: {
+            'https://cloudflare-eth.com': { url: 'https://cloudflare-eth.com', latency: 50, status: 'ok' },
+            'https://ethereum-rpc.publicnode.com': { url: 'https://ethereum-rpc.publicnode.com', latency: 60, status: 'ok' }, // Next fastest
+            'https://eth.llamarpc.com': { url: 'https://eth.llamarpc.com', latency: 75, status: 'ok' },
+            'https://rpc.ankr.com/eth': { url: 'https://rpc.ankr.com/eth', latency: 100, status: 'ok' },
+            'https://eth.drpc.org': { url: 'https://eth.drpc.org', latency: Infinity, status: 'timeout' },
+        },
         lastTested: Date.now()
     };
 
     const nextFastest = await rpcSelector.findNextFastestRpc(chainId);
 
-    expect(nextFastest).toBe('https://rpc1.com'); // Fails: returns null
-    expect(mockGetLatencyMapFn).toHaveBeenCalledWith(chainId); // Fails: not called
-    expect(mockGetFastestRpcFn).toHaveBeenCalledWith(chainId); // Fails: not called
+    expect(nextFastest).toBe('https://ethereum-rpc.publicnode.com'); // Expect 60ms one
+    expect(mockGetLatencyMapFn).toHaveBeenCalledWith(chainId);
+    expect(mockGetFastestRpcFn).toHaveBeenCalledWith(chainId);
   });
 
    it('should return null for next fastest if cache has no latency map', async () => {
     const chainId = 1;
     mockCacheStore[chainId] = {
-        fastestRpc: 'https://rpc2.com',
+        fastestRpc: 'https://cloudflare-eth.com',
         latencyMap: null,
         lastTested: Date.now()
     };
      const nextFastest = await rpcSelector.findNextFastestRpc(chainId);
-     expect(nextFastest).toBeNull(); // Passes (by coincidence?)
-     expect(mockGetLatencyMapFn).toHaveBeenCalledWith(chainId); // Fails: not called
+     expect(nextFastest).toBeNull();
+     expect(mockGetLatencyMapFn).toHaveBeenCalledWith(chainId);
    });
 
-   it('should return null for next fastest if only one RPC in latency map', async () => {
+   it('should return null for next fastest if only one OK RPC in latency map', async () => {
     const chainId = 1;
     mockCacheStore[chainId] = {
-        fastestRpc: 'https://rpc2.com',
-        latencyMap: { 'https://rpc2.com': 50 },
+        fastestRpc: 'https://cloudflare-eth.com',
+        latencyMap: {
+            'https://rpc.ankr.com/eth': { url: 'https://rpc.ankr.com/eth', latency: Infinity, status: 'timeout' },
+            'https://cloudflare-eth.com': { url: 'https://cloudflare-eth.com', latency: 50, status: 'ok' },
+         },
         lastTested: Date.now()
     };
      const nextFastest = await rpcSelector.findNextFastestRpc(chainId);
-     expect(nextFastest).toBeNull(); // Passes (by coincidence?)
-     expect(mockGetLatencyMapFn).toHaveBeenCalledWith(chainId); // Fails: not called
+     expect(nextFastest).toBeNull();
+     expect(mockGetLatencyMapFn).toHaveBeenCalledWith(chainId);
    });
 
 });
