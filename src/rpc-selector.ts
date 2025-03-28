@@ -1,5 +1,5 @@
-import { ChainlistDataSource } from './chainlist-data-source.js'; // Use .js extension for ES modules
 import { CacheManager } from './cache-manager.js';
+import { ChainlistDataSource } from './chainlist-data-source.js';
 import { LatencyTester } from './latency-tester.js';
 
 export class RpcSelector {
