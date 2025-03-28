@@ -16,18 +16,19 @@
 -   `RpcSelector` implemented to find the fastest RPC using cache and testing.
 -   `RpcHandler` (main API) implemented, integrating all components and providing `send` method with fallback logic.
 -   `src/index.ts` created as the library entry point.
+-   Initial tests using `bun test` added for `LatencyTester`, `RpcSelector`, and `RpcHandler` (all passing).
 
 ## 3. What's Next (Immediate Tasks)
 
--   **Testing:** Implement unit/integration tests for the components, especially `RpcHandler` and `RpcSelector`.
--   **Refinement:** Review error handling, logging, and configuration options (e.g., cache path).
--   **Build Script:** Ensure the build script in `package.json` works correctly.
+-   **Refinement:** Review error handling, logging, and configuration options (e.g., cache path, timeouts).
+-   **Build Script:** Ensure the build script in `package.json` works correctly (`bun build ./src/index.ts --outdir ./dist --target node`).
 -   **Documentation:** Add usage examples and API documentation (e.g., in README).
--   **Cleanup:** Remove any old/unused code (if applicable, though we started fresh).
+-   **Test Coverage:** Increase test coverage, potentially adding tests for `CacheManager` and `ChainlistDataSource`.
+-   **Cleanup:** Remove any old/unused code (if applicable).
 
 ## 4. Known Issues / Blockers
 
--   No automated tests yet.
+-   Test coverage is not exhaustive.
 -   The `lib/chainlist` submodule needs occasional manual updates (`git submodule update --remote` followed by regenerating `rpcs.json`).
 
 ## 5. Open Questions / Decisions (During Implementation/Refinement)

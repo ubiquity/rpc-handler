@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "author": "",
   "devDependencies": {
-    "@types/node": "^22.13.14"
+    "@types/node": "^22.13.14",
+    "bun-types": "^1.2.7"
   },
   "description": "Intelligent RPC handler using Chainlist",
   "keywords": [
@@ -17,7 +18,7 @@
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist --target node",
     "start": "bun run src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "bun test"
   },
   "type": "module"
 }

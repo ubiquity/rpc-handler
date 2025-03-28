@@ -28,7 +28,7 @@
     "lib": ["ESNext", "DOM"], // Include DOM types for browser globals
 
     /* Types */
-    "types": ["node"], // Explicitly include node types
+    "types": ["node", "bun-types"], // Add bun-types
 
     /* Path Aliases */
     "baseUrl": ".",
@@ -36,6 +36,6 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*.ts"], // Include all TS files in src
+  "include": ["src/**/*.ts", "tests/**/*.ts"], // Include src and tests
   "exclude": ["node_modules", "dist", "lib"] // Exclude build/dependency folders
 }
