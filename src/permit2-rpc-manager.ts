@@ -30,9 +30,20 @@ export interface Permit2RpcManagerOptions {
   requestTimeoutMs?: number; // Timeout for the actual RPC call
   nodeCachePath?: string; // Path for Node.js cache file
   localStorageKey?: string; // Key for browser localStorage
+  logLevel?: "debug" | "info" | "warn" | "error" | "none"; // Add log level option
 }
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000; // 10 seconds for RPC calls
+const DEFAULT_LOG_LEVEL = "warn"; // Default log level
+
+// Define log level hierarchy (higher number means higher priority)
+const LOG_LEVEL_HIERARCHY: Record<NonNullable<Permit2RpcManagerOptions["logLevel"]>, number> = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+  none: 4,
+};
 
 export class Permit2RpcManager {
   private dataSource: ChainlistDataSource;
@@ -40,18 +51,47 @@ export class Permit2RpcManager {
   private latencyTester: LatencyTester;
   private rpcSelector: RpcSelector;
   private requestTimeoutMs: number;
+  private logLevel: NonNullable<Permit2RpcManagerOptions["logLevel"]>; // Store the log level
+  private configuredLogLevelValue: number; // Store the numeric value for comparison
 
   constructor(options: Permit2RpcManagerOptions = {}) {
-    this.dataSource = new ChainlistDataSource();
-    // Pass relevant options to CacheManager constructor
+    this.logLevel = options.logLevel ?? DEFAULT_LOG_LEVEL;
+    this.configuredLogLevelValue = LOG_LEVEL_HIERARCHY[this.logLevel];
+    const logger = this._log.bind(this); // Create bound logger once
+
+    // Instantiate dependencies in correct order, passing logger
+    this.dataSource = new ChainlistDataSource(logger);
     this.cacheManager = new CacheManager({
       cacheTtlMs: options.cacheTtlMs,
       nodeCachePath: options.nodeCachePath,
       localStorageKey: options.localStorageKey,
+      logger: logger, // Pass logger to CacheManager
     });
-    this.latencyTester = new LatencyTester(options.latencyTimeoutMs);
-    this.rpcSelector = new RpcSelector(this.dataSource, this.cacheManager, this.latencyTester);
+    this.latencyTester = new LatencyTester(options.latencyTimeoutMs, logger); // Pass logger to LatencyTester
+    this.rpcSelector = new RpcSelector(this.dataSource, this.cacheManager, this.latencyTester, logger); // Pass logger to RpcSelector
     this.requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+  }
+
+  // Internal logger method
+  private _log(level: "debug" | "info" | "warn" | "error", message: string, ...optionalParams: any[]): void {
+    if (this.logLevel === "none") {
+      return;
+    }
+    const messageLevelValue = LOG_LEVEL_HIERARCHY[level];
+    if (messageLevelValue >= this.configuredLogLevelValue) {
+      switch (level) {
+        case "debug":
+        case "info":
+          console.log(`[Permit2RPC:${level}] ${message}`, ...optionalParams);
+          break;
+        case "warn":
+          console.warn(`[Permit2RPC:${level}] ${message}`, ...optionalParams);
+          break;
+        case "error":
+          console.error(`[Permit2RPC:${level}] ${message}`, ...optionalParams);
+          break;
+      }
+    }
   }
 
   /**
@@ -66,24 +106,24 @@ export class Permit2RpcManager {
     }
 
     try {
-      console.log(`Attempting RPC call to ${rpcUrl} for chain ${chainId}: ${method}`);
+      this._log("debug", `Attempting RPC call to ${rpcUrl} for chain ${chainId}: ${method}`);
       return await this.executeRpcCall<T>(rpcUrl, method, params);
     } catch (error: any) {
-      console.warn(`RPC call failed for ${rpcUrl} (chain ${chainId}): ${error.message}. Attempting fallback...`);
+      this._log("warn", `RPC call failed for ${rpcUrl} (chain ${chainId}): ${error.message}. Attempting fallback...`);
 
       // Attempt fallback to the next fastest RPC
       const fallbackRpcUrl = await this.rpcSelector.findNextFastestRpc(chainId);
 
       if (!fallbackRpcUrl) {
-        console.error(`Fallback failed: No alternative RPC endpoint found for chainId ${chainId}.`);
+        this._log("error", `Fallback failed: No alternative RPC endpoint found for chainId ${chainId}.`);
         throw new Error(`RPC call failed for chainId ${chainId} and no fallback available. Original error: ${error.message}`);
       }
 
       try {
-        console.log(`Attempting fallback RPC call to ${fallbackRpcUrl} for chain ${chainId}: ${method}`);
+        this._log("debug", `Attempting fallback RPC call to ${fallbackRpcUrl} for chain ${chainId}: ${method}`);
         return await this.executeRpcCall<T>(fallbackRpcUrl, method, params);
       } catch (fallbackError: any) {
-        console.error(`Fallback RPC call failed for ${fallbackRpcUrl} (chain ${chainId}): ${fallbackError.message}`);
+        this._log("error", `Fallback RPC call failed for ${fallbackRpcUrl} (chain ${chainId}): ${fallbackError.message}`);
         throw new Error(`RPC call failed for chainId ${chainId} on primary and fallback endpoints. Fallback error: ${fallbackError.message}`);
       }
     }
@@ -114,7 +154,7 @@ export class Permit2RpcManager {
       if (!response.ok) throw new Error(`HTTP error ${response.status} ${response.statusText}`);
       const responseData: JsonRpcResponse = await response.json();
       if (responseData.error) throw new Error(`RPC error ${responseData.error.code}: ${responseData.error.message}`);
-      if (responseData.result === undefined) console.warn(`RPC response for ${method} had undefined result.`);
+      if (responseData.result === undefined) this._log("warn", `RPC response for ${method} had undefined result.`);
       return responseData.result as T;
     } catch (error: any) {
       clearTimeout(timeoutId);

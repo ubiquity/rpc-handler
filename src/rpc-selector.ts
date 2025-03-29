@@ -1,16 +1,22 @@
-import { CacheManager } from "./cache-manager.ts";
-import { ChainlistDataSource } from "./chainlist-data-source.ts";
-import { LatencyTester } from "./latency-tester.ts"; // Import LatencyTestResult
+import { CacheManager } from "./cache-manager.js"; // Use .js extension
+import { ChainlistDataSource } from "./chainlist-data-source.js"; // Use .js extension
+import { LatencyTester } from "./latency-tester.js"; // Use .js extension
+
+// Define a logger type (can be shared or defined per file)
+type LoggerFn = (level: "debug" | "info" | "warn" | "error", message: string, ...optionalParams: any[]) => void;
 
 export class RpcSelector {
   private dataSource: ChainlistDataSource;
   private cacheManager: CacheManager;
   private latencyTester: LatencyTester;
+  private log: LoggerFn;
 
-  constructor(dataSource: ChainlistDataSource, cacheManager: CacheManager, latencyTester: LatencyTester) {
+  constructor(dataSource: ChainlistDataSource, cacheManager: CacheManager, latencyTester: LatencyTester, logger?: LoggerFn) {
     this.dataSource = dataSource;
     this.cacheManager = cacheManager;
     this.latencyTester = latencyTester;
+    // Use provided logger or a no-op function if none is given
+    this.log = logger || (() => {});
   }
 
   /**
@@ -27,20 +33,21 @@ export class RpcSelector {
       // Check if the cached fastest is still considered 'ok' or 'syncing' in the cached map
       const latencyMap = await this.cacheManager.getLatencyMap(chainId);
       const cachedResult = latencyMap?.[cachedFastest];
-      if (cachedResult && (cachedResult.status === "ok" || cachedResult.status === "syncing")) {
-        console.log(`Using cached fastest RPC for chain ${chainId}: ${cachedFastest} (Status: ${cachedResult.status})`);
+      // Allow cached 'wrong_bytecode' as well, as it might be the best available
+      if (cachedResult && (cachedResult.status === "ok" || cachedResult.status === "syncing" || cachedResult.status === "wrong_bytecode")) {
+        this.log("info", `Using cached fastest RPC for chain ${chainId}: ${cachedFastest} (Status: ${cachedResult.status})`);
         return cachedFastest;
       } else {
-        console.log(`Cached fastest RPC ${cachedFastest} for chain ${chainId} is no longer valid or missing in map. Re-evaluating.`);
+        this.log("info", `Cached fastest RPC ${cachedFastest} for chain ${chainId} is no longer valid or missing in map. Re-evaluating.`);
       }
     }
 
-    console.log(`No valid cache for chain ${chainId}. Performing latency tests...`);
+    this.log("info", `No valid cache for chain ${chainId}. Performing latency tests...`);
 
     // 2. Get RPC URLs from data source
-    const rpcUrls = await this.dataSource.getRpcUrls(chainId);
+    const rpcUrls = this.dataSource.getRpcUrls(chainId); // Now synchronous
     if (rpcUrls.length === 0) {
-      console.warn(`No RPC URLs found for chain ${chainId} in data source.`);
+      this.log("warn", `No RPC URLs found for chain ${chainId} in data source.`);
       return null; // No URLs to test
     }
 
@@ -70,7 +77,7 @@ export class RpcSelector {
 
     // If no 'ok' RPC found, try 'wrong_bytecode' status as first fallback
     if (!foundOk) {
-      console.warn(`No RPCs with 'ok' status found for chain ${chainId}. Checking for 'wrong_bytecode' RPCs...`);
+      this.log("warn", `No RPCs with 'ok' status found for chain ${chainId}. Checking for 'wrong_bytecode' RPCs...`);
       minLatency = Infinity;
       for (const url in latencyMap) {
         if (Object.prototype.hasOwnProperty.call(latencyMap, url)) {
@@ -86,7 +93,7 @@ export class RpcSelector {
 
     // If no 'ok' or 'wrong_bytecode' RPC found, try 'syncing' status as last fallback
     if (!foundStatus) {
-      console.warn(`No RPCs with 'ok' or 'wrong_bytecode' status found for chain ${chainId}. Checking for 'syncing' RPCs...`);
+      this.log("warn", `No RPCs with 'ok' or 'wrong_bytecode' status found for chain ${chainId}. Checking for 'syncing' RPCs...`);
       minLatency = Infinity;
       for (const url in latencyMap) {
         if (Object.prototype.hasOwnProperty.call(latencyMap, url)) {
@@ -102,11 +109,11 @@ export class RpcSelector {
 
     // Log selection result
     if (fastestRpc) {
-      console.log(`Selected fastest RPC for chain ${chainId}: ${fastestRpc} (${minLatency}ms, status: ${foundStatus})`);
+      this.log("info", `Selected fastest RPC for chain ${chainId}: ${fastestRpc} (${minLatency}ms, status: ${foundStatus})`);
     }
 
     if (!fastestRpc) {
-      console.warn(`No responsive RPCs found meeting criteria (ok > syncing) for chain ${chainId} after testing.`);
+      this.log("warn", `No responsive RPCs found meeting criteria (ok > wrong_bytecode > syncing) for chain ${chainId} after testing.`);
     }
 
     // 5. Update cache with detailed results and the selected fastest (even if only 'syncing')
@@ -125,7 +132,7 @@ export class RpcSelector {
     const currentFastest = (await this.cacheManager["getRawChainCache"](chainId))?.fastestRpc; // Use internal getter
 
     if (!latencyMap) {
-      console.warn(`No latency map found in cache for chain ${chainId} to determine next fastest.`);
+      this.log("warn", `No latency map found in cache for chain ${chainId} to determine next fastest.`);
       return null;
     }
 
@@ -160,14 +167,14 @@ export class RpcSelector {
         }
       }
       if (nextFastestRpc) {
-        console.log(`Next fastest RPC (syncing) found for chain ${chainId}: ${nextFastestRpc} (${minLatency}ms)`);
+        this.log("info", `Next fastest RPC (syncing) found for chain ${chainId}: ${nextFastestRpc} (${minLatency}ms)`);
       }
     } else if (nextFastestRpc) {
-      console.log(`Next fastest RPC (ok) found for chain ${chainId}: ${nextFastestRpc} (${minLatency}ms)`);
+      this.log("info", `Next fastest RPC (ok) found for chain ${chainId}: ${nextFastestRpc} (${minLatency}ms)`);
     }
 
     if (!nextFastestRpc) {
-      console.warn(`No alternative responsive RPCs found meeting criteria for chain ${chainId} in cache.`);
+      this.log("warn", `No alternative responsive RPCs found meeting criteria (ok > syncing) for chain ${chainId} in cache.`);
     }
 
     return nextFastestRpc;

@@ -11,6 +11,9 @@ interface RpcWhitelist {
   };
 }
 
+// Define a logger type
+type LoggerFn = (level: "debug" | "info" | "warn" | "error", message: string, ...optionalParams: any[]) => void;
+
 // Cast the imported JSON to the defined interface
 const jsonData = whitelistJson as RpcWhitelist;
 
@@ -18,8 +21,11 @@ export class ChainlistDataSource {
   // Store data in the format { chainId: number, rpcUrls: string[] }
   private whitelistData: { chainId: number; rpcUrls: string[] }[] = [];
   private initialized = false;
+  private log: LoggerFn;
 
-  constructor() {
+  constructor(logger?: LoggerFn) {
+    // Use provided logger or a no-op function if none is given
+    this.log = logger || (() => {});
     // Initialize data directly in the constructor since import is synchronous
     this.loadData();
   }
@@ -37,9 +43,9 @@ export class ChainlistDataSource {
       }));
 
       this.initialized = true;
-      console.log(`Successfully initialized whitelist data for ${this.whitelistData.length} chains.`);
+      this.log("info", `Successfully initialized whitelist data for ${this.whitelistData.length} chains.`);
     } catch (error) {
-      console.error("Failed to process imported RPC whitelist data:", error);
+      this.log("error", "Failed to process imported RPC whitelist data:", error);
       this.whitelistData = [];
       this.initialized = true; // Prevent retries on error
     }
@@ -53,7 +59,7 @@ export class ChainlistDataSource {
     const chainEntry = this.whitelistData.find((c) => c.chainId === chainId);
 
     if (!chainEntry) {
-      console.warn(`No whitelisted RPCs found for chainId: ${chainId}`);
+      this.log("warn", `No whitelisted RPCs found for chainId: ${chainId}`);
       return [];
     }
 
