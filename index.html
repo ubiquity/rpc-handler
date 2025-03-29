@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Permit2 RPC Manager - Browser Test</title>
     <style>
-        body { font-family: sans-serif; padding: 1em; }
-        pre { background-color: #eee; padding: 1em; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; max-height: 400px; overflow-y: auto;}
-        button { margin: 5px; padding: 8px 12px; }
+        body { font-family: sans-serif; padding: 1em; display: flex; gap: 1em;}
+        #controls, #output-area { flex: 1; }
+        textarea { width: 95%; min-height: 200px; font-family: monospace; margin-bottom: 10px;}
+        pre { background-color: #eee; padding: 1em; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; max-height: 600px; overflow-y: auto;}
+        button { margin: 5px 5px 5px 0; padding: 8px 12px; }
         .error { color: red; }
         .success { color: green; }
         .info { color: blue; }
@@ -15,29 +17,41 @@
     </style>
 </head>
 <body>
-    <h1>Permit2 RPC Manager - Browser Test</h1>
-    <p>Open the browser's developer console to see detailed logs.</p>
+    <div id="controls">
+        <h1>Permit2 RPC Manager - Browser Test</h1>
+        <p>Open the browser's developer console to see detailed logs.</p>
 
-    <div>
-        <label for="chainIdInput">Chain ID:</label>
-        <input type="number" id="chainIdInput" value="100">
-        <button id="testButton">Test Latency & Get Fastest RPC</button>
-        <button id="chainIdButton">Call eth_chainId</button>
-        <button id="wxdaiButton">Check WXDAI Balances (Gnosis)</button>
+        <div>
+            <label for="rpcWhitelistText">RPC Whitelist Data (Edit to test failover by removing primary RPCs):</label><br>
+            <textarea id="rpcWhitelistText"></textarea><br>
+            <button id="initButton">Initialize/Re-Initialize Manager</button>
+        </div>
+        <hr>
+        <div>
+            <label for="chainIdInput">Chain ID:</label>
+            <input type="number" id="chainIdInput" value="100">
+            <button id="testButton" disabled>Test Latency & Get Fastest RPC</button>
+            <button id="chainIdButton" disabled>Call eth_chainId</button>
+            <button id="wxdaiButton" disabled>Check WXDAI Balances (Gnosis)</button>
+        </div>
     </div>
 
-    <h2>Result / Status:</h2>
-    <pre id="output">Click a button to start...</pre>
+    <div id="output-area">
+        <h2>Result / Status Log:</h2>
+        <pre id="output">Initialize Manager first...</pre>
+    </div>
 
     <script type="module">
         // Import from the built distribution file
         import { Permit2RpcManager, readContract } from './dist/index.js';
 
         const outputEl = document.getElementById('output');
+        const initButton = document.getElementById('initButton');
         const testButton = document.getElementById('testButton');
         const chainIdButton = document.getElementById('chainIdButton');
         const wxdaiButton = document.getElementById('wxdaiButton');
         const chainIdInput = document.getElementById('chainIdInput');
+        const rpcWhitelistText = document.getElementById('rpcWhitelistText');
 
         // Constants for WXDAI test
         const GNOSIS_CHAIN_ID = 100;
@@ -58,7 +72,7 @@
           },
         ];
 
-        let manager;
+        let manager = null; // Initialize manager as null
 
         // Keep track of logs to display on page
         let logs = [];
@@ -73,29 +87,73 @@
             console[type === 'error' ? 'error' : 'log'](message);
         }
 
-        try {
-            logOutput('Initializing Permit2RpcManager with logLevel: debug...');
-            manager = new Permit2RpcManager({
-                 logLevel: 'debug',
-                 latencyTimeoutMs: 7000,
-                 requestTimeoutMs: 10000
-            });
-            logOutput('Manager initialized.', 'success');
-        } catch (err) {
-            logOutput(`Error initializing manager: ${err.message}`, 'error');
+        // Function to fetch and load default whitelist
+        async function loadDefaultWhitelist() {
+            try {
+                const response = await fetch('./src/rpc-whitelist.json'); // Fetch relative to HTML
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                rpcWhitelistText.value = JSON.stringify(data, null, 2);
+                logOutput("Default rpc-whitelist.json loaded into textarea.", "info");
+            } catch (e) {
+                logOutput(`Error loading default rpc-whitelist.json: ${e.message}`, "error");
+                rpcWhitelistText.value = '{\n  "rpcs": {}\n}'; // Default empty structure
+            }
         }
 
+        // Initialize Manager Function
+        function initializeManager() {
+             logOutput('Initializing Permit2RpcManager with logLevel: debug...');
+             let initialRpcData;
+             try {
+                 initialRpcData = JSON.parse(rpcWhitelistText.value);
+                 if (!initialRpcData || typeof initialRpcData !== 'object' || !initialRpcData.rpcs) {
+                     throw new Error("Invalid JSON structure. Must have a top-level 'rpcs' object.");
+                 }
+             } catch (e) {
+                  logOutput(`Error parsing JSON from textarea: ${e.message}`, 'error');
+                  manager = null; // Ensure manager is null on error
+                  testButton.disabled = true;
+                  chainIdButton.disabled = true;
+                  wxdaiButton.disabled = true;
+                  return;
+             }
+
+             try {
+                 manager = new Permit2RpcManager({
+                     logLevel: 'debug',
+                     latencyTimeoutMs: 7000,
+                     requestTimeoutMs: 10000,
+                     initialRpcData: initialRpcData // Pass data from textarea
+                 });
+                 logOutput('Manager initialized successfully with data from textarea.', 'success');
+                 testButton.disabled = false;
+                 chainIdButton.disabled = false;
+                 wxdaiButton.disabled = false;
+             } catch (err) {
+                 logOutput(`Error initializing manager: ${err.message}`, 'error');
+                 manager = null;
+                 testButton.disabled = true;
+                 chainIdButton.disabled = true;
+                 wxdaiButton.disabled = true;
+             }
+        }
+
+        // --- Event Listeners ---
+        initButton.addEventListener('click', initializeManager);
+
         testButton.addEventListener('click', async () => {
-            if (!manager) return logOutput('Manager not initialized.', 'error');
+            if (!manager) return logOutput('Manager not initialized. Click "Initialize Manager" first.', 'error');
             const chainId = parseInt(chainIdInput.value, 10);
             logOutput(`Testing latency for Chain ID: ${chainId}...`);
             try {
-                // Access internal selector for testing (not typical usage)
                 const rankedList = await manager.rpcSelector.getRankedRpcList(chainId);
                 if (rankedList.length > 0) {
                     logOutput(`Latency test complete. Fastest usable RPC found: ${rankedList[0]}\nFull ranked list:\n${rankedList.join('\n')}`, 'success');
                 } else {
-                    logOutput(`Latency test complete. No usable RPCs found for chain ${chainId}. Check console for CORS/network errors.`, 'error');
+                    logOutput(`Latency test complete. No usable RPCs found for chain ${chainId}. Check console for CORS/network errors or whitelist content.`, 'error');
                 }
             } catch (err) {
                 logOutput(`Error during latency test: ${err.message}`, 'error');
@@ -103,7 +161,7 @@
         });
 
          chainIdButton.addEventListener('click', async () => {
-            if (!manager) return logOutput('Manager not initialized.', 'error');
+            if (!manager) return logOutput('Manager not initialized. Click "Initialize Manager" first.', 'error');
              const chainId = parseInt(chainIdInput.value, 10);
             logOutput(`Calling eth_chainId for Chain ID: ${chainId}...`);
             try {
@@ -115,7 +173,7 @@
         });
 
         wxdaiButton.addEventListener('click', async () => {
-             if (!manager) return logOutput('Manager not initialized.', 'error');
+             if (!manager) return logOutput('Manager not initialized. Click "Initialize Manager" first.', 'error');
              logOutput(`Checking WXDAI balances on Gnosis (Chain ${GNOSIS_CHAIN_ID})...`);
 
              try {
@@ -126,7 +184,8 @@
                         address: WXDAI_ADDRESS,
                         abi: erc20AbiBalanceOf,
                         functionName: 'balanceOf',
-                        args: [ADDRESS_ZERO_BALANCE]
+                        args: [ADDRESS_ZERO_BALANCE],
+                        logger: (level, msg, ...params) => logOutput(`[ReadContract:${level}] ${msg} ${params.join(' ')}`, level) // Pass logger
                     }),
                      readContract({
                         manager,
@@ -134,7 +193,8 @@
                         address: WXDAI_ADDRESS,
                         abi: erc20AbiBalanceOf,
                         functionName: 'balanceOf',
-                        args: [ADDRESS_100_BALANCE]
+                        args: [ADDRESS_100_BALANCE],
+                        logger: (level, msg, ...params) => logOutput(`[ReadContract:${level}] ${msg} ${params.join(' ')}`, level) // Pass logger
                     })
                 ]);
 
@@ -167,6 +227,9 @@
                  logOutput(`Error during WXDAI balance check: ${err.message}`, 'error');
              }
         });
+
+        // Load default whitelist on page load
+        loadDefaultWhitelist();
 
     </script>
 </body>

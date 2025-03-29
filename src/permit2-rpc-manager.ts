@@ -31,6 +31,7 @@ export interface Permit2RpcManagerOptions {
   nodeCachePath?: string; // Path for Node.js cache file
   localStorageKey?: string; // Key for browser localStorage
   logLevel?: "debug" | "info" | "warn" | "error" | "none"; // Add log level option
+  initialRpcData?: { rpcs: { [chainId: string]: string[] } }; // Optional initial RPC data
 }
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000; // 10 seconds for RPC calls
@@ -59,8 +60,8 @@ export class Permit2RpcManager {
     this.configuredLogLevelValue = LOG_LEVEL_HIERARCHY[this.logLevel];
     const logger = this._log.bind(this); // Create bound logger once
 
-    // Instantiate dependencies in correct order, passing logger
-    this.dataSource = new ChainlistDataSource(logger);
+    // Instantiate dependencies in correct order, passing logger and initial data
+    this.dataSource = new ChainlistDataSource(logger, options.initialRpcData); // Pass initial data
     this.cacheManager = new CacheManager({
       cacheTtlMs: options.cacheTtlMs,
       nodeCachePath: options.nodeCachePath,
