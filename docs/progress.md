@@ -1,48 +1,52 @@
 # Progress: Permit2 RPC Manager Rewrite
 
-## 1. Current Status (March 28, 2025)
+## 1. Current Status (March 30, 2025)
 
-- **Phase:** Implementation
-- **Overall Progress:** 80% (Core components implemented)
+- **Phase:** Refinement / Documentation
+- **Overall Progress:** ~95% (Core features implemented, tested, documented)
 
 ## 2. What Works
 
-- Core documentation structure created.
-- Project configuration (`package.json`, `tsconfig.json`) set up.
-- Chainlist RPC data generated (`lib/chainlist/out/rpcs.json`).
-- `ChainlistDataSource` implemented to load RPC data.
-- `CacheManager` implemented with support for `localStorage` (browser) and JSON file (Node.js).
-- `LatencyTester` implemented using native `fetch` with timeouts.
-- `RpcSelector` implemented to find the fastest RPC using cache and testing.
-- `Permit2RpcManager` (main API) implemented, integrating all components and providing `send` method with fallback logic.
-- `src/index.ts` created as the library entry point.
-- Initial tests using `bun test` added for `LatencyTester`, `RpcSelector`, `Permit2RpcManager`, and `readContract` helper (all passing).
-- `readContract` helper function added for contract interactions using `viem`.
-- Switched from testing all Chainlist RPCs to using a curated `src/rpc-whitelist.json`.
-- Latency testing enhanced to check Permit2 bytecode and `eth_syncing`.
-- Cache stores detailed `LatencyTestResult` including failure status/reasons.
-- `README.md` created with usage examples.
+- Core documentation structure created and updated.
+- Project configuration (`package.json`, `tsconfig.json`, `.prettierrc`, `.gitignore`, etc.) set up.
+- Chainlist submodule integration with scripts for updating local whitelist (`src/rpc-whitelist.json`).
+- `ChainlistDataSource` loads curated RPC data, accepts overrides, browser/worker safe.
+- `CacheManager` provides browser caching (`localStorage`), separated Node.js file caching (`cache-manager.node.ts`), configurable options.
+- `LatencyTester` performs optimized checks (`eth_chainId` first), handles errors gracefully (incl. CORS), uses configurable logging.
+- `RpcSelector` ranks RPCs (`ok` > `wrong_bytecode` > `syncing` > latency), prevents concurrent latency tests per chain.
+- `Permit2RpcManager` main class:
+    - Integrates all components.
+    - Provides `send` method with robust iterative fallback and round-robin starting point.
+    - Provides `readContract` helper (via `contract-utils.ts`).
+    - Offers configurable options (`cacheTtlMs`, `latencyTimeoutMs`, `requestTimeoutMs`, `logLevel`, `initialRpcData`, `localStorageKey`).
+- `src/index.ts` exports main components.
+- Unit tests (`bun test`) updated and passing.
+- Integration test (`tests/client-integration.test.ts`) added to simulate concurrent load and verify failover.
+- Browser test environment (`index.html`, `dev:browser` script) created for frontend validation.
+- Build system configured for Node and Browser targets using build-time defines.
+- Release scripts (`release:*`) added for automated versioning and publishing.
 
-## 3. What's Next (Immediate Tasks)
+## 3. Completed Tasks (Recent)
 
-- **RPC Selection Enhancement:** ✅ Improved RPC selection to handle nodes with incorrect Permit2 bytecode more gracefully:
-  - Added support for using RPCs with wrong bytecode for basic operations
-  - Implemented priority system: ok > wrong_bytecode > syncing
-  - Added detailed logging of bytecode mismatches for debugging
-- **Edge Cases:** ✅ Added handling for chain upgrades and reorgs that might affect Permit2 bytecode
-- **Documentation:** ✅ Updated all docs to reflect new RPC selection behavior
-- **Code Comments:** Add more detailed comments explaining bytecode check purpose
-- **Whitelist Maintenance:** Continue monitoring RPC reliability across chains
+- ✅ **Failover Logic:** Implemented iterative fallback and round-robin distribution in `send`.
+- ✅ **Concurrency Handling:** Added locking to `RpcSelector` to prevent duplicate latency tests.
+- ✅ **Browser/Worker Compatibility:** Separated Node cache logic, used build defines to ensure browser bundle safety, fixed Deno import issues.
+- ✅ **Configurable Logging:** Added `logLevel` option and refactored logging calls.
+- ✅ **Test Suite:** Fixed unit tests, added integration test for failover, added browser test page.
+- ✅ **Development Workflow:** Added `dev:browser` script with `live-server`.
+- ✅ **Release Workflow:** Added automated `release:*` scripts.
+- ✅ **Documentation:** Updated `README.md` and `docs/*` files.
 
 ## 4. Known Issues / Blockers
 
-- Test coverage is not exhaustive.
-- The initial `rpc-whitelist.json` may need expansion/refinement for broader chain support.
-- ✅ Issue with strict Permit2 bytecode checks resolved by implementing priority-based RPC selection.
+- **`ENAMETOOLONG` Error:** Persistent error during `attempt_completion` due to symlinked `node_modules` in development, preventing automated completion message confirmation (but doesn't affect library functionality).
+- **Whitelist Curation:** Effectiveness in the browser *highly depends* on `src/rpc-whitelist.json` containing RPCs with permissive CORS headers. Manual curation and testing (using `whitelist:test` script or `index.html`) is required.
+- **Test Coverage:** While improved, coverage for all edge cases might still be missing.
 
-## 5. Open Questions / Decisions (Future)
+## 5. Next Steps / Future Considerations
 
-- Finalize configuration options (cache path, timeouts).
-- Refine the strategy for handling/retrying failed RPCs beyond the current single fallback.
-- Determine best approach for library distribution (e.g., publishing to npm).
-- Consider adding support for `eth_sendRawTransaction` (requires handling nonces, gas, etc.).
+- **Confirm Default Log Level:** Decide final default (`warn` or `none`).
+- **Publish Stable Version:** Publish `0.4.0` or `1.0.0`.
+- **Code Comments:** Add more detailed comments, especially around complex logic like failover and caching.
+- **Write Operations:** Consider adding support for `eth_sendRawTransaction`.
+- **Dynamic Scoring:** Revisit dynamic RPC scoring based on runtime health as a future enhancement if current failover proves insufficient in complex real-world scenarios.

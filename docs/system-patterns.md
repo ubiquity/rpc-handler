@@ -26,47 +26,49 @@ flowchart TD
 
 ## 2. Component Descriptions
 
-- **API Interface:** The public-facing interface for the manager. It will expose methods for making RPC calls (e.g., `send(chainId, method, params)`). It abstracts the underlying complexity from the user.
-- **Chain Manager:** Responsible for managing information about different blockchain networks (Chain IDs, known RPC endpoints).
-- **Chainlist Data Source:** Responsible for fetching and potentially updating the list of RPC endpoints from Chainlist. It filters for free endpoints and provides this data to the `RPC Selector`. This might involve fetching a pre-generated list or interacting with the Chainlist API/data source directly.
-  - **Latency Tester:** Periodically tests the response time and validity of whitelisted RPC endpoints:
-    - Tests Permit2 bytecode (first 13995 bytes) via `eth_getCode`
-    - Checks sync status via `eth_syncing`
+- **API Interface (`Permit2RpcManager`):** The main class. Exposes the `send` method for making RPC calls and integrates other components. Implements round-robin starting point selection for concurrent requests and iterative fallback logic across available RPCs. Accepts configuration options (timeouts, logging, cache settings, initial RPC data).
+- **Chainlist Data Source (`ChainlistDataSource`):** Loads the curated list of RPC endpoints from `src/rpc-whitelist.json` (or accepts initial data). Provides the list of URLs for a given chain to the `RpcSelector`. Now browser-safe by default.
+- **Latency Tester (`LatencyTester`):** Tests the response time and validity of whitelisted RPC endpoints when triggered by the `RpcSelector` (typically on cache miss/expiry).
+    - *Optimization:* Now performs a single `eth_chainId` call first. If successful and fast, *then* performs `eth_getCode` (for Permit2 bytecode) and `eth_syncing`.
     - Returns detailed results including:
       - `ok`: Fully synced with correct bytecode
       - `wrong_bytecode`: Synced but incorrect Permit2 bytecode
       - `syncing`: Node is still syncing
-      - Error states: `timeout`, `http_error`, `rpc_error`, `network_error`
-  - **Cache Manager:** Stores the detailed `LatencyTestResult` map and the currently selected fastest valid RPC endpoint for each chain. Uses `localStorage` (browser) or a JSON file (Node.js) for persistence.
-  - **RPC Selector:** The core logic unit. For a given `chainId`:
-  1.  Checks the cache for the current fastest RPC.
-  2.  If not cached or cache is stale, consults the `Chainlist Data Source` for available free endpoints.
-  3.  Triggers the `Latency Tester` if needed (cache miss/expired).
-  4.  Uses latency results (from cache or tester) to select the fastest endpoint in order of preference:
-      1. RPCs with `status: 'ok'` (fully compliant)
-      2. RPCs with `status: 'wrong_bytecode'` (for basic operations)
-      3. RPCs with `status: 'syncing'` (last resort)
-      4. No selection if all RPCs have critical errors
-  5.  Updates the cache with the detailed results and the selected endpoint (if any) via the `Cache Manager`.
-  6.  Returns the selected RPC endpoint URL (or null) to the `Permit2RpcManager`.
+      - Error states: `timeout`, `http_error`, `rpc_error`, `network_error` (includes CORS failures in browser). Logs expected browser fetch failures at 'debug' level.
+- **Cache Manager (`CacheManager`):** Stores the detailed `LatencyTestResult` map for each chain. Uses `localStorage` in browser environments. Node.js file caching is separated into `cache-manager.node.ts` and requires explicit configuration/use. Accepts configuration for TTL and storage keys/paths.
+- **RPC Selector (`RpcSelector`):** The core ranking logic unit.
+  1.  Provides `getRankedRpcList(chainId)` method.
+  2.  Checks `CacheManager` for fresh latency data.
+  3.  If cache is stale/invalid, triggers `LatencyTester` (using a locking mechanism to prevent concurrent tests for the same chain).
+  4.  Updates cache with new test results and identifies the overall fastest usable RPC.
+  5.  Filters out RPCs with error statuses (`timeout`, `network_error`, etc.).
+  6.  Sorts the remaining usable RPCs based on status priority (`ok` > `wrong_bytecode` > `syncing`) and then by latency.
+  7.  Returns the final sorted list of usable RPC URLs to `Permit2RpcManager`.
 
 ## 3. Key Design Patterns
 
-- **Strategy Pattern:** The `RPC Selector` uses a compound strategy:
-  - Primary: RPC status tier (ok > wrong_bytecode > syncing)
-  - Secondary: Fastest latency within each tier
-  - Future: Could add more strategies (round-robin, paid tiers)
-- **Caching:** Used extensively to avoid redundant latency tests and provide quick endpoint selection.
-- **Abstraction:** The `API Interface` hides the internal workings of endpoint selection and testing.
-- **Modular Design:** Components are designed with distinct responsibilities, allowing for easier testing, maintenance, and potential future extensions.
+- **Ranking Strategy:** The `RpcSelector` ranks usable RPCs using a compound strategy (status priority then latency).
+- **Round-Robin Load Distribution:** The `Permit2RpcManager` selects the *starting* RPC for each new request in a round-robin fashion from the ranked list to distribute load across healthy endpoints during concurrent calls.
+- **Iterative Fallback:** The `Permit2RpcManager.send` method iterates through the entire ranked list upon failure, retrying the request on the next available RPC until success or exhaustion.
+- **Caching:** Used by `RpcSelector` to store latency test results and avoid redundant tests.
+- **Environment-Specific Logic:** Uses build-time defines (`process.env.BUILD_ENV`) and runtime checks (`typeof window`) to separate browser (`localStorage`) and Node.js (file system via `cache-manager.node.ts`) concerns, particularly for caching.
+- **Modular Design:** Components remain focused on distinct responsibilities.
 
-## 4. Data Flow (Simplified Request)
+## 4. Data Flow (Simplified Request with Failover)
 
-1.  User calls `manager.send(chainId, method, params)`.
-2.  `API Interface` passes the request to `Chain Manager`.
-3.  `Chain Manager` asks `RPC Selector` for the best endpoint for `chainId`.
-4.  `RPC Selector` checks `Cache Manager`.
-    - If valid cache entry exists, returns cached endpoint URL.
-    - If not, fetches endpoints from `Chainlist Data Source`, triggers `Latency Tester`, determines fastest, updates cache via `Cache Manager`, and returns the fastest endpoint URL.
-5.  `Chain Manager` (or `API Interface`) uses the returned URL to make the actual RPC call.
-6.  Result (or error) is returned to the user.
+1.  Multiple concurrent calls to `manager.send(chainId, method, params)` are made.
+2.  Each `send` call asks `rpcSelector.getRankedRpcList(chainId)`.
+3.  `RpcSelector` checks `CacheManager`.
+    - If cache is valid, returns cached ranked list.
+    - If cache is invalid:
+        - Only the *first* call triggers `LatencyTester.testRpcUrls` (due to locking). Other calls wait.
+        - `LatencyTester` performs optimized checks (e.g., `eth_chainId` first).
+        - Results are used to rank usable RPCs (filtering errors like CORS/timeout).
+        - `CacheManager` is updated.
+        - The ranked list is returned to all waiting `send` calls.
+4.  Each `send` call determines its *starting* RPC from the ranked list using the round-robin index for that `chainId`.
+5.  Each `send` call enters its *own* iterative loop, starting from its determined index:
+    - It attempts `executeRpcCall` with the current RPC URL.
+    - If successful, the loop breaks, and the result is returned.
+    - If it fails (network error, RPC error, timeout), it logs a warning and proceeds to the *next* RPC in the ranked list (wrapping around).
+6.  If a `send` call's loop completes without any success, a final error is thrown for that specific call.
