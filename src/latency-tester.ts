@@ -27,7 +27,7 @@ type EthSyncingResult =
     }; // Keep simple for type check
 
 // Restore 'wrong_bytecode' status
-export type LatencyTestStatus = "ok" | "syncing" | "wrong_bytecode" | "timeout" | "http_error" | "rpc_error" | "network_error";
+type LatencyTestStatus = "ok" | "syncing" | "wrong_bytecode" | "timeout" | "http_error" | "rpc_error" | "network_error";
 
 export interface LatencyTestResult {
   url: string;
