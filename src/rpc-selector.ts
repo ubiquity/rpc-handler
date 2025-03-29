@@ -1,6 +1,6 @@
-import { CacheManager } from "./cache-manager.js";
-import { ChainlistDataSource } from "./chainlist-data-source.js";
-import { LatencyTester } from "./latency-tester.js"; // Import LatencyTestResult
+import { CacheManager } from "./cache-manager.ts";
+import { ChainlistDataSource } from "./chainlist-data-source.ts";
+import { LatencyTester } from "./latency-tester.ts"; // Import LatencyTestResult
 
 export class RpcSelector {
   private dataSource: ChainlistDataSource;

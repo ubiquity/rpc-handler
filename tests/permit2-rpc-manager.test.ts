@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
-import { Permit2RpcManager } from "../src/permit2-rpc-manager.js";
+import { Permit2RpcManager } from "../src/permit2-rpc-manager.ts";
 // Import PERMIT2_BYTECODE_PREFIX for the fetch mock
-import PERMIT2_BYTECODE_PREFIX from "../src/permit2-bytecode.js";
+import PERMIT2_BYTECODE_PREFIX from "../src/permit2-bytecode.ts";
 
 // --- Mocks ---
 

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, mock, Mock } from "bun:test";
 import type { Address, Hex } from "viem"; // Import Abi type
 import { encodeFunctionResult } from "viem";
-import { readContract } from "../src/contract-utils.js";
-import { Permit2RpcManager } from "../src/permit2-rpc-manager.js";
+import { readContract } from "../src/contract-utils.ts";
+import { Permit2RpcManager } from "../src/permit2-rpc-manager.ts";
 
 // Example ABI for testing basic types
 const testAbi = [

@@ -24,7 +24,7 @@ bun install # Or npm install / yarn install
 ### Basic RPC Calls (`eth_blockNumber`, etc.)
 
 ```typescript
-import { Permit2RpcManager } from "./src/index.js"; // Adjust import path as needed
+import { Permit2RpcManager } from "./src/index.ts"; // Adjust import path as needed
 
 async function example() {
   // Optionally configure timeouts and cache TTL
@@ -55,7 +55,7 @@ example();
 ### Smart Contract Calls (`readContract`)
 
 ```typescript
-import { Permit2RpcManager, readContract } from "./src/index.js"; // Adjust import path
+import { Permit2RpcManager, readContract } from "./src/index.ts"; // Adjust import path
 import type { Address, Abi } from "viem";
 
 // Define your contract ABI (e.g., ERC20 subset)

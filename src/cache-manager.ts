@@ -2,7 +2,7 @@ import * as fs from "fs/promises";
 import * as os from "os"; // Import os module
 import * as path from "path";
 // Import the detailed result type using 'import type' for type-only imports
-import type { LatencyTestResult } from "./latency-tester.js";
+import type { LatencyTestResult } from "./latency-tester.ts";
 
 // Define the structure for cached data per chain
 interface ChainCache {

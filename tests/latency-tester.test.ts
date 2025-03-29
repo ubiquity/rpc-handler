@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import { LatencyTester } from "../src/latency-tester.js";
-import PERMIT2_BYTECODE_PREFIX from "../src/permit2-bytecode.js";
+import { LatencyTester } from "../src/latency-tester.ts";
+import PERMIT2_BYTECODE_PREFIX from "../src/permit2-bytecode.ts";
 
 // Mock the global fetch function
 global.fetch = mock(async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {

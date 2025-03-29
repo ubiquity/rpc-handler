@@ -1,9 +1,9 @@
 import type { Address } from "viem"; // Import viem types for example
-import { CacheManager } from "./cache-manager.js"; // CacheManager now accepts options
-import { ChainlistDataSource } from "./chainlist-data-source.js";
-import { readContract } from "./contract-utils.js"; // Import the helper
-import { LatencyTester } from "./latency-tester.js";
-import { RpcSelector } from "./rpc-selector.js";
+import { CacheManager } from "./cache-manager.ts"; // CacheManager now accepts options
+import { ChainlistDataSource } from "./chainlist-data-source.ts";
+import { readContract } from "./contract-utils.ts"; // Import the helper
+import { LatencyTester } from "./latency-tester.ts";
+import { RpcSelector } from "./rpc-selector.ts";
 
 // Re-define JSON-RPC request/response interfaces (or import if modularized later)
 interface JsonRpcRequest {

@@ -1,5 +1,5 @@
 import { Abi, AbiFunctionNotFoundError, Address, CallExecutionError, decodeFunctionResult, encodeFunctionData, Hex } from "viem";
-import { Permit2RpcManager } from "./permit2-rpc-manager.js";
+import { Permit2RpcManager } from "./permit2-rpc-manager.ts";
 
 /**
  * Options for calling a read-only contract function.

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     /* Base Options: */
     "esModuleInterop": true,
     "skipLibCheck": true,

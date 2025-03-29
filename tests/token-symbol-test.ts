@@ -1,5 +1,5 @@
 import type { Abi } from "viem";
-import { Permit2RpcManager, readContract } from "../src/index.js";
+import { Permit2RpcManager, readContract } from "../src/index.ts";
 
 // Minimal ABI for symbol() function
 const abi: Abi = [

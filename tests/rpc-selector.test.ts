@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, mock, Mock } from "bun:test";
-import { ChainlistDataSource } from "../src/chainlist-data-source.js";
-import type { LatencyTestResult, LatencyTestStatus } from "../src/latency-tester.js";
-import { RpcSelector } from "../src/rpc-selector.js";
+import { ChainlistDataSource } from "../src/chainlist-data-source.ts";
+import type { LatencyTestResult, LatencyTestStatus } from "../src/latency-tester.ts";
+import { RpcSelector } from "../src/rpc-selector.ts";
 
 describe("RpcSelector (using Whitelist)", () => {
   let dataSource: ChainlistDataSource;
