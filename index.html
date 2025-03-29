@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permit2 RPC Manager - Browser Test</title>
+    <style>
+        body { font-family: sans-serif; padding: 1em; }
+        pre { background-color: #eee; padding: 1em; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; }
+        button { margin: 5px; padding: 8px 12px; }
+        .error { color: red; }
+        .success { color: green; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Permit2 RPC Manager - Browser Test</h1>
+    <p>Open the browser's developer console to see detailed logs.</p>
+
+    <div>
+        <label for="chainIdInput">Chain ID:</label>
+        <input type="number" id="chainIdInput" value="100">
+        <button id="testButton">Test Latency & Get Fastest RPC</button>
+        <button id="chainIdButton">Call eth_chainId</button>
+    </div>
+
+    <h2>Result / Status:</h2>
+    <pre id="output">Click a button to start...</pre>
+
+    <script type="module">
+        // Import from the built distribution file
+        import { Permit2RpcManager } from './dist/index.js';
+
+        const outputEl = document.getElementById('output');
+        const testButton = document.getElementById('testButton');
+        const chainIdButton = document.getElementById('chainIdButton');
+        const chainIdInput = document.getElementById('chainIdInput');
+
+        let manager;
+
+        function logOutput(message, type = 'info') {
+            console[type === 'error' ? 'error' : 'log'](message); // Also log to console
+            outputEl.textContent = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
+            outputEl.className = type;
+        }
+
+        try {
+            logOutput('Initializing Permit2RpcManager with logLevel: debug...');
+            // Initialize with debug logging to see everything
+            manager = new Permit2RpcManager({
+                 logLevel: 'debug',
+                 latencyTimeoutMs: 7000, // Allow reasonable time for tests
+                 requestTimeoutMs: 10000
+            });
+            logOutput('Manager initialized.', 'success');
+        } catch (err) {
+            logOutput(`Error initializing manager: ${err.message}`, 'error');
+        }
+
+        testButton.addEventListener('click', async () => {
+            if (!manager) {
+                logOutput('Manager not initialized.', 'error');
+                return;
+            }
+            const chainId = parseInt(chainIdInput.value, 10);
+            logOutput(`Testing latency for Chain ID: ${chainId}...`);
+            try {
+                // Access internal selector for testing (not typical usage)
+                const rankedList = await manager.rpcSelector.getRankedRpcList(chainId);
+                if (rankedList.length > 0) {
+                    logOutput(`Latency test complete. Fastest usable RPC found: ${rankedList[0]}\nFull ranked list:\n${rankedList.join('\n')}`, 'success');
+                } else {
+                    logOutput(`Latency test complete. No usable RPCs found for chain ${chainId}. Check console for CORS/network errors.`, 'error');
+                }
+            } catch (err) {
+                logOutput(`Error during latency test: ${err.message}`, 'error');
+            }
+        });
+
+         chainIdButton.addEventListener('click', async () => {
+            if (!manager) {
+                logOutput('Manager not initialized.', 'error');
+                return;
+            }
+             const chainId = parseInt(chainIdInput.value, 10);
+            logOutput(`Calling eth_chainId for Chain ID: ${chainId}...`);
+            try {
+                const result = await manager.send(chainId, 'eth_chainId');
+                logOutput(`eth_chainId successful. Result: ${result} (Chain ID: ${parseInt(result, 16)})`, 'success');
+            } catch (err) {
+                logOutput(`Error calling eth_chainId: ${err.message}`, 'error');
+            }
+        });
+
+    </script>
+</body>
+</html>
