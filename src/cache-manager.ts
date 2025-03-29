@@ -1,8 +1,8 @@
-import * as fs from "fs/promises";
-import * as os from "os"; // Import os module
-import * as path from "path";
+import * as fs from "node:fs/promises"; // Add node: prefix
+import * as os from "node:os"; // Add node: prefix
+import * as path from "node:path"; // Add node: prefix
 // Import the detailed result type using 'import type' for type-only imports
-import type { LatencyTestResult } from "./latency-tester.ts";
+import type { LatencyTestResult } from "./latency-tester.js"; // Keep .js extension for module compatibility
 
 // Define the structure for cached data per chain
 interface ChainCache {

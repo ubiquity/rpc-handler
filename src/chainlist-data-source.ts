@@ -1,5 +1,8 @@
-import * as fs from "fs/promises";
-import * as path from "path";
+// Directly import the JSON data using an import attribute.
+import whitelistJson from "./rpc-whitelist.json" with { type: "json" };
+// Remove fs and path imports as they are Node.js specific
+// import * as fs from "fs/promises";
+// import * as path from "path";
 
 // Interface for the structure of rpc-whitelist.json
 interface RpcWhitelist {
@@ -8,46 +11,44 @@ interface RpcWhitelist {
   };
 }
 
-// Update path to the new whitelist file
-const RPC_DATA_PATH = path.join(
-  __dirname,
-  // '..', // No longer need to go up if whitelist is in src
-  "rpc-whitelist.json"
-);
+// Cast the imported JSON to the defined interface
+const jsonData = whitelistJson as RpcWhitelist;
 
 export class ChainlistDataSource {
   // Store data in the format { chainId: number, rpcUrls: string[] }
   private whitelistData: { chainId: number; rpcUrls: string[] }[] = [];
   private initialized = false;
 
-  constructor() {}
+  constructor() {
+    // Initialize data directly in the constructor since import is synchronous
+    this.loadData();
+  }
 
-  private async loadData(): Promise<void> {
+  // Make loadData synchronous as file reading is removed
+  private loadData(): void {
     if (this.initialized) {
       return;
     }
     try {
-      console.log(`Loading RPC whitelist data from: ${RPC_DATA_PATH}`);
-      const rawData = await fs.readFile(RPC_DATA_PATH, "utf-8");
-      const jsonData = JSON.parse(rawData) as RpcWhitelist;
-
-      // Transform the loaded data into the desired internal format
+      // Transform the imported data directly
       this.whitelistData = Object.entries(jsonData.rpcs).map(([chainIdStr, urls]) => ({
         chainId: parseInt(chainIdStr, 10),
         rpcUrls: urls.filter((url) => typeof url === "string" && url.startsWith("https://") && !url.includes("${")), // Pre-filter valid URLs
       }));
 
       this.initialized = true;
-      console.log(`Successfully loaded whitelist data for ${this.whitelistData.length} chains.`);
+      console.log(`Successfully initialized whitelist data for ${this.whitelistData.length} chains.`);
     } catch (error) {
-      console.error("Failed to load or parse RPC whitelist data:", error);
+      console.error("Failed to process imported RPC whitelist data:", error);
       this.whitelistData = [];
       this.initialized = true; // Prevent retries on error
     }
   }
 
-  async getRpcUrls(chainId: number): Promise<string[]> {
-    await this.loadData(); // Ensure data is loaded
+  // Make getRpcUrls synchronous
+  getRpcUrls(chainId: number): string[] {
+    // Data is loaded in constructor, no need for await
+    // await this.loadData();
 
     const chainEntry = this.whitelistData.find((c) => c.chainId === chainId);
 
@@ -60,8 +61,10 @@ export class ChainlistDataSource {
     return chainEntry.rpcUrls;
   }
 
-  async getAllChainIds(): Promise<number[]> {
-    await this.loadData();
+  // Make getAllChainIds synchronous
+  getAllChainIds(): number[] {
+    // Data is loaded in constructor, no need for await
+    // await this.loadData();
     return this.whitelistData.map((chain) => chain.chainId);
   }
 }

@@ -31,6 +31,7 @@
     "build": "bun build ./src/index.ts --outdir ./dist --target node --sourcemap && tsc --emitDeclarationOnly --outDir dist",
     "start": "bun run src/index.ts",
     "test": "bun test",
+    "watch": "bun build ./src/index.ts --outdir ./dist --target node --sourcemap --watch & tsc --emitDeclarationOnly --outDir dist --watch",
     "prepublishOnly": "bun run build",
     "format": "prettier --write ."
   },
