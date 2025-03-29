@@ -6,11 +6,12 @@
     <title>Permit2 RPC Manager - Browser Test</title>
     <style>
         body { font-family: sans-serif; padding: 1em; }
-        pre { background-color: #eee; padding: 1em; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; }
+        pre { background-color: #eee; padding: 1em; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; max-height: 400px; overflow-y: auto;}
         button { margin: 5px; padding: 8px 12px; }
         .error { color: red; }
         .success { color: green; }
         .info { color: blue; }
+        .log-entry { margin-bottom: 5px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -22,6 +23,7 @@
         <input type="number" id="chainIdInput" value="100">
         <button id="testButton">Test Latency & Get Fastest RPC</button>
         <button id="chainIdButton">Call eth_chainId</button>
+        <button id="wxdaiButton">Check WXDAI Balances (Gnosis)</button>
     </div>
 
     <h2>Result / Status:</h2>
@@ -29,27 +31,53 @@
 
     <script type="module">
         // Import from the built distribution file
-        import { Permit2RpcManager } from './dist/index.js';
+        import { Permit2RpcManager, readContract } from './dist/index.js';
 
         const outputEl = document.getElementById('output');
         const testButton = document.getElementById('testButton');
         const chainIdButton = document.getElementById('chainIdButton');
+        const wxdaiButton = document.getElementById('wxdaiButton');
         const chainIdInput = document.getElementById('chainIdInput');
+
+        // Constants for WXDAI test
+        const GNOSIS_CHAIN_ID = 100;
+        const WXDAI_ADDRESS = '0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d';
+        const ADDRESS_ZERO_BALANCE = '0xd9530F3fbBEa11beD01DC09E79318f2f20223716';
+        const ADDRESS_100_BALANCE = '0x054Ec26398549588F3c958719bD17CC1e6E97c3C';
+        const EXPECTED_BALANCE_100 = 100001000000000000000n; // 100.001 * 10^18
+
+        const erc20AbiBalanceOf = [
+          {
+            constant: true,
+            inputs: [{ name: "_owner", type: "address" }],
+            name: "balanceOf",
+            outputs: [{ name: "balance", type: "uint256" }],
+            payable: false,
+            stateMutability: "view",
+            type: "function",
+          },
+        ];
 
         let manager;
 
+        // Keep track of logs to display on page
+        let logs = [];
         function logOutput(message, type = 'info') {
-            console[type === 'error' ? 'error' : 'log'](message); // Also log to console
-            outputEl.textContent = typeof message === 'string' ? message : JSON.stringify(message, null, 2);
-            outputEl.className = type;
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}][${type.toUpperCase()}] ${typeof message === 'string' ? message : JSON.stringify(message)}`;
+            logs.unshift(logEntry); // Add to beginning
+            logs = logs.slice(0, 100); // Keep max 100 logs
+            outputEl.textContent = logs.join('\n');
+            outputEl.className = type; // Style based on last message type
+            // Also log to console
+            console[type === 'error' ? 'error' : 'log'](message);
         }
 
         try {
             logOutput('Initializing Permit2RpcManager with logLevel: debug...');
-            // Initialize with debug logging to see everything
             manager = new Permit2RpcManager({
                  logLevel: 'debug',
-                 latencyTimeoutMs: 7000, // Allow reasonable time for tests
+                 latencyTimeoutMs: 7000,
                  requestTimeoutMs: 10000
             });
             logOutput('Manager initialized.', 'success');
@@ -58,10 +86,7 @@
         }
 
         testButton.addEventListener('click', async () => {
-            if (!manager) {
-                logOutput('Manager not initialized.', 'error');
-                return;
-            }
+            if (!manager) return logOutput('Manager not initialized.', 'error');
             const chainId = parseInt(chainIdInput.value, 10);
             logOutput(`Testing latency for Chain ID: ${chainId}...`);
             try {
@@ -78,10 +103,7 @@
         });
 
          chainIdButton.addEventListener('click', async () => {
-            if (!manager) {
-                logOutput('Manager not initialized.', 'error');
-                return;
-            }
+            if (!manager) return logOutput('Manager not initialized.', 'error');
              const chainId = parseInt(chainIdInput.value, 10);
             logOutput(`Calling eth_chainId for Chain ID: ${chainId}...`);
             try {
@@ -90,6 +112,60 @@
             } catch (err) {
                 logOutput(`Error calling eth_chainId: ${err.message}`, 'error');
             }
+        });
+
+        wxdaiButton.addEventListener('click', async () => {
+             if (!manager) return logOutput('Manager not initialized.', 'error');
+             logOutput(`Checking WXDAI balances on Gnosis (Chain ${GNOSIS_CHAIN_ID})...`);
+
+             try {
+                const results = await Promise.allSettled([
+                    readContract({
+                        manager,
+                        chainId: GNOSIS_CHAIN_ID,
+                        address: WXDAI_ADDRESS,
+                        abi: erc20AbiBalanceOf,
+                        functionName: 'balanceOf',
+                        args: [ADDRESS_ZERO_BALANCE]
+                    }),
+                     readContract({
+                        manager,
+                        chainId: GNOSIS_CHAIN_ID,
+                        address: WXDAI_ADDRESS,
+                        abi: erc20AbiBalanceOf,
+                        functionName: 'balanceOf',
+                        args: [ADDRESS_100_BALANCE]
+                    })
+                ]);
+
+                let success = true;
+                let summary = 'WXDAI Balance Check Results:\n';
+
+                // Check result for ADDRESS_ZERO_BALANCE
+                if (results[0].status === 'fulfilled') {
+                    const balance = BigInt(results[0].value);
+                    summary += ` - Address ...${ADDRESS_ZERO_BALANCE.slice(-4)}: ${balance === 0n ? 'OK (0)' : `FAIL (Expected 0, Got ${balance})`}\n`;
+                    if (balance !== 0n) success = false;
+                } else {
+                    summary += ` - Address ...${ADDRESS_ZERO_BALANCE.slice(-4)}: FAILED (${results[0].reason?.message || 'Unknown error'})\n`;
+                    success = false;
+                }
+
+                 // Check result for ADDRESS_100_BALANCE
+                if (results[1].status === 'fulfilled') {
+                    const balance = BigInt(results[1].value);
+                     summary += ` - Address ...${ADDRESS_100_BALANCE.slice(-4)}: ${balance === EXPECTED_BALANCE_100 ? `OK (${balance})` : `FAIL (Expected ${EXPECTED_BALANCE_100}, Got ${balance})`}\n`;
+                     if (balance !== EXPECTED_BALANCE_100) success = false;
+                } else {
+                    summary += ` - Address ...${ADDRESS_100_BALANCE.slice(-4)}: FAILED (${results[1].reason?.message || 'Unknown error'})\n`;
+                    success = false;
+                }
+
+                logOutput(summary, success ? 'success' : 'error');
+
+             } catch (err) {
+                 logOutput(`Error during WXDAI balance check: ${err.message}`, 'error');
+             }
         });
 
     </script>

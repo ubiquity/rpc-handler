@@ -8,6 +8,9 @@ type LoggerFn = (level: "debug" | "info" | "warn" | "error", message: string, ..
 // Define acceptable statuses for selection
 const ACCEPTABLE_STATUSES: LatencyTestResult["status"][] = ["ok", "wrong_bytecode", "syncing"];
 
+// Map to track ongoing latency tests for specific chains
+const ongoingLatencyTests = new Map<number, Promise<Record<string, LatencyTestResult>>>();
+
 export class RpcSelector {
   private dataSource: ChainlistDataSource;
   private cacheManager: CacheManager;
@@ -26,6 +29,7 @@ export class RpcSelector {
    * Fetches from cache or performs latency tests if needed.
    * Filters out RPCs with error statuses.
    * Sorts the remaining RPCs by status priority (ok > wrong_bytecode > syncing) and then by latency.
+   * Ensures only one latency test runs concurrently per chain ID.
    *
    * @param chainId - The chain ID.
    * @returns A promise that resolves to a sorted array of usable RPC URLs.
@@ -42,22 +46,43 @@ export class RpcSelector {
          this.log("info", `No valid cache for chain ${chainId}. Performing latency tests...`);
       }
 
-      const rpcUrls = this.dataSource.getRpcUrls(chainId);
-      if (rpcUrls.length === 0) {
-        this.log("warn", `No RPC URLs found for chain ${chainId} in data source.`);
-        return []; // No URLs to test
-      }
-
-      latencyMap = await this.latencyTester.testRpcUrls(rpcUrls);
-
-      // Find the new fastest based on the fresh test results
-      const newFastest = this._findFastestInMap(latencyMap);
-      await this.cacheManager.updateChainCache(chainId, latencyMap, newFastest?.url ?? null);
-      if (newFastest) {
-         this.log("info", `Selected fastest RPC for chain ${chainId}: ${newFastest.url} (${newFastest.latency}ms, status: ${newFastest.status})`);
+      // --- Latency Test Locking ---
+      let testPromise = ongoingLatencyTests.get(chainId);
+      if (testPromise) {
+        this.log("debug", `Latency test already in progress for chain ${chainId}, awaiting result...`);
+        latencyMap = await testPromise; // Wait for the ongoing test
       } else {
-         this.log("warn", `No responsive RPCs found meeting criteria (${ACCEPTABLE_STATUSES.join(" > ")}) for chain ${chainId} after testing.`);
+        const rpcUrls = this.dataSource.getRpcUrls(chainId);
+        if (rpcUrls.length === 0) {
+          this.log("warn", `No RPC URLs found for chain ${chainId} in data source.`);
+          return []; // No URLs to test
+        }
+
+        // Create the promise, store it, run the test, then remove it
+        testPromise = this.latencyTester.testRpcUrls(rpcUrls);
+        ongoingLatencyTests.set(chainId, testPromise);
+        this.log("debug", `Initiated latency test for chain ${chainId}.`);
+
+        try {
+            latencyMap = await testPromise;
+            // Find the new fastest based on the fresh test results
+            const newFastest = this._findFastestInMap(latencyMap);
+            await this.cacheManager.updateChainCache(chainId, latencyMap, newFastest?.url ?? null);
+            if (newFastest) {
+               this.log("info", `Selected fastest RPC for chain ${chainId}: ${newFastest.url} (${newFastest.latency}ms, status: ${newFastest.status})`);
+            } else {
+               this.log("warn", `No responsive RPCs found meeting criteria (${ACCEPTABLE_STATUSES.join(" > ")}) for chain ${chainId} after testing.`);
+            }
+        } catch (error) {
+             this.log("error", `Latency test failed for chain ${chainId}`, error);
+             latencyMap = {}; // Set empty map on error
+        } finally {
+            ongoingLatencyTests.delete(chainId); // Remove promise once done
+            this.log("debug", `Latency test finished for chain ${chainId}.`);
+        }
       }
+      // --- End Latency Test Locking ---
+
     } else {
        this.log("debug", `Using valid cached latency map for chain ${chainId}.`);
     }

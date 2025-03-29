@@ -49,7 +49,7 @@ export class Permit2RpcManager {
   private dataSource: ChainlistDataSource;
   private cacheManager: CacheManager;
   private latencyTester: LatencyTester;
-  private rpcSelector: RpcSelector;
+  public rpcSelector: RpcSelector; // Make public for testing access
   private requestTimeoutMs: number;
   private logLevel: NonNullable<Permit2RpcManagerOptions["logLevel"]>; // Store the log level
   private configuredLogLevelValue: number; // Store the numeric value for comparison
@@ -128,8 +128,9 @@ export class Permit2RpcManager {
 
   /**
    * Executes a single JSON-RPC call to the specified URL.
+   * Made public temporarily FOR TESTING PURPOSES ONLY.
    */
-  private async executeRpcCall<T>(url: string, method: string, params: any[]): Promise<T> {
+  public async executeRpcCall<T>(url: string, method: string, params: any[]): Promise<T> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.requestTimeoutMs);
 
