@@ -1,0 +1,22 @@
+# Cline's Project Intelligence: permit2-rpc-manager
+
+This file captures key patterns, preferences, and insights for this project.
+
+## Core Instructions & Preferences
+
+- **Package Manager:** Always use `bun install` for dependencies.
+- **Execution:** Always use `bun run` for executing TypeScript files (e.g., `bun run src/index.ts`). Do not compile with `tsc` or run directly with `node`.
+- **Environment:** `bun` handles `.env` files automatically; no need for `dotenv`. Assume `.env` exists and is populated if needed for execution.
+- **File Naming:** Use `kebab-case.ts` for new files.
+- **Linting:** Do not fix ESLint errors unless explicitly asked.
+- **File Length:** Keep TypeScript files under ~256 lines; refactor if longer.
+- **Cleanup:** Delete unused files before completing tasks.
+- **Documentation:** Maintain docs meticulously. Read ALL docs at the start of each session. Use `update docs` command to trigger a full review and update cycle.
+
+## Project-Specific Patterns
+
+- **RPC Source:** Use the curated `src/rpc-whitelist.json` as the primary source for RPC endpoints, not the full Chainlist data.
+- **Latency Testing:** Testing involves `eth_getCode` (Permit2 bytecode, first 13995 bytes), `eth_syncing`, and basic latency checks. Detailed status (`ok`, `wrong_bytecode`, `syncing`, errors) is crucial.
+- **RPC Selection:** Prioritize RPCs in this order: `ok` > `wrong_bytecode` > `syncing`. Within each tier, select the fastest based on latency. RPCs with other error statuses are excluded.
+- **Caching:** Use `.rpc-cache.json` for Node.js persistence of detailed latency results and selected RPCs.
+- **Dependencies:** Key dependencies include `viem` (used in `readContract`), potentially `ethers` or `axios`/`fetch` for raw calls/testing.
