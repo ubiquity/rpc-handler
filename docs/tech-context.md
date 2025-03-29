@@ -1,4 +1,4 @@
-# Tech Context: RPC Handler Rewrite
+# Tech Context: Permit2 RPC Manager Rewrite
 
 ## 1. Core Technologies
 
