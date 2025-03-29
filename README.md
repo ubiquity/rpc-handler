@@ -1,129 +1,148 @@
-# `@ubiquity-dao/rpc-handler`
+# Permit2 RPC Manager
 
-## Why use this package?
+An intelligent RPC manager for EVM-compatible chains that automatically selects the fastest, valid RPC endpoint from a curated whitelist.
 
-- **No more slow RPCs**: No more slow RPCs, no more failed requests, no more headaches
-- **Fastest RPCs**: Returns the fastest RPC for a given network ID
-- **Fallback mechanism**: Retries failed method calls on the next fastest provider
-- **Retries failed method calls**: Retries failed method calls on the next fastest provider
-- **No more searching for RPCs**: No need to for an RPC URL again, just pass the network ID
-- **Fully configurable**: Configure the number of retries, retry delay, log tier and more
-- **Browser and Node.js support**: Can be used in both the browser and Node.js
-- **Local storage cache**: Stores the fastest RPCs for a given network ID in the browser's local storage
-- **Drop-in replacement**: No changes required to your existing codebase, just replace your current provider with the one returned by `RPCHandler.getFastestRpcProvider()`
-- **No tracking or analytics**: No additional tracking, data collection or analytics performed by this package beyond the specific public endpoints that support those features
+## Features
+
+- **Automatic RPC Selection:** Dynamically tests whitelisted RPCs for latency, sync status (`eth_syncing`), and specific contract bytecode (Permit2 via `eth_getCode`) to find the best endpoint. Uses an intelligent fallback system that adapts to operation requirements:
+  - For standard operations: Can use any responsive RPC in order of preference: fully synced > wrong Permit2 bytecode > syncing
+  - For Permit2-related operations: Only uses RPCs with correct Permit2 bytecode
+- **Whitelisting:** Uses a configurable `src/rpc-whitelist.json` to manage the pool of RPCs to test.
+- **Caching:** Caches detailed latency test results (including status/errors) in `.rpc-cache.json` (Node.js) or `localStorage` (browser) to speed up subsequent requests (default 1-hour TTL).
+- **Fallback:** Automatically retries requests with the next fastest valid RPC (using the same 'ok' > 'syncing' priority) if the primary choice fails.
+- **Contract Interaction:** Includes a `readContract` helper function (using `viem`) for easy read-only smart contract calls (requires user-provided ABI).
+- **TypeScript:** Written in TypeScript with type definitions.
 
 ## Installation
 
 ```bash
-bun add @ubiquity-dao/rpc-handler
+bun install # Or npm install / yarn install
 ```
 
 ## Usage
 
-- Config options with null are optional, but still need to be passed as `null`
+### Basic RPC Calls (`eth_blockNumber`, etc.)
 
 ```typescript
-import { RPCHandler, HandlerConstructorConfig } from "@ubiquity-dao/rpc-handler/";
+import { Permit2RpcManager } from "./src/index.ts"; // Adjust import path as needed
 
-export function useHandler(networkId: number) {
-  const config: HandlerConstructorConfig = {
-    networkId: 100, // your chosen networkId
-    networkName:  null, // will default using the networkRpcs
-    networkRpcs:  null, // e.g "https://mainnet.infura.io/..."
-    runtimeRpcs:  null, // e.g "<networkId>__https://mainnet.infura.io/..." > "1__https://mainnet.infura.io/..."
-    autoStorage: true, // browser only, will store in localStorage
-    cacheRefreshCycles: 10, // bad RPCs are excluded if they fail, this is how many cycles before they're re-tested
-    rpcTimeout: 1500, // when the RPCs are tested they are raced, this is the max time to allow for a response
-    tracking: "yes", // accepted values: "yes" | "limited" | "none". This is the data tracking status of the RPC, not this package.
-    proxySettings: {
-      retryCount: 3, // how many times we'll loop the list of RPCs retrying the request before failing
-      retryDelay: 100, // (ms) how long we'll wait before moving to the next RPC, best to keep this low
-      logTier: "ok", // |"info"|"error"|"debug"|"fatal"|"verbose"; set to "none" for no logs, null will default to "error", "verbose" will log all
-      logger: null, // null will default to PrettyLogs
-      strictLogs: true, // true, only the specified logTier will be logged and false all wll be logged.
-      moduleName?: "[UBQ RPC Handler]", // Can be omitted. this is the prefix for the logs.
-      disabled?: false, // Can be omitted. this will disable the proxy, requiring you to handle retry logic etc yourself.
-    }
-  };
-  // No RPCs are tested at this point
-  return new RPCHandler(config);
+async function example() {
+  // Optionally configure timeouts and cache TTL
+  const manager = new Permit2RpcManager({
+    latencyTimeoutMs: 5000, // Timeout for latency tests
+    requestTimeoutMs: 10000, // Timeout for actual RPC calls
+    // cacheTtlMs: 60 * 60 * 1000 // Default is 1 hour
+  });
+
+  const chainId = 1; // Ethereum
+
+  try {
+    const blockNumberHex = await manager.send<string>(chainId, "eth_blockNumber");
+    const blockNumber = parseInt(blockNumberHex, 16);
+    console.log(`Latest block number on chain ${chainId}: ${blockNumber}`);
+
+    // Example: Get balance
+    // const balanceHex = await manager.send<string>(chainId, 'eth_getBalance', [address, 'latest']);
+    // console.log(`Balance: ${balanceHex}`);
+  } catch (error) {
+    console.error(`Error fetching data for chain ${chainId}:`, error);
+  }
 }
+
+example();
 ```
 
-- In your app:
+### Smart Contract Calls (`readContract`)
 
 ```typescript
-import { useHandler } from "./rpc-handler";
-const handler = useHandler(networkId);
+import { Permit2RpcManager, readContract } from "./src/index.ts"; // Adjust import path
+import type { Address, Abi } from "viem";
 
-// Now the RPCs are tested
-app.provider = await handler.getFastestRpcProvider();
-```
-
-- Perform a consensus check:
-
-##### Note that this is intended for read-only operations, as it will make multiple requests to different RPCs to achieve a consensus on the response.
-
-```typescript
-const handler = new RPCHandler(config);
-
-const reqPayload: RequestPayload = {
-  jsonrpc: "2.0",
-  method: "eth_getBlockByNumber",
-  params: ["latest", false],
-  id: 1,
-  headers: {
-    "Content-Type": "application/json",
+// Define your contract ABI (e.g., ERC20 subset)
+const erc20Abi = [
+  {
+    inputs: [],
+    name: "symbol",
+    outputs: [{ type: "string" }],
+    stateMutability: "view",
+    type: "function",
   },
-};
+  {
+    inputs: [{ name: "account", type: "address" }],
+    name: "balanceOf",
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const; // Use 'as const'
 
-// This response is validated against N nodes before it's returned
-// in this case 50% of nodes need to agree otherwise it will fail and throw an error
-const requestResponse = await handler.security.consensusCall(reqPayload, "0.5");
+const manager = new Permit2RpcManager();
+const chainId = 1; // Ethereum
+const usdcAddress: Address = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+const someAccount: Address = "0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503";
+
+async function getContractInfo() {
+  try {
+    const symbol = await readContract<string>({
+      manager,
+      chainId,
+      address: usdcAddress,
+      abi: erc20Abi,
+      functionName: "symbol",
+    });
+    console.log(`Token Symbol: ${symbol}`);
+
+    const balance = await readContract<bigint>({
+      manager,
+      chainId,
+      address: usdcAddress,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [someAccount],
+    });
+    console.log(`Balance of ${someAccount}: ${balance.toString()}`);
+  } catch (error) {
+    console.error("Contract read error:", error);
+  }
+}
+
+getContractInfo();
 ```
 
-#### Notes
+## Development
 
-- The RPCs are not tested on instantiation, but are tested on each call to `handler.getFastestRpcProvider()` or `handler.testRpcPerformance()`
+- **Build:** `bun run build` (Uses `esbuild`, defined in `package.json`)
+- **Test:** `bun test` (Uses Bun's built-in test runner)
+- **Run Example:** Uncomment the `main()` call in `src/permit2-rpc-manager.ts` and run `bun run src/permit2-rpc-manager.ts`.
 
-- See the full [config](types/handler.ts) object (optionally passed in the constructor) for more options
+## Whitelist
 
-- LocalStorage is not enabled by default, but can be enabled by passing `autoStorage: true` in the config object
+Modify `src/rpc-whitelist.json` to add/remove RPC endpoints for specific chain IDs. The manager will only test URLs listed in this file.
 
-- Use the returned `JsonRpcProvider` object as you would normally, internally, any call you pass through it will be retried on the next fastest provider if it fails. It should only ever really throw due to user error or a network issue.
+## Latency Testing & Selection
 
-## Testing
+The `LatencyTester` performs the following checks concurrently for each whitelisted RPC:
 
-1. Build the package:
+1.  **Permit2 Bytecode:** Sends `eth_getCode` to the Permit2 address (`0x000000000022D473030F116dDEE9F6B43aC78BA3`) and verifies the returned bytecode matches the first 13995 bytes. The prefix check ensures the Permit2 contract is correctly deployed, but allows for potential minor deployment differences across chains. The byte comparison is exact, and any mismatch results in `status: 'wrong_bytecode'`.
+2.  **Sync Status:** Sends `eth_syncing` and verifies the result is `false`. Failure results in `status: 'syncing'`.
+3.  **Connectivity/Timeout:** Checks for network errors, HTTP errors, RPC errors, or timeouts during the above calls.
 
-```bash
-bun run build
-```
+The `RpcSelector` uses these test results to select an endpoint based on operation needs:
 
-2. In terminal A run the following command to start a local Anvil instance:
+- Priority 1: RPCs with `status: 'ok'` (fully synced, correct bytecode) - sorted by latency
+- Priority 2: RPCs with `status: 'wrong_bytecode'` (synced but incorrect Permit2 bytecode) - sorted by latency
+  - These RPCs are fully functional for most operations
+  - Only excluded when Permit2-specific functionality is needed
+- Priority 3: RPCs with `status: 'syncing'` (not fully synced) - sorted by latency
+  - May have correct bytecode but need time to sync
+  - Useful as last resort for basic calls
+- Excluded: RPCs with network errors, timeouts, or authentication failures
 
-```bash
-bun test:anvil
-```
+This prioritization ensures:
 
-3. In terminal B run the following command to run the tests:
+- Basic operations (like `eth_call` for token symbol) work reliably by using any responsive RPC
+- Permit2-related operations only use RPCs with exact bytecode match
+- Performance is optimized by selecting the fastest RPC within each priority level
+- Maximum availability through intelligent fallback between priority levels
 
-```bash
-bun run test
-```
-
-## Say goodbye to slow RPCs
-
-This packages leverages [Chainlist's](https://github.com/DefiLlama/chainlist) network RPC list to return the lowest latency provider from the list for any given network ID. Creating a runtime/local storage cache of the fastest RPCs, it can be used in both the browser and Node.js.
-
-By default, it performs as an abstraction layer for the Web3 developer by having built-in failed method call retries,
-bad endpoint exclusion and a cache of the fastest RPCs for a given network ID. It serves as a drop-in replacement for any `JsonRpcProvider` and can be extended to handle custom RPCs, chains and more.
-
-By routing requests through this package, it ensures the lowest latency for your users, while also providing a fallback mechanism for when the fastest provider fails. As even the best of nodes can fail, it retries failed method calls on the next fastest provider and so on until it succeeds or until your custom breakpoints are reached. With the ability to configure the number of retries, retry delay, log tier, breakpoints and more, it can be tailored to your specific needs.
-
-There is no additional tracking, data collection or analytics performed by this package beyond the specific public endpoints that support those features. These will be made filterable in the future. Calls are made directly to the RPCs and the only data stored is the `Record` of RPCs for a given network ID, which can be stored in the browser's local storage for faster retrieval.
-
-No changes are required to your existing codebase, simply replace your current provider with the one returned by `RPCHandler.getFastestRpcProvider()` and you're good to go. While all attempts are made to ensure the fastest provider is always used, it's important to note that the fastest provider can change over time, so it's recommended to call `RPCHandler.getFastestRpcProvider()` at the start of your app or at regular intervals. Also, it is possible that all providers fail, in which case the package will throw an error.
-
-No more slow RPCs, no more failed requests, no more headaches.
+Note: RPCs may temporarily report incorrect bytecode during chain upgrades or reorgs. The manager's caching and priority system handles such transient states gracefully.

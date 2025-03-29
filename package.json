@@ -1,92 +1,59 @@
 {
-  "name": "@ubiquity-dao/rpc-handler",
-  "version": "1.2.3",
-  "description": "Uses Chainlist's RPC collection racing them returning the lowest latency RPC",
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
-  "types": "dist/index.d.ts",
-  "author": "Ubiquity",
-  "license": "MIT",
-  "files": [
-    "dist"
+  "name": "@pavlovcik/permit2-rpc-manager",
+  "version": "0.2.0",
+  "author": "0x4007",
+  "description": "Intelligent RPC manager with Permit2 validation and advanced fallback strategy",
+  "keywords": [
+    "rpc",
+    "blockchain",
+    "chainlist",
+    "ethereum",
+    "viem",
+    "web3"
   ],
+  "license": "MIT",
+  "private": false,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src/rpc-whitelist.json"
+  ],
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist --target node --sourcemap && tsc --emitDeclarationOnly --outDir dist",
+    "start": "bun run src/index.ts",
+    "test": "bun test",
+    "watch": "bun build ./src/index.ts --outdir ./dist --target node --sourcemap --watch & tsc --emitDeclarationOnly --outDir dist --watch",
+    "prepublishOnly": "bun run build",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "viem": "^2.24.1"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.8",
+    "@types/node": "^22.13.14",
+    "bun-types": "^1.2.7",
+    "knip": "^5.46.3",
+    "prettier": "^3.5.3",
+    "typescript": "^5.4.2"
+  },
   "engines": {
     "node": ">=20.10.0"
   },
-  "scripts": {
-    "format": "run-s format:lint format:prettier format:cspell",
-    "format:lint": "eslint --fix .",
-    "format:prettier": "prettier --write .",
-    "format:cspell": "npx tsx .github/cspell.ts",
-    "knip": "knip",
-    "knip-ci": "knip --no-exit-code --reporter json",
-    "prepare": "husky install",
-    "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
-    "build:index": "tsx build/esbuild-build.ts",
-    "build": "run-s clean build:index build:types",
-    "postinstall": "git submodule update --init --recursive",
-    "test:anvil": "npx tsx ./tests/anvil.ts",
-    "test": "jest",
-    "clean": "rm -rf dist"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pavlovcik/permit2-rpc-manager.git"
   },
-  "keywords": [
-    "typescript",
-    "template",
-    "dao",
-    "ubiquity",
-    "open-source"
-  ],
-  "dependencies": {
-    "@ethersproject/providers": "5.7.2",
-    "axios": "^1.7.1",
-    "node-fetch": "^3.3.2"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.24.0",
-    "@babel/preset-env": "^7.24.0",
-    "@babel/preset-typescript": "^7.23.3",
-    "@commitlint/cli": "^18.6.1",
-    "@commitlint/config-conventional": "^18.6.2",
-    "@cspell/dict-node": "^4.0.3",
-    "@cspell/dict-software-terms": "^3.3.18",
-    "@cspell/dict-typescript": "^3.1.2",
-    "@types/jest": "^29.5.12",
-    "@types/node": "^20.11.19",
-    "@types/node-fetch": "^2.6.11",
-    "@typescript-eslint/eslint-plugin": "^7.0.1",
-    "@typescript-eslint/parser": "^7.0.1",
-    "cspell": "^8.4.0",
-    "esbuild": "^0.20.1",
-    "eslint": "^8.56.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.1.3",
-    "eslint-plugin-sonarjs": "^0.24.0",
-    "husky": "^9.0.11",
-    "jest": "29.7.0",
-    "jest-junit": "16.0.0",
-    "jest-md-dashboard": "0.8.0",
-    "knip": "5.27.0",
-    "lint-staged": "^15.2.2",
-    "nock": "13.5.6",
-    "npm-run-all": "^4.1.5",
-    "prettier": "3.3.3",
-    "ts-jest": "29.2.3",
-    "ts-node": "10.9.2",
-    "tsx": "^4.7.1",
-    "typescript": "^5.3.3"
-  },
-  "lint-staged": {
-    "*.ts": [
-      "prettier --write",
-      "eslint --fix"
-    ],
-    "src/**.{ts,json}": [
-      "cspell"
-    ]
-  },
-  "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
+  "publishConfig": {
+    "access": "public"
   }
 }

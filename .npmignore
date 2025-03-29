@@ -1,0 +1,33 @@
+# Source files
+src/
+
+# Tests
+tests/
+coverage/
+
+# Development & build files
+.github/
+.vscode/
+.env
+.env.*
+tsconfig.json
+.eslintrc
+.eslintignore
+.prettierrc
+.prettier*
+.gitignore
+.gitattributes
+.cspell.json
+
+# Docs & examples
+docs/
+examples/
+*.md
+!README.md
+
+# Git submodules
+lib/chainlist/
+
+# Cache and logs
+.rpc-cache.json
+*.log
