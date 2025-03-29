@@ -2,7 +2,7 @@ import * as fs from "node:fs/promises"; // Add node: prefix
 import * as os from "node:os"; // Add node: prefix
 import * as path from "node:path"; // Add node: prefix
 // Import the detailed result type using 'import type' for type-only imports
-import type { LatencyTestResult } from "./latency-tester.js"; // Keep .js extension for module compatibility
+import type { LatencyTestResult } from "./latency-tester.ts"; // Revert to .ts extension
 
 // Define a logger type (can be shared or defined per file)
 type LoggerFn = (level: "debug" | "info" | "warn" | "error", message: string, ...optionalParams: any[]) => void;

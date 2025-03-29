@@ -1,6 +1,6 @@
-import { CacheManager } from "./cache-manager.js"; // Use .js extension
-import { ChainlistDataSource } from "./chainlist-data-source.js"; // Use .js extension
-import { LatencyTester } from "./latency-tester.js"; // Use .js extension
+import { CacheManager } from "./cache-manager.ts"; // Revert to .ts extension
+import { ChainlistDataSource } from "./chainlist-data-source.ts"; // Revert to .ts extension
+import { LatencyTester } from "./latency-tester.ts"; // Revert to .ts extension
 
 // Define a logger type (can be shared or defined per file)
 type LoggerFn = (level: "debug" | "info" | "warn" | "error", message: string, ...optionalParams: any[]) => void;

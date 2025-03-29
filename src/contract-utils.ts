@@ -1,5 +1,5 @@
 import { Abi, AbiFunctionNotFoundError, Address, CallExecutionError, decodeFunctionResult, encodeFunctionData, Hex } from "viem";
-import { Permit2RpcManager } from "./permit2-rpc-manager.js"; // Use .js extension
+import { Permit2RpcManager } from "./permit2-rpc-manager.ts"; // Revert to .ts extension
 
 // Define a logger type (can be shared or defined per file)
 type LoggerFn = (level: "debug" | "info" | "warn" | "error", message: string, ...optionalParams: any[]) => void;
