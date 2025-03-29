@@ -96,37 +96,34 @@ export class Permit2RpcManager {
 
   /**
    * Sends a JSON-RPC request to the fastest available RPC for the given chain.
-   * Handles fallback to the next fastest RPC if the primary one fails.
+   * Handles fallback by iterating through a ranked list of available RPCs.
    */
   async send<T = any>(chainId: number, method: string, params: any[] = []): Promise<T> {
-    let rpcUrl = await this.rpcSelector.findFastestRpc(chainId);
+    const rankedRpcList = await this.rpcSelector.getRankedRpcList(chainId);
 
-    if (!rpcUrl) {
+    if (rankedRpcList.length === 0) {
+      this._log("error", `No available RPC endpoints found for chainId ${chainId}. Cannot send request.`);
       throw new Error(`No available RPC endpoints found for chainId ${chainId}.`);
     }
 
-    try {
-      this._log("debug", `Attempting RPC call to ${rpcUrl} for chain ${chainId}: ${method}`);
-      return await this.executeRpcCall<T>(rpcUrl, method, params);
-    } catch (error: any) {
-      this._log("warn", `RPC call failed for ${rpcUrl} (chain ${chainId}): ${error.message}. Attempting fallback...`);
+    let lastError: any = null;
 
-      // Attempt fallback to the next fastest RPC
-      const fallbackRpcUrl = await this.rpcSelector.findNextFastestRpc(chainId);
-
-      if (!fallbackRpcUrl) {
-        this._log("error", `Fallback failed: No alternative RPC endpoint found for chainId ${chainId}.`);
-        throw new Error(`RPC call failed for chainId ${chainId} and no fallback available. Original error: ${error.message}`);
-      }
-
+    for (const rpcUrl of rankedRpcList) {
       try {
-        this._log("debug", `Attempting fallback RPC call to ${fallbackRpcUrl} for chain ${chainId}: ${method}`);
-        return await this.executeRpcCall<T>(fallbackRpcUrl, method, params);
-      } catch (fallbackError: any) {
-        this._log("error", `Fallback RPC call failed for ${fallbackRpcUrl} (chain ${chainId}): ${fallbackError.message}`);
-        throw new Error(`RPC call failed for chainId ${chainId} on primary and fallback endpoints. Fallback error: ${fallbackError.message}`);
+        this._log("debug", `Attempting RPC call to ${rpcUrl} for chain ${chainId}: ${method}`);
+        const result = await this.executeRpcCall<T>(rpcUrl, method, params);
+        this._log("debug", `RPC call successful for ${rpcUrl}`);
+        return result; // Success! Return the result.
+      } catch (error: any) {
+        lastError = error; // Store the error in case all attempts fail
+        this._log("warn", `RPC call attempt failed for ${rpcUrl} (chain ${chainId}): ${error.message}. Trying next RPC...`);
+        // Continue to the next RPC in the list
       }
     }
+
+    // If the loop finishes, all RPCs failed.
+    this._log("error", `All available RPC endpoints failed for chainId ${chainId}. Last error: ${lastError?.message}`);
+    throw new Error(`All available RPC endpoints failed for chainId ${chainId}. Last error: ${lastError?.message}`);
   }
 
   /**

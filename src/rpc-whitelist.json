@@ -16,6 +16,14 @@
       "https://rpc.ankr.com/optimism",
       "https://1rpc.io/op"
     ],
+    "56": [
+      "https://bsc-dataseed1.binance.org",
+      "https://bsc-dataseed.bnbchain.org",
+      "https://bsc-rpc.publicnode.com",
+      "https://bsc.drpc.org",
+      "https://rpc.ankr.com/bsc",
+      "https://1rpc.io/bnb"
+    ],
     "100": [
       "https://rpc.gnosischain.com",
       "https://gnosis-rpc.publicnode.com",
@@ -33,6 +41,19 @@
       "https://rpc.ankr.com/polygon",
       "https://1rpc.io/matic"
     ],
+    "324": [
+      "https://mainnet.era.zksync.io",
+      "https://zksync-era.drpc.org",
+      "https://zksync.meowrpc.com",
+      "https://1rpc.io/zksync2-era"
+    ],
+    "8453": [
+      "https://mainnet.base.org",
+      "https://base.llamarpc.com",
+      "https://base-rpc.publicnode.com",
+      "https://base.drpc.org",
+      "https://1rpc.io/base"
+    ],
     "42161": [
       "https://arbitrum-one.public.blastapi.io",
       "https://arb1.arbitrum.io/rpc",
@@ -41,14 +62,11 @@
       "https://arbitrum.drpc.org",
       "https://1rpc.io/arb"
     ],
-    "8453": ["https://mainnet.base.org", "https://base.llamarpc.com", "https://base-rpc.publicnode.com", "https://base.drpc.org", "https://1rpc.io/base"],
-    "56": [
-      "https://bsc-dataseed1.binance.org",
-      "https://bsc-dataseed.bnbchain.org",
-      "https://bsc-rpc.publicnode.com",
-      "https://bsc.drpc.org",
-      "https://rpc.ankr.com/bsc",
-      "https://1rpc.io/bnb"
+    "42220": [
+      "https://forno.celo.org",
+      "https://rpc.ankr.com/celo",
+      "https://1rpc.io/celo",
+      "https://celo.drpc.org"
     ],
     "43114": [
       "https://api.avax.network/ext/bc/C/rpc",
@@ -57,7 +75,6 @@
       "https://rpc.ankr.com/avalanche",
       "https://1rpc.io/avax"
     ],
-    "42220": ["https://forno.celo.org", "https://rpc.ankr.com/celo", "https://1rpc.io/celo", "https://celo.drpc.org"],
     "81457": [
       "https://rpc.blast.io",
       "https://blast.blockpi.network/v1/rpc/public",
@@ -65,7 +82,10 @@
       "https://blastl2-mainnet.public.blastapi.io",
       "https://blast.drpc.org"
     ],
-    "324": ["https://mainnet.era.zksync.io", "https://zksync-era.drpc.org", "https://zksync.meowrpc.com", "https://1rpc.io/zksync2-era"],
-    "7777777": ["https://rpc.zora.energy", "https://zora.rpc.subquery.network/public", "https://1rpc.io/zora"]
+    "7777777": [
+      "https://rpc.zora.energy",
+      "https://zora.rpc.subquery.network/public",
+      "https://1rpc.io/zora"
+    ]
   }
 }

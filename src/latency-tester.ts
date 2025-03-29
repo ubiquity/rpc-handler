@@ -112,7 +112,9 @@ export class LatencyTester {
           status = "network_error"; // Includes CORS errors from fetch
         }
       }
-      this.log("warn", `Latency test failed for ${url}: ${status} - ${err.message}`);
+      // Log expected "Failed to fetch" (likely CORS) at debug level, others at warn
+      const logLevel = status === "network_error" && err instanceof TypeError && err.message === "Failed to fetch" ? "debug" : "warn";
+      this.log(logLevel, `Latency test failed for ${url}: ${status} - ${err.message}`);
       return { url, latency: Infinity, status, error: err.message };
     }
 

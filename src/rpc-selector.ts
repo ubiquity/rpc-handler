@@ -1,9 +1,12 @@
-import { CacheManager } from "./cache-manager.ts"; // Revert to .ts extension
-import { ChainlistDataSource } from "./chainlist-data-source.ts"; // Revert to .ts extension
-import { LatencyTester } from "./latency-tester.ts"; // Revert to .ts extension
+import { CacheManager } from "./cache-manager.ts";
+import { ChainlistDataSource } from "./chainlist-data-source.ts";
+import { LatencyTester, LatencyTestResult } from "./latency-tester.ts";
 
-// Define a logger type (can be shared or defined per file)
+// Define a logger type
 type LoggerFn = (level: "debug" | "info" | "warn" | "error", message: string, ...optionalParams: any[]) => void;
+
+// Define acceptable statuses for selection
+const ACCEPTABLE_STATUSES: LatencyTestResult["status"][] = ["ok", "wrong_bytecode", "syncing"];
 
 export class RpcSelector {
   private dataSource: ChainlistDataSource;
@@ -15,168 +18,106 @@ export class RpcSelector {
     this.dataSource = dataSource;
     this.cacheManager = cacheManager;
     this.latencyTester = latencyTester;
-    // Use provided logger or a no-op function if none is given
     this.log = logger || (() => {});
   }
 
   /**
-   * Finds the fastest available RPC URL for the given chain ID based on status priority.
-   * Priority: 'ok' > 'syncing'. Ignores others.
-   * Uses cached data if available and not expired, otherwise performs latency tests.
-   * Returns the URL of the fastest valid RPC, or null if none meet the criteria.
+   * Gets a ranked list of available RPC URLs for the given chain ID.
+   * Fetches from cache or performs latency tests if needed.
+   * Filters out RPCs with error statuses.
+   * Sorts the remaining RPCs by status priority (ok > wrong_bytecode > syncing) and then by latency.
+   *
+   * @param chainId - The chain ID.
+   * @returns A promise that resolves to a sorted array of usable RPC URLs.
    */
-  async findFastestRpc(chainId: number): Promise<string | null> {
-    // 1. Check cache first for a valid 'ok' RPC
-    const cachedFastest = await this.cacheManager.getFastestRpc(chainId);
-    if (cachedFastest) {
-      // Optional: Could add a quick background check here if needed
-      // Check if the cached fastest is still considered 'ok' or 'syncing' in the cached map
-      const latencyMap = await this.cacheManager.getLatencyMap(chainId);
-      const cachedResult = latencyMap?.[cachedFastest];
-      // Allow cached 'wrong_bytecode' as well, as it might be the best available
-      if (cachedResult && (cachedResult.status === "ok" || cachedResult.status === "syncing" || cachedResult.status === "wrong_bytecode")) {
-        this.log("info", `Using cached fastest RPC for chain ${chainId}: ${cachedFastest} (Status: ${cachedResult.status})`);
-        return cachedFastest;
+  async getRankedRpcList(chainId: number): Promise<string[]> {
+    let latencyMap = await this.cacheManager.getLatencyMap(chainId);
+    let fastestCachedRpc = await this.cacheManager.getFastestRpc(chainId); // Check if cache is valid
+
+    // If cache is invalid (no map or fastest RPC doesn't match map status), re-test
+    if (!latencyMap || !fastestCachedRpc || !latencyMap[fastestCachedRpc] || !ACCEPTABLE_STATUSES.includes(latencyMap[fastestCachedRpc].status)) {
+      if (fastestCachedRpc && latencyMap) {
+         this.log("info", `Cached fastest RPC ${fastestCachedRpc} for chain ${chainId} is no longer valid or missing in map. Re-testing.`);
       } else {
-        this.log("info", `Cached fastest RPC ${cachedFastest} for chain ${chainId} is no longer valid or missing in map. Re-evaluating.`);
+         this.log("info", `No valid cache for chain ${chainId}. Performing latency tests...`);
       }
-    }
 
-    this.log("info", `No valid cache for chain ${chainId}. Performing latency tests...`);
-
-    // 2. Get RPC URLs from data source
-    const rpcUrls = this.dataSource.getRpcUrls(chainId); // Now synchronous
-    if (rpcUrls.length === 0) {
-      this.log("warn", `No RPC URLs found for chain ${chainId} in data source.`);
-      return null; // No URLs to test
-    }
-
-    // 3. Test latency
-    const latencyMap = await this.latencyTester.testRpcUrls(rpcUrls);
-
-    // 4. Find the fastest valid RPC ('ok' first, then 'syncing')
-    let fastestRpc: string | null = null;
-    let minLatency = Infinity;
-    let foundOk = false;
-
-    // Try to find the fastest RPC in order of preference: ok > wrong_bytecode > syncing
-    let foundStatus = null;
-
-    // First try 'ok' status
-    for (const url in latencyMap) {
-      if (Object.prototype.hasOwnProperty.call(latencyMap, url)) {
-        const result = latencyMap[url];
-        if (result?.status === "ok" && result.latency < minLatency) {
-          minLatency = result.latency;
-          fastestRpc = url;
-          foundOk = true;
-          foundStatus = "ok";
-        }
+      const rpcUrls = this.dataSource.getRpcUrls(chainId);
+      if (rpcUrls.length === 0) {
+        this.log("warn", `No RPC URLs found for chain ${chainId} in data source.`);
+        return []; // No URLs to test
       }
-    }
 
-    // If no 'ok' RPC found, try 'wrong_bytecode' status as first fallback
-    if (!foundOk) {
-      this.log("warn", `No RPCs with 'ok' status found for chain ${chainId}. Checking for 'wrong_bytecode' RPCs...`);
-      minLatency = Infinity;
-      for (const url in latencyMap) {
-        if (Object.prototype.hasOwnProperty.call(latencyMap, url)) {
-          const result = latencyMap[url];
-          if (result?.status === "wrong_bytecode" && result.latency < minLatency) {
-            minLatency = result.latency;
-            fastestRpc = url;
-            foundStatus = "wrong_bytecode";
-          }
-        }
+      latencyMap = await this.latencyTester.testRpcUrls(rpcUrls);
+
+      // Find the new fastest based on the fresh test results
+      const newFastest = this._findFastestInMap(latencyMap);
+      await this.cacheManager.updateChainCache(chainId, latencyMap, newFastest?.url ?? null);
+      if (newFastest) {
+         this.log("info", `Selected fastest RPC for chain ${chainId}: ${newFastest.url} (${newFastest.latency}ms, status: ${newFastest.status})`);
+      } else {
+         this.log("warn", `No responsive RPCs found meeting criteria (${ACCEPTABLE_STATUSES.join(" > ")}) for chain ${chainId} after testing.`);
       }
+    } else {
+       this.log("debug", `Using valid cached latency map for chain ${chainId}.`);
     }
 
-    // If no 'ok' or 'wrong_bytecode' RPC found, try 'syncing' status as last fallback
-    if (!foundStatus) {
-      this.log("warn", `No RPCs with 'ok' or 'wrong_bytecode' status found for chain ${chainId}. Checking for 'syncing' RPCs...`);
-      minLatency = Infinity;
-      for (const url in latencyMap) {
-        if (Object.prototype.hasOwnProperty.call(latencyMap, url)) {
-          const result = latencyMap[url];
-          if (result?.status === "syncing" && result.latency < minLatency) {
-            minLatency = result.latency;
-            fastestRpc = url;
-            foundStatus = "syncing";
-          }
-        }
-      }
-    }
-
-    // Log selection result
-    if (fastestRpc) {
-      this.log("info", `Selected fastest RPC for chain ${chainId}: ${fastestRpc} (${minLatency}ms, status: ${foundStatus})`);
-    }
-
-    if (!fastestRpc) {
-      this.log("warn", `No responsive RPCs found meeting criteria (ok > wrong_bytecode > syncing) for chain ${chainId} after testing.`);
-    }
-
-    // 5. Update cache with detailed results and the selected fastest (even if only 'syncing')
-    await this.cacheManager.updateChainCache(chainId, latencyMap, fastestRpc);
-
-    return fastestRpc;
+    // Filter and sort the results from the (potentially updated) latency map
+    const rankedList = this._rankResults(latencyMap);
+    this.log("debug", `Ranked RPC list for chain ${chainId}:`, rankedList);
+    return rankedList;
   }
 
   /**
-   * Gets the next fastest RPC URL based on the cached latency map, prioritizing 'ok' then 'syncing'.
-   * Excludes the currently known fastest RPC (if provided and valid).
+   * Helper to find the single best RPC from a latency map based on status and latency.
    */
-  async findNextFastestRpc(chainId: number): Promise<string | null> {
-    const latencyMap = await this.cacheManager.getLatencyMap(chainId);
-    // Get potentially expired fastest RPC to exclude it correctly
-    const currentFastest = (await this.cacheManager["getRawChainCache"](chainId))?.fastestRpc; // Use internal getter
+  private _findFastestInMap(latencyMap: Record<string, LatencyTestResult> | null): LatencyTestResult | null {
+    if (!latencyMap) return null;
 
-    if (!latencyMap) {
-      this.log("warn", `No latency map found in cache for chain ${chainId} to determine next fastest.`);
-      return null;
-    }
+    let bestResult: LatencyTestResult | null = null;
 
-    let nextFastestRpc: string | null = null;
-    let minLatency = Infinity;
-    let foundOk = false;
-
-    // Prioritize 'ok' status
-    for (const url in latencyMap) {
-      if (Object.prototype.hasOwnProperty.call(latencyMap, url)) {
-        if (url === currentFastest) continue; // Skip current fastest
-        const result = latencyMap[url];
-        if (result?.status === "ok" && result.latency < minLatency) {
-          minLatency = result.latency;
-          nextFastestRpc = url;
-          foundOk = true;
-        }
-      }
-    }
-
-    // If no 'ok' found, try 'syncing'
-    if (!foundOk) {
-      minLatency = Infinity; // Reset for syncing check
+    for (const status of ACCEPTABLE_STATUSES) {
+      let fastestForStatus: LatencyTestResult | null = null;
       for (const url in latencyMap) {
-        if (Object.prototype.hasOwnProperty.call(latencyMap, url)) {
-          if (url === currentFastest) continue;
-          const result = latencyMap[url];
-          if (result?.status === "syncing" && result.latency < minLatency) {
-            minLatency = result.latency;
-            nextFastestRpc = url;
+        const result = latencyMap[url];
+        if (result?.status === status) {
+          if (!fastestForStatus || result.latency < fastestForStatus.latency) {
+            fastestForStatus = result;
           }
         }
       }
-      if (nextFastestRpc) {
-        this.log("info", `Next fastest RPC (syncing) found for chain ${chainId}: ${nextFastestRpc} (${minLatency}ms)`);
+      if (fastestForStatus) {
+        bestResult = fastestForStatus;
+        break; // Found the best according to status priority
       }
-    } else if (nextFastestRpc) {
-      this.log("info", `Next fastest RPC (ok) found for chain ${chainId}: ${nextFastestRpc} (${minLatency}ms)`);
     }
-
-    if (!nextFastestRpc) {
-      this.log("warn", `No alternative responsive RPCs found meeting criteria (ok > syncing) for chain ${chainId} in cache.`);
-    }
-
-    return nextFastestRpc;
+    return bestResult;
   }
+
+  /**
+   * Helper to filter and rank RPC results based on status and latency.
+   */
+  private _rankResults(latencyMap: Record<string, LatencyTestResult> | null): string[] {
+    if (!latencyMap) return [];
+
+    const validResults = Object.values(latencyMap).filter(
+      (result) => result && ACCEPTABLE_STATUSES.includes(result.status)
+    );
+
+    // Sort by status priority, then latency
+    validResults.sort((a, b) => {
+      const statusA = ACCEPTABLE_STATUSES.indexOf(a.status);
+      const statusB = ACCEPTABLE_STATUSES.indexOf(b.status);
+      if (statusA !== statusB) {
+        return statusA - statusB; // Lower index (better status) comes first
+      }
+      return a.latency - b.latency; // Lower latency comes first
+    });
+
+    return validResults.map((result) => result.url);
+  }
+
+  // --- Deprecated Methods (to be removed or kept for internal use if needed) ---
+  // async findFastestRpc(chainId: number): Promise<string | null> { ... }
+  // async findNextFastestRpc(chainId: number): Promise<string | null> { ... }
 }
