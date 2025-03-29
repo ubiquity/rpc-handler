@@ -75,7 +75,8 @@ export class CacheManager {
         console.error(`CacheManager (Browser): Failed to load cache from localStorage (key: ${this.cacheKey}):`, error);
         this.cache = {}; // Reset cache on error
       }
-    } else if (isNode && this.nodeCachePath) { // Use the instance path
+    } else if (isNode && this.nodeCachePath) {
+      // Use the instance path
       try {
         const rawData = await fs.readFile(this.nodeCachePath, "utf-8");
         this.cache = JSON.parse(rawData);
@@ -101,7 +102,8 @@ export class CacheManager {
       } catch (error) {
         console.error(`CacheManager (Browser): Failed to save cache to localStorage (key: ${this.cacheKey}):`, error);
       }
-    } else if (isNode && this.nodeCachePath) { // Use the instance path
+    } else if (isNode && this.nodeCachePath) {
+      // Use the instance path
       try {
         // Ensure directory exists before writing
         const dir = path.dirname(this.nodeCachePath);

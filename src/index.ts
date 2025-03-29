@@ -7,4 +7,4 @@ import { Permit2RpcManager } from "./permit2-rpc-manager.js";
 export { Permit2RpcManager, readContract };
 
 // Export types
-    export type { Permit2RpcManagerOptions, ReadContractOptions };
+export type { Permit2RpcManagerOptions, ReadContractOptions };

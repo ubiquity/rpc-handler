@@ -5,9 +5,7 @@
     "tests/**/*.test.ts" // Add test files as entry points
   ],
   "project": ["src/**/*.ts"], // Keep project focused on source
-  "ignore": [
-    "lib/**"
-  ],
+  "ignore": ["lib/**"],
   "ignoreDependencies": [
     "prettier" // Ignore prettier for now, assuming external usage
   ]

@@ -43,7 +43,8 @@ describe("RpcSelector (using Whitelist)", () => {
         let status: LatencyTestStatus = "ok";
         if (url.includes("cloudflare")) latency = 50;
         else if (url.includes("ankr")) latency = 100;
-        else if (url.includes("llamarpc")) latency = 75; // Default to ok
+        else if (url.includes("llamarpc"))
+          latency = 75; // Default to ok
         else if (url.includes("publicnode")) latency = 60;
         else if (url.includes("drpc.org")) {
           latency = Infinity;
@@ -59,7 +60,6 @@ describe("RpcSelector (using Whitelist)", () => {
     });
     // Mock for the internal method used by findNextFastestRpc
     mockGetRawChainCacheFn = mock(async (chainId: number) => mockCacheStore[chainId] ?? null);
-
 
     dataSource = new ChainlistDataSource();
     mockCacheManager = {
@@ -260,7 +260,7 @@ describe("RpcSelector (using Whitelist)", () => {
     expect(mockGetFastestRpcFn).not.toHaveBeenCalled(); // Should NOT call public getFastestRpc
   });
 
-   it("should NOT find the next fastest WRONG_BYTECODE RPC if no OK or SYNCING RPCs exist", async () => {
+  it("should NOT find the next fastest WRONG_BYTECODE RPC if no OK or SYNCING RPCs exist", async () => {
     const chainId = 1;
     const currentFastest = "https://cloudflare-eth.com"; // Assume this failed somehow
     mockCacheStore[chainId] = {
@@ -280,7 +280,6 @@ describe("RpcSelector (using Whitelist)", () => {
     expect(mockGetRawChainCacheFn).toHaveBeenCalledWith(chainId); // Check internal call
     expect(mockGetFastestRpcFn).not.toHaveBeenCalled(); // Should NOT call public getFastestRpc
   });
-
 
   it("should return null for next fastest if cache has no latency map", async () => {
     const chainId = 1;

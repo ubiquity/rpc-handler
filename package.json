@@ -31,7 +31,8 @@
     "build": "bun build ./src/index.ts --outdir ./dist --target node && tsc --emitDeclarationOnly --outDir dist",
     "start": "bun run src/index.ts",
     "test": "bun test",
-    "prepublishOnly": "bun run build"
+    "prepublishOnly": "bun run build",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "viem": "^2.24.1"

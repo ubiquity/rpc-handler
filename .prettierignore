@@ -1,0 +1,8 @@
+# Ignore build output
+dist/
+
+# Ignore node_modules
+node_modules/
+
+# Ignore submodules / vendor code
+lib/
