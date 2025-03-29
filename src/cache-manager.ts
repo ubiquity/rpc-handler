@@ -1,7 +1,4 @@
-// Use static imports again
-import nodeFs from "node:fs/promises";
-import nodeOs from "node:os";
-import nodePath from "node:path";
+// Node imports removed
 import type { LatencyTestResult } from "./latency-tester.ts";
 
 // Define a logger type
@@ -17,28 +14,31 @@ interface ChainCache {
 // Define the overall cache structure
 type CacheData = Record<number, ChainCache>;
 
-// --- Environment Detection (Using process.env injected by build) ---
-// declare const IS_NODE: boolean; // Removed
-// declare const IS_BROWSER: boolean; // Removed
-// We will check process.env.BUILD_ENV which will be defined by bun build --define
+// --- Environment Check (Runtime for Browser) ---
+// We assume if this module is loaded, it's likely in a browser context
+// or a Node context where file caching isn't the default.
+const isBrowser = typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 
 const DEFAULT_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
-const DEFAULT_NODE_CACHE_FILENAME = "permit2-rpc-manager.cache.json";
 const DEFAULT_LOCAL_STORAGE_KEY = "permit2RpcManagerCache";
 
 // Options for CacheManager constructor
 interface CacheManagerOptions {
   cacheTtlMs?: number;
-  nodeCachePath?: string; // User-provided path takes precedence
+  // nodeCachePath is no longer used in this base class
   localStorageKey?: string;
   logger?: LoggerFn;
 }
 
+/**
+ * CacheManager primarily for browser environments using localStorage.
+ * Node.js file caching is handled separately in cache-manager.node.ts.
+ */
 export class CacheManager {
   private cache: CacheData = {};
   private cacheLoaded = false;
   private cacheKey: string;
-  private nodeCachePath: string | null = null;
+  // nodeCachePath removed
   private cacheTtlMs: number;
   private log: LoggerFn;
 
@@ -46,71 +46,30 @@ export class CacheManager {
     this.cacheTtlMs = options.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
     this.cacheKey = options.localStorageKey ?? DEFAULT_LOCAL_STORAGE_KEY;
     this.log = options.logger || (() => {});
-
-    // Determine Node.js cache path using build defines
-    // This block should be removed entirely by tree-shaking in browser builds
-    if (process.env.BUILD_ENV === 'node') {
-      if (options.nodeCachePath) {
-        this.nodeCachePath = options.nodeCachePath;
-        this.log("info", `CacheManager (Node.js): Using user-provided cache path: ${this.nodeCachePath}`);
-      } else {
-        try {
-          this.nodeCachePath = nodePath.join(nodeOs.tmpdir(), DEFAULT_NODE_CACHE_FILENAME);
-          this.log("info", `CacheManager (Node.js): Determined default cache path: ${this.nodeCachePath}`);
-        } catch (e) {
-          this.log("error", "Error determining default Node.js cache path in temp dir:", e);
-          this.nodeCachePath = null;
-        }
-      }
-       if (!this.nodeCachePath) {
-         this.log("warn", "CacheManager (Node.js): Could not determine cache path. Caching will be disabled.");
-       }
-    }
+    // No Node path determination needed here
   }
 
   private async loadCache(): Promise<void> {
     if (this.cacheLoaded) return;
 
-    // Use process.env check for browser logic
-    if (process.env.BUILD_ENV === 'browser') {
+    // Only implement browser logic here
+    if (isBrowser) {
       try {
-        // Check window existence again just in case (though BUILD_ENV should guarantee it)
-        if (typeof window !== "undefined" && window.localStorage) {
-            const storedCache = window.localStorage.getItem(this.cacheKey);
-            if (storedCache) {
-              this.cache = JSON.parse(storedCache);
-              this.log("debug", `CacheManager (Browser): Loaded cache from localStorage (key: ${this.cacheKey})`);
-            } else {
-              this.log("debug", `CacheManager (Browser): No cache found in localStorage (key: ${this.cacheKey})`);
-            }
+        const storedCache = window.localStorage.getItem(this.cacheKey);
+        if (storedCache) {
+          this.cache = JSON.parse(storedCache);
+          this.log("debug", `CacheManager (Browser): Loaded cache from localStorage (key: ${this.cacheKey})`);
         } else {
-             this.log("warn", "CacheManager (Browser): localStorage not available.");
-             this.cache = {};
+          this.log("debug", `CacheManager (Browser): No cache found in localStorage (key: ${this.cacheKey})`);
         }
       } catch (error) {
         this.log("error", `CacheManager (Browser): Failed to load cache from localStorage (key: ${this.cacheKey}):`, error);
         this.cache = {};
       }
-    }
-    // Use process.env check for Node logic
-    else if (process.env.BUILD_ENV === 'node') {
-      if (this.nodeCachePath) {
-        try {
-          const rawData = await nodeFs.readFile(this.nodeCachePath, "utf-8");
-          this.cache = JSON.parse(rawData);
-          this.log("debug", `CacheManager (Node.js): Loaded cache from file (${this.nodeCachePath})`);
-        } catch (error: any) {
-          if (error.code === "ENOENT") {
-            this.log("debug", `CacheManager (Node.js): Cache file not found (${this.nodeCachePath}), initializing empty cache.`);
-            this.cache = {};
-          } else {
-            this.log("error", `CacheManager (Node.js): Failed to load cache from file (${this.nodeCachePath}):`, error);
-            this.cache = {};
-          }
-        }
-      } else {
-          this.log("warn", "CacheManager (Node.js): Skipping file cache load (no path determined).");
-      }
+    } else {
+      // In non-browser environments, this default manager won't load from files
+      this.log("warn", "CacheManager: Not in a browser environment, skipping localStorage cache load. File caching requires explicit use of NodeCacheHandler.");
+      this.cache = {};
     }
     this.cacheLoaded = true;
   }
@@ -121,33 +80,17 @@ export class CacheManager {
       return;
     }
 
-    // Use process.env check for browser logic
-    if (process.env.BUILD_ENV === 'browser') {
+    // Only implement browser logic here
+    if (isBrowser) {
       try {
-         if (typeof window !== "undefined" && window.localStorage) {
-            window.localStorage.setItem(this.cacheKey, JSON.stringify(this.cache));
-            this.log("debug", `CacheManager (Browser): Saved cache to localStorage (key: ${this.cacheKey})`);
-         } else {
-             this.log("warn", "CacheManager (Browser): localStorage not available, skipping save.");
-         }
+        window.localStorage.setItem(this.cacheKey, JSON.stringify(this.cache));
+        this.log("debug", `CacheManager (Browser): Saved cache to localStorage (key: ${this.cacheKey})`);
       } catch (error) {
         this.log("error", `CacheManager (Browser): Failed to save cache to localStorage (key: ${this.cacheKey}):`, error);
       }
-    }
-    // Use process.env check for Node logic
-    else if (process.env.BUILD_ENV === 'node') {
-       if (this.nodeCachePath) {
-        try {
-          const dir = nodePath.dirname(this.nodeCachePath);
-          await nodeFs.mkdir(dir, { recursive: true });
-          await nodeFs.writeFile(this.nodeCachePath, JSON.stringify(this.cache, null, 2));
-          this.log("debug", `CacheManager (Node.js): Saved cache to file (${this.nodeCachePath})`);
-        } catch (error) {
-          this.log("error", `CacheManager (Node.js): Failed to save cache to file (${this.nodeCachePath}):`, error);
-        }
-      } else {
-          this.log("warn", "CacheManager (Node.js): Skipping file cache save (no path determined).");
-      }
+    } else {
+       // In non-browser environments, this default manager won't save to files
+       this.log("warn", "CacheManager: Not in a browser environment, skipping localStorage cache save.");
     }
   }
 

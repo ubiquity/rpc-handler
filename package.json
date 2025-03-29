@@ -30,8 +30,8 @@
   "scripts": {
     "start": "bun run src/index.ts",
     "test": "bun test",
-    "watch": "bun build ./src/index.ts --outdir ./dist --target node --sourcemap --define \"process.env.BUILD_ENV:'node'\" --watch & tsc --emitDeclarationOnly --outDir dist --watch",
-    "build": "bun build ./src/index.ts --outdir ./dist --target node --sourcemap --define \"process.env.BUILD_ENV:'node'\" && tsc --emitDeclarationOnly --outDir dist",
+    "watch": "bun build ./src/index.ts --outdir ./dist --target node --sourcemap --watch & tsc --emitDeclarationOnly --outDir dist --watch",
+    "build": "bun build ./src/index.ts --outdir ./dist --target node --sourcemap && tsc --emitDeclarationOnly --outDir dist",
     "build:browser": "bun build ./src/index.ts --outdir ./dist --sourcemap --define \"process.env.BUILD_ENV:'browser'\"",
     "watch:build": "onchange 'src/**/*.ts' -- bun run build",
     "watch:build-browser": "onchange 'src/**/*.ts' -- rm -rf dist && bun run build:browser",
