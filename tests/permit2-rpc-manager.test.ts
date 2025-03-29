@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
-import { RpcHandler } from "../src/rpc-handler.js";
+import { Permit2RpcManager } from "../src/permit2-rpc-manager.js";
 // Import PERMIT2_BYTECODE_PREFIX for the fetch mock
 import PERMIT2_BYTECODE_PREFIX from "../src/permit2-bytecode.js";
 
@@ -29,7 +29,7 @@ global.fetch = mock(async (input: RequestInfo | URL, init?: RequestInit): Promis
     return new Response(JSON.stringify({ jsonrpc: "2.0", id: id, result: false }), { status: 200 });
   }
 
-  // --- Actual Method Call Simulation (for RpcHandler tests) ---
+  // --- Actual Method Call Simulation (for Permit2RpcManager tests) ---
   if (method === "eth_blockNumber") {
     if (url.includes("fastest-rpc.com")) {
       return new Response(JSON.stringify({ jsonrpc: "2.0", id: id, result: "0x123" }), { status: 200 });
@@ -50,8 +50,8 @@ global.fetch = mock(async (input: RequestInfo | URL, init?: RequestInit): Promis
 }) as any;
 
 // --- Tests ---
-describe("RpcHandler (Unit Tests with Mocked Selector)", () => {
-  let handler: RpcHandler;
+describe("Permit2RpcManager (Unit Tests with Mocked Selector)", () => {
+  let manager: Permit2RpcManager;
 
   beforeEach(() => {
     // Reset mocks
@@ -65,10 +65,10 @@ describe("RpcHandler (Unit Tests with Mocked Selector)", () => {
       findNextFastestRpc: mockFindNextFastestRpcFn,
     };
 
-    // Instantiate RpcHandler, manually overriding the selector instance it creates
-    handler = new RpcHandler({ requestTimeoutMs: 500 });
+    // Instantiate Permit2RpcManager, manually overriding the selector instance it creates
+    manager = new Permit2RpcManager({ requestTimeoutMs: 500 });
     // Replace the internally created selector with our mock
-    handler["rpcSelector"] = mockRpcSelectorInstance;
+    manager["rpcSelector"] = mockRpcSelectorInstance;
 
     // Clear cache file
     const fs = require("node:fs");
@@ -101,7 +101,7 @@ describe("RpcHandler (Unit Tests with Mocked Selector)", () => {
 
     mockFindFastestRpcFn.mockResolvedValue(fastestRpc);
 
-    const result = await handler.send(chainId, method);
+    const result = await manager.send(chainId, method);
 
     expect(result).toBe(expectedResult);
     expect(mockFindFastestRpcFn).toHaveBeenCalledWith(chainId);
@@ -122,7 +122,7 @@ describe("RpcHandler (Unit Tests with Mocked Selector)", () => {
     mockFindFastestRpcFn.mockResolvedValue(errorRpc);
     mockFindNextFastestRpcFn.mockResolvedValue(fallbackRpc);
 
-    const result = await handler.send(chainId, method);
+    const result = await manager.send(chainId, method);
 
     expect(result).toBe(expectedResult);
     expect(mockFindFastestRpcFn).toHaveBeenCalledWith(chainId);
@@ -141,7 +141,7 @@ describe("RpcHandler (Unit Tests with Mocked Selector)", () => {
 
     mockFindFastestRpcFn.mockResolvedValue(null); // Selector returns null
 
-    await expect(handler.send(chainId, method)).rejects.toThrow(`No available RPC endpoints found for chainId ${chainId}.`);
+    await expect(manager.send(chainId, method)).rejects.toThrow(`No available RPC endpoints found for chainId ${chainId}.`);
     expect(mockFindFastestRpcFn).toHaveBeenCalledWith(chainId);
     // Removed expect(global.fetch).not.toHaveBeenCalled(); as it's unreliable here
   });
@@ -156,7 +156,7 @@ describe("RpcHandler (Unit Tests with Mocked Selector)", () => {
     mockFindNextFastestRpcFn.mockResolvedValue(errorRpc2);
     // Mock fetch will fail both error-rpc URLs
 
-    await expect(handler.send(chainId, method)).rejects.toThrow(/RPC call failed for chainId 1 on primary and fallback endpoints/);
+    await expect(manager.send(chainId, method)).rejects.toThrow(/RPC call failed for chainId 1 on primary and fallback endpoints/);
     expect(mockFindFastestRpcFn).toHaveBeenCalledWith(chainId);
     expect(mockFindNextFastestRpcFn).toHaveBeenCalledWith(chainId);
     // Removed expect(global.fetch).toHaveBeenCalledTimes(2); as it's unreliable
@@ -170,7 +170,7 @@ describe("RpcHandler (Unit Tests with Mocked Selector)", () => {
     mockFindFastestRpcFn.mockResolvedValue(errorRpc);
     mockFindNextFastestRpcFn.mockResolvedValue(null); // No fallback
 
-    await expect(handler.send(chainId, method)).rejects.toThrow(/RPC call failed for chainId 1 and no fallback available/);
+    await expect(manager.send(chainId, method)).rejects.toThrow(/RPC call failed for chainId 1 and no fallback available/);
     expect(mockFindFastestRpcFn).toHaveBeenCalledWith(chainId);
     expect(mockFindNextFastestRpcFn).toHaveBeenCalledWith(chainId);
     // Removed expect(global.fetch).toHaveBeenCalledTimes(1); as it's unreliable

@@ -37,6 +37,7 @@
     "viem": "^2.24.1"
   },
   "devDependencies": {
+    "@types/bun": "^1.2.8",
     "@types/node": "^22.13.14",
     "bun-types": "^1.2.7",
     "prettier": "^3.5.3",
@@ -47,7 +48,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/pavlovcik/rpc-handler"
+    "url": "https://github.com/pavlovcik/permit2-rpc-manager"
   },
   "publishConfig": {
     "access": "public"

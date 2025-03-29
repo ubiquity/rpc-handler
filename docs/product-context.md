@@ -1,4 +1,4 @@
-# Product Context: RPC Handler Rewrite
+# Product Context: Permit2 RPC Manager Rewrite
 
 ## 1. Problem Statement
 
@@ -11,11 +11,11 @@ Developers building decentralized applications (dApps) often need to interact wi
 
 ## 2. Proposed Solution
 
-The rewritten `rpc-handler` solves these problems by providing an intelligent, automated RPC management layer:
+The rewritten `permit2-rpc-manager` solves these problems by providing an intelligent, automated RPC management layer:
 
 - **Abstract Complexity:**
 
-  - Simple interface (`RpcHandler.send`) for making raw RPC calls
+  - Simple interface (`Permit2RpcManager.send`) for making raw RPC calls
   - Helper function (`readContract`) for easy read-only contract interactions
   - Hides complex endpoint selection and validation logic
   - Transparent fallback system that adapts to operation requirements

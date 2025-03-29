@@ -32,7 +32,7 @@ const DEFAULT_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 export class CacheManager {
   private cache: CacheData = {};
   private cacheLoaded = false;
-  private cacheKey = "rpcHandlerCache"; // Key for localStorage
+  private cacheKey = "permit2RpcManagerCache"; // Key for localStorage
 
   constructor(private cacheTtlMs: number = DEFAULT_CACHE_TTL_MS) {}
 

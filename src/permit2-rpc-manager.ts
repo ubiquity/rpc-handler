@@ -23,7 +23,7 @@ interface JsonRpcResponse {
   };
 }
 
-export interface RpcHandlerOptions {
+export interface Permit2RpcManagerOptions {
   // Added export
   cacheTtlMs?: number;
   latencyTimeoutMs?: number;
@@ -32,14 +32,14 @@ export interface RpcHandlerOptions {
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000; // 10 seconds for RPC calls
 
-export class RpcHandler {
+export class Permit2RpcManager {
   private dataSource: ChainlistDataSource;
   private cacheManager: CacheManager;
   private latencyTester: LatencyTester;
   private rpcSelector: RpcSelector;
   private requestTimeoutMs: number;
 
-  constructor(options: RpcHandlerOptions = {}) {
+  constructor(options: Permit2RpcManagerOptions = {}) {
     this.dataSource = new ChainlistDataSource();
     this.cacheManager = new CacheManager(options.cacheTtlMs);
     this.latencyTester = new LatencyTester(options.latencyTimeoutMs);
@@ -179,19 +179,19 @@ const cowTokenAddressGnosis: Address = "0xC6ed4f520f6A4e4DC27273509239b7F8A68d20
 const gnosisChainId = 100;
 
 async function main() {
-  console.log("--- Starting RpcHandler Example for Gnosis COW Token ---");
+  console.log("--- Starting Permit2RpcManager Example for Gnosis COW Token ---");
   // Use slightly longer timeouts for real network calls
-  const handler = new RpcHandler({ latencyTimeoutMs: 7000, requestTimeoutMs: 15000 });
+  const manager = new Permit2RpcManager({ latencyTimeoutMs: 7000, requestTimeoutMs: 15000 });
 
   try {
     console.log(`\n--- Testing Chain ID: ${gnosisChainId} (Gnosis) ---`);
     // Optional: Fetch block number first to ensure basic connectivity
-    // const blockNumber = await handler.send<string>(gnosisChainId, 'eth_blockNumber');
+    // const blockNumber = await manager.send<string>(gnosisChainId, 'eth_blockNumber');
     // console.log(`Gnosis Chain - Latest Block Number: ${parseInt(blockNumber, 16)} (${blockNumber})`);
 
     console.log(`\n--- Fetching COW Token Symbol on Gnosis ---`);
     const symbol = await readContract<string>({
-      handler,
+      manager,
       chainId: gnosisChainId,
       address: cowTokenAddressGnosis,
       abi: erc20Abi, // Using the standard ERC20 ABI subset
@@ -205,7 +205,7 @@ async function main() {
       console.error(`>>> FAILURE: Expected symbol 'COW', but received '${symbol}'`);
     }
   } catch (error) {
-    console.error(`RPC Handler Example Failed for Chain ${gnosisChainId}:`, error);
+    console.error(`Permit2 RPC Manager Example Failed for Chain ${gnosisChainId}:`, error);
   }
 
   console.log("\n--- Example Finished ---");

@@ -1,4 +1,4 @@
-# Progress: RPC Handler Rewrite
+# Progress: Permit2 RPC Manager Rewrite
 
 ## 1. Current Status (March 28, 2025)
 
@@ -14,9 +14,9 @@
 - `CacheManager` implemented with support for `localStorage` (browser) and JSON file (Node.js).
 - `LatencyTester` implemented using native `fetch` with timeouts.
 - `RpcSelector` implemented to find the fastest RPC using cache and testing.
-- `RpcHandler` (main API) implemented, integrating all components and providing `send` method with fallback logic.
+- `Permit2RpcManager` (main API) implemented, integrating all components and providing `send` method with fallback logic.
 - `src/index.ts` created as the library entry point.
-- Initial tests using `bun test` added for `LatencyTester`, `RpcSelector`, `RpcHandler`, and `readContract` helper (all passing).
+- Initial tests using `bun test` added for `LatencyTester`, `RpcSelector`, `Permit2RpcManager`, and `readContract` helper (all passing).
 - `readContract` helper function added for contract interactions using `viem`.
 - Switched from testing all Chainlist RPCs to using a curated `src/rpc-whitelist.json`.
 - Latency testing enhanced to check Permit2 bytecode and `eth_syncing`.

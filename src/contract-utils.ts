@@ -1,11 +1,11 @@
 import { Abi, AbiFunctionNotFoundError, Address, CallExecutionError, decodeFunctionResult, encodeFunctionData, Hex } from "viem";
-import { RpcHandler } from "./rpc-handler.js";
+import { Permit2RpcManager } from "./permit2-rpc-manager.js";
 
 /**
  * Options for calling a read-only contract function.
  */
 export interface ReadContractOptions {
-  handler: RpcHandler;
+  manager: Permit2RpcManager;
   chainId: number;
   address: Address;
   abi: Abi;
@@ -16,13 +16,13 @@ export interface ReadContractOptions {
 }
 
 /**
- * Calls a read-only smart contract function using eth_call via the RpcHandler.
+ * Calls a read-only smart contract function using eth_call via the Permit2RpcManager.
  *
  * @param options - The options for the contract call.
  * @returns The decoded result of the function call.
- * @throws If the function doesn't exist in the ABI, the call reverts, or the RpcHandler fails.
+ * @throws If the function doesn't exist in the ABI, the call reverts, or the Permit2RpcManager fails.
  */
-export async function readContract<T = any>({ handler, chainId, address, abi, functionName, args }: ReadContractOptions): Promise<T> {
+export async function readContract<T = any>({ manager, chainId, address, abi, functionName, args }: ReadContractOptions): Promise<T> {
   let callData: Hex;
   try {
     callData = encodeFunctionData({
@@ -44,8 +44,8 @@ export async function readContract<T = any>({ handler, chainId, address, abi, fu
 
   let rawResult: Hex | undefined;
   try {
-    // Use the RpcHandler to send the eth_call
-    rawResult = await handler.send<Hex>(chainId, "eth_call", [
+    // Use the Permit2RpcManager to send the eth_call
+    rawResult = await manager.send<Hex>(chainId, "eth_call", [
       {
         to: address,
         data: callData,
@@ -63,8 +63,8 @@ export async function readContract<T = any>({ handler, chainId, address, abi, fu
       // Let decode attempt handle it, it might throw if decoding fails
     }
   } catch (error) {
-    // Catch errors from the RpcHandler (network, RPC errors, etc.)
-    console.error(`eth_call via RpcHandler failed for ${functionName} on chain ${chainId}:`, error);
+    // Catch errors from the Permit2RpcManager (network, RPC errors, etc.)
+    console.error(`eth_call via Permit2RpcManager failed for ${functionName} on chain ${chainId}:`, error);
     throw new Error(`eth_call failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 

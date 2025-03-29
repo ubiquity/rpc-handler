@@ -1,6 +1,6 @@
-# Distilled Context: RPC Handler Rewrite (End of Session Summary)
+# Distilled Context: Permit2 RPC Manager Rewrite (End of Session Summary)
 
-This document summarizes the state, architecture, and key decisions of the RPC Handler project at the end of the current development session. It aims to provide a comprehensive overview for continuation.
+This document summarizes the state, architecture, and key decisions of the Permit2 RPC Manager project at the end of the current development session. It aims to provide a comprehensive overview for continuation.
 
 _(Note: This differs from `active-context.md`, which tracks the immediate focus and recent changes during ongoing work.)_
 
@@ -17,15 +17,15 @@ _(Note: This differs from `active-context.md`, which tracks the immediate focus 
 
 ## 2. Project Goal & Core Problem Solved
 
-- **Goal:** Create an intelligent RPC handler that automatically selects the fastest, _valid_ RPC for EVM chains, abstracting complexity and improving reliability/performance compared to manual endpoint management.
+- **Goal:** Create an intelligent RPC manager that automatically selects the fastest, _valid_ RPC for EVM chains, abstracting complexity and improving reliability/performance compared to manual endpoint management.
 - **Problem:** Public RPCs are often unreliable, slow, or out-of-sync. Managing them manually is complex.
 
 ## 2. Final Architecture & Components (`src/`)
 
 ```mermaid
 flowchart TD
-    subgraph RpcHandler Instance
-        HandlerAPI[RpcHandler Class]
+    subgraph Permit2RpcManager Instance
+        RpcManagerAPI[Permit2RpcManager Class]
         Selector[RpcSelector Instance]
         Tester[LatencyTester Instance]
         Cache[CacheManager Instance]
@@ -38,11 +38,11 @@ flowchart TD
         Network[(Live RPC Endpoints)]
     end
 
-    User --> HandlerAPI
-    HandlerAPI -- creates --> Selector
-    HandlerAPI -- creates --> Tester
-    HandlerAPI -- creates --> Cache
-    HandlerAPI -- creates --> DataSource
+    User --> RpcManagerAPI
+    RpcManagerAPI -- creates --> Selector
+    RpcManagerAPI -- creates --> Tester
+    RpcManagerAPI -- creates --> Cache
+    RpcManagerAPI -- creates --> DataSource
 
     Selector -- uses --> DataSource
     Selector -- uses --> Cache
@@ -53,9 +53,9 @@ flowchart TD
     Cache -- reads/writes --> CacheFile
 
     Tester -- sends_requests_to --> Network
-    HandlerAPI -- sends_final_request_to --> Network
+    RpcManagerAPI -- sends_final_request_to --> Network
 
-    Helper[readContract Utility] -- uses --> HandlerAPI
+    Helper[readContract Utility] -- uses --> RpcManagerAPI
 
     style User fill:#D6EAF8,stroke:#333,stroke-width:2px
     style Network fill:#E8DAEF,stroke:#333,stroke-width:2px
@@ -69,7 +69,7 @@ flowchart TD
 - **`CacheManager`:**
   - Stores the `LatencyTestResult` map and the selected `fastestRpc` URL per chain.
   - Uses `.rpc-cache.json` (Node.js) or `localStorage` (browser). Detects environment via `typeof window`/`typeof process`.
-  - Default TTL is 1 hour (configurable via `RpcHandler` options).
+  - Default TTL is 1 hour (configurable via `Permit2RpcManager` options).
 - **`RpcSelector`:**
   - Orchestrates selection. Checks cache first (respecting TTL for `fastestRpc` but allowing potentially stale `latencyMap` for fallback).
   - If cache miss/invalid, gets URLs from `DataSource`, triggers `LatencyTester`.
@@ -80,14 +80,14 @@ flowchart TD
     4.  Returns `null` if no suitable RPC found.
   - Updates cache with full test results and selected RPC (if any).
   - Provides `findNextFastestRpc` using the same priority logic on the cached map.
-- **`RpcHandler`:**
+- **`Permit2RpcManager`:**
   - Main entry point. Instantiates dependencies.
   - `send(chainId, method, params)`: Gets fastest RPC from `RpcSelector`, executes call via `fetch`. On failure, calls `findNextFastestRpc` and retries once.
 - **`contract-utils.readContract`:**
   - Helper function exported from `src/index.ts`.
   - Uses `viem` (`encodeFunctionData`, `decodeFunctionResult`).
   - Requires user-provided `abi`.
-  - Calls `handler.send` to perform the underlying `eth_call`.
+  - Calls `manager.send` to perform the underlying `eth_call`.
 
 ## 3. Key Decisions & Trade-offs
 
@@ -96,11 +96,11 @@ flowchart TD
 - **Dynamic Leniency:** Implemented fallback to allow using RPCs that pass the critical bytecode check but are currently syncing (`status: 'syncing'`) _only if_ no fully 'ok' RPCs are available. This balances reliability with availability.
 - **Detailed Caching:** Cache stores the full `LatencyTestResult` map, preserving failure reasons for potential analysis or future blacklist implementation, even if a lenient selection was made.
 - **Manual ABI Provision:** `readContract` requires users to provide ABIs, avoiding the complexity and dependency issues of dynamic fetching (e.g., Etherscan API).
-- **Testing Strategy:** Unit tests use mocks (`tests/rpc-handler.test.ts`, `tests/contract-utils.test.ts`). Integration-style tests use real data source but mocked network (`tests/rpc-selector.test.ts`, `tests/latency-tester.test.ts`). The previous mocking issues with `RpcSelector` were resolved by using the real `ChainlistDataSource`.
+- **Testing Strategy:** Unit tests use mocks (`tests/permit2-rpc-manager.test.ts`, `tests/contract-utils.test.ts`). Integration-style tests use real data source but mocked network (`tests/rpc-selector.test.ts`, `tests/latency-tester.test.ts`). The previous mocking issues with `RpcSelector` were resolved by using the real `ChainlistDataSource`.
 
 ## 4. Current Status & Next Steps
 
 - Core functionality implemented and documented (`docs/`, `README.md`).
 - All 27 tests across 4 files pass (`bun test`).
-- Example code in `src/rpc-handler.ts` demonstrates live usage but is commented out due to public RPC unreliability against strict checks.
+- Example code in `src/permit2-rpc-manager.ts` demonstrates live usage but is commented out due to public RPC unreliability against strict checks.
 - **Next:** Refinement (error handling, config), improved test coverage, whitelist maintenance, consider write transaction support.

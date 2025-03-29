@@ -1,12 +1,12 @@
-# System Patterns: RPC Handler Rewrite
+# System Patterns: Permit2 RPC Manager Rewrite
 
 ## 1. High-Level Architecture
 
-The rewritten RPC handler will consist of several key components working together:
+The rewritten RPC manager will consist of several key components working together:
 
 ```mermaid
 flowchart TD
-    subgraph RPC Handler Core
+    subgraph Permit2 RPC Manager Core
         A[API Interface] --> B(Chain Manager)
         B --> C{RPC Selector}
         C --> D[Latency Tester]
@@ -26,7 +26,7 @@ flowchart TD
 
 ## 2. Component Descriptions
 
-- **API Interface:** The public-facing interface for the handler. It will expose methods for making RPC calls (e.g., `send(chainId, method, params)`). It abstracts the underlying complexity from the user.
+- **API Interface:** The public-facing interface for the manager. It will expose methods for making RPC calls (e.g., `send(chainId, method, params)`). It abstracts the underlying complexity from the user.
 - **Chain Manager:** Responsible for managing information about different blockchain networks (Chain IDs, known RPC endpoints).
 - **Chainlist Data Source:** Responsible for fetching and potentially updating the list of RPC endpoints from Chainlist. It filters for free endpoints and provides this data to the `RPC Selector`. This might involve fetching a pre-generated list or interacting with the Chainlist API/data source directly.
   - **Latency Tester:** Periodically tests the response time and validity of whitelisted RPC endpoints:
@@ -48,7 +48,7 @@ flowchart TD
       3. RPCs with `status: 'syncing'` (last resort)
       4. No selection if all RPCs have critical errors
   5.  Updates the cache with the detailed results and the selected endpoint (if any) via the `Cache Manager`.
-  6.  Returns the selected RPC endpoint URL (or null) to the `RpcHandler`.
+  6.  Returns the selected RPC endpoint URL (or null) to the `Permit2RpcManager`.
 
 ## 3. Key Design Patterns
 
@@ -62,7 +62,7 @@ flowchart TD
 
 ## 4. Data Flow (Simplified Request)
 
-1.  User calls `handler.send(chainId, method, params)`.
+1.  User calls `manager.send(chainId, method, params)`.
 2.  `API Interface` passes the request to `Chain Manager`.
 3.  `Chain Manager` asks `RPC Selector` for the best endpoint for `chainId`.
 4.  `RPC Selector` checks `Cache Manager`.

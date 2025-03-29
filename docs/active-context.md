@@ -1,4 +1,4 @@
-# Active Context: RPC Handler Rewrite - Post-Implementation
+# Active Context: Permit2 RPC Manager Rewrite - Post-Implementation
 
 ## 1. Current Focus
 
@@ -21,7 +21,7 @@ The project is in refinement phase, with recent focus on improving RPC selection
 
 - **Previous Activities:**
 
-- Completed core component implementation (`ChainlistDataSource`, `CacheManager`, `LatencyTester`, `RpcSelector`, `RpcHandler`).
+- Completed core component implementation (`ChainlistDataSource`, `CacheManager`, `LatencyTester`, `RpcSelector`, `Permit2RpcManager`).
 - Switched data source from full Chainlist data to a curated `src/rpc-whitelist.json`.
 - Enhanced `LatencyTester` to check Permit2 bytecode (`eth_getCode`) and sync status (`eth_syncing`).
 - Updated `CacheManager` to store detailed `LatencyTestResult` objects.

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, mock, Mock } from "bun:test";
 import type { Address, Hex } from "viem"; // Import Abi type
 import { encodeFunctionResult } from "viem";
 import { readContract } from "../src/contract-utils.js";
-import { RpcHandler } from "../src/rpc-handler.js";
+import { Permit2RpcManager } from "../src/permit2-rpc-manager.js";
 
 // Example ABI for testing basic types
 const testAbi = [
@@ -51,7 +51,7 @@ const erc20Abi = [
 ] as const;
 
 describe("readContract", () => {
-  let mockHandler: RpcHandler;
+  let mockRpcManager: Permit2RpcManager;
   let mockSendFn: Mock<(...args: any[]) => Promise<Hex | undefined>>;
   const testChainId = 1;
   const testAddress: Address = "0x1234567890123456789012345678901234567890";
@@ -59,9 +59,9 @@ describe("readContract", () => {
   const gnosisDaiAddress: Address = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
 
   beforeEach(() => {
-    // Mock the handler's send method
+    // Mock the manager's send method
     mockSendFn = mock(async (chainId, method, params) => {
-      console.log(`>>> MOCK handler.send called: chain=${chainId}, method=${method}, params=${JSON.stringify(params)}`);
+      console.log(`>>> MOCK manager.send called: chain=${chainId}, method=${method}, params=${JSON.stringify(params)}`);
       if (method === "eth_call") {
         const callData = params[0]?.data;
         // Simulate responses based on expected encoded call data
@@ -92,15 +92,15 @@ describe("readContract", () => {
       return undefined; // Default undefined for unexpected calls
     });
 
-    // Create a mock handler object
-    mockHandler = {
+    // Create a mock manager object
+    mockRpcManager = {
       send: mockSendFn,
     } as any;
   });
 
-  it("should call handler.send with correct eth_call parameters", async () => {
+  it("should call manager.send with correct eth_call parameters", async () => {
     await readContract({
-      handler: mockHandler,
+      manager: mockRpcManager,
       chainId: testChainId,
       address: testAddress,
       abi: testAbi,
@@ -112,7 +112,7 @@ describe("readContract", () => {
 
   it("should decode uint256 result correctly", async () => {
     const result = await readContract<bigint>({
-      handler: mockHandler,
+      manager: mockRpcManager,
       chainId: testChainId,
       address: testAddress,
       abi: testAbi,
@@ -123,7 +123,7 @@ describe("readContract", () => {
 
   it("should decode address result correctly", async () => {
     const result = await readContract<Address>({
-      handler: mockHandler,
+      manager: mockRpcManager,
       chainId: testChainId,
       address: testAddress,
       abi: testAbi,
@@ -136,7 +136,7 @@ describe("readContract", () => {
   it("should throw if function name is not in ABI", async () => {
     await expect(
       readContract({
-        handler: mockHandler,
+        manager: mockRpcManager,
         chainId: testChainId,
         address: testAddress,
         abi: testAbi,
@@ -146,11 +146,11 @@ describe("readContract", () => {
     expect(mockSendFn).not.toHaveBeenCalled();
   });
 
-  it("should throw if handler.send fails", async () => {
+  it("should throw if manager.send fails", async () => {
     mockSendFn.mockRejectedValueOnce(new Error("RPC Unavailable"));
     await expect(
       readContract({
-        handler: mockHandler,
+        manager: mockRpcManager,
         chainId: testChainId,
         address: testAddress,
         abi: testAbi,
@@ -167,7 +167,7 @@ describe("readContract", () => {
     });
     await expect(
       readContract({
-        handler: mockHandler,
+        manager: mockRpcManager,
         chainId: testChainId,
         address: testAddress,
         abi: testAbi,
@@ -176,21 +176,21 @@ describe("readContract", () => {
     ).rejects.toThrow(/Failed to decode result|Contract call reverted/);
   });
 
-  // --- Test with Mocked RpcHandler ---
+  // --- Test with Mocked Permit2RpcManager ---
   it("should fetch mocked DAI details from Gnosis (Chain 100)", async () => {
-    // Uses the mockHandler defined in beforeEach
+    // Uses the mockRpcManager defined in beforeEach
     console.log(`\n--- Fetching MOCKED DAI details for Gnosis (Chain ${gnosisChainId}) ---`);
     try {
       const [symbol, totalSupply] = await Promise.all([
         readContract<string>({
-          handler: mockHandler,
+          manager: mockRpcManager,
           chainId: gnosisChainId,
           address: gnosisDaiAddress,
           abi: erc20Abi,
           functionName: "symbol",
         }),
         readContract<bigint>({
-          handler: mockHandler,
+          manager: mockRpcManager,
           chainId: gnosisChainId,
           address: gnosisDaiAddress,
           abi: erc20Abi,
