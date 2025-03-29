@@ -132,18 +132,22 @@ describe("LatencyTester", () => {
     expect(results["https://timeout-rpc.com"]?.status).toBe("timeout");
   });
 
-  it("should return Infinity latency and syncing status if node is syncing", async () => {
+  it("should return measured latency and syncing status if node is syncing", async () => {
     const urls = ["https://syncing-rpc.com"];
     const results = await tester.testRpcUrls(urls);
-    expect(results["https://syncing-rpc.com"]?.latency).toBe(Infinity);
+    // Syncing nodes now return their actual latency, not Infinity
+    expect(results["https://syncing-rpc.com"]?.latency).toBeGreaterThan(0);
+    expect(results["https://syncing-rpc.com"]?.latency).toBeLessThan(Infinity);
     expect(results["https://syncing-rpc.com"]?.status).toBe("syncing");
   });
 
   // Restore bytecode test
-  it("should return Infinity latency and wrong_bytecode status if bytecode is incorrect", async () => {
+  it("should return measured latency and wrong_bytecode status if bytecode is incorrect", async () => {
     const urls = ["https://wrong-bytecode-rpc.com"];
     const results = await tester.testRpcUrls(urls);
-    expect(results["https://wrong-bytecode-rpc.com"]?.latency).toBe(Infinity);
+    // Nodes with wrong bytecode now return their actual latency, not Infinity
+    expect(results["https://wrong-bytecode-rpc.com"]?.latency).toBeGreaterThan(0);
+    expect(results["https://wrong-bytecode-rpc.com"]?.latency).toBeLessThan(Infinity);
     expect(results["https://wrong-bytecode-rpc.com"]?.status).toBe("wrong_bytecode");
   });
 

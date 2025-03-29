@@ -1,5 +1,5 @@
 import type { Address } from "viem"; // Import viem types for example
-import { CacheManager } from "./cache-manager.js";
+import { CacheManager } from "./cache-manager.js"; // CacheManager now accepts options
 import { ChainlistDataSource } from "./chainlist-data-source.js";
 import { readContract } from "./contract-utils.js"; // Import the helper
 import { LatencyTester } from "./latency-tester.js";
@@ -23,11 +23,13 @@ interface JsonRpcResponse {
   };
 }
 
+// Update options to include CacheManager options
 export interface Permit2RpcManagerOptions {
-  // Added export
   cacheTtlMs?: number;
   latencyTimeoutMs?: number;
   requestTimeoutMs?: number; // Timeout for the actual RPC call
+  nodeCachePath?: string; // Path for Node.js cache file
+  localStorageKey?: string; // Key for browser localStorage
 }
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000; // 10 seconds for RPC calls
@@ -41,7 +43,12 @@ export class Permit2RpcManager {
 
   constructor(options: Permit2RpcManagerOptions = {}) {
     this.dataSource = new ChainlistDataSource();
-    this.cacheManager = new CacheManager(options.cacheTtlMs);
+    // Pass relevant options to CacheManager constructor
+    this.cacheManager = new CacheManager({
+      cacheTtlMs: options.cacheTtlMs,
+      nodeCachePath: options.nodeCachePath,
+      localStorageKey: options.localStorageKey,
+    });
     this.latencyTester = new LatencyTester(options.latencyTimeoutMs);
     this.rpcSelector = new RpcSelector(this.dataSource, this.cacheManager, this.latencyTester);
     this.requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
@@ -181,7 +188,12 @@ const gnosisChainId = 100;
 async function main() {
   console.log("--- Starting Permit2RpcManager Example for Gnosis COW Token ---");
   // Use slightly longer timeouts for real network calls
-  const manager = new Permit2RpcManager({ latencyTimeoutMs: 7000, requestTimeoutMs: 15000 });
+  // Example: Provide a custom Node.js cache path
+  const manager = new Permit2RpcManager({
+    latencyTimeoutMs: 7000,
+    requestTimeoutMs: 15000,
+    // nodeCachePath: '/path/to/your/app/cache/rpc-manager.cache.json' // Example custom path
+  });
 
   try {
     console.log(`\n--- Testing Chain ID: ${gnosisChainId} (Gnosis) ---`);

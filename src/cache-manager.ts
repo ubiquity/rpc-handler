@@ -1,6 +1,6 @@
 import * as fs from "fs/promises";
+import * as os from "os"; // Import os module
 import * as path from "path";
-import { fileURLToPath } from "url";
 // Import the detailed result type using 'import type' for type-only imports
 import type { LatencyTestResult } from "./latency-tester.js";
 
@@ -18,23 +18,49 @@ type CacheData = Record<number, ChainCache>;
 const isBrowser = typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 const isNode = typeof process !== "undefined" && process.versions != null && process.versions.node != null;
 
-// --- Node.js Cache File Path ---
-let nodeCachePath: string | null = null;
-if (isNode) {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  // Default cache file in the project root
-  nodeCachePath = path.join(__dirname, "..", ".rpc-cache.json");
-}
-
 const DEFAULT_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const DEFAULT_NODE_CACHE_FILENAME = "permit2-rpc-manager.cache.json";
+const DEFAULT_LOCAL_STORAGE_KEY = "permit2RpcManagerCache";
+
+// Options for CacheManager constructor
+interface CacheManagerOptions {
+  cacheTtlMs?: number;
+  nodeCachePath?: string; // Allow overriding the Node.js cache file path
+  localStorageKey?: string;
+}
 
 export class CacheManager {
   private cache: CacheData = {};
   private cacheLoaded = false;
-  private cacheKey = "permit2RpcManagerCache"; // Key for localStorage
+  private cacheKey: string;
+  private nodeCachePath: string | null = null; // Store the determined path
+  private cacheTtlMs: number;
 
-  constructor(private cacheTtlMs: number = DEFAULT_CACHE_TTL_MS) {}
+  constructor(options: CacheManagerOptions = {}) {
+    this.cacheTtlMs = options.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
+    this.cacheKey = options.localStorageKey ?? DEFAULT_LOCAL_STORAGE_KEY;
+
+    // Determine Node.js cache path in constructor
+    if (isNode) {
+      if (options.nodeCachePath) {
+        // Use user-provided path directly
+        this.nodeCachePath = options.nodeCachePath;
+      } else {
+        // Default to system temp directory if no path provided
+        try {
+          this.nodeCachePath = path.join(os.tmpdir(), DEFAULT_NODE_CACHE_FILENAME);
+        } catch (e) {
+          console.error("Error determining default Node.js cache path in temp dir:", e);
+          this.nodeCachePath = null; // Fallback if temp dir fails
+        }
+      }
+      if (this.nodeCachePath) {
+        console.log(`CacheManager (Node.js): Using cache path: ${this.nodeCachePath}`);
+      } else {
+        console.warn("CacheManager (Node.js): Could not determine cache path. Caching will be disabled.");
+      }
+    }
+  }
 
   private async loadCache(): Promise<void> {
     if (this.cacheLoaded) return;
@@ -46,19 +72,20 @@ export class CacheManager {
           this.cache = JSON.parse(storedCache);
         }
       } catch (error) {
-        console.error("Failed to load cache from localStorage:", error);
+        console.error(`CacheManager (Browser): Failed to load cache from localStorage (key: ${this.cacheKey}):`, error);
         this.cache = {}; // Reset cache on error
       }
-    } else if (isNode && nodeCachePath) {
+    } else if (isNode && this.nodeCachePath) { // Use the instance path
       try {
-        const rawData = await fs.readFile(nodeCachePath, "utf-8");
+        const rawData = await fs.readFile(this.nodeCachePath, "utf-8");
         this.cache = JSON.parse(rawData);
       } catch (error: any) {
         if (error.code === "ENOENT") {
+          // File doesn't exist, which is fine on first load
           this.cache = {};
         } else {
-          console.error("Failed to load cache from file:", error);
-          this.cache = {};
+          console.error(`CacheManager (Node.js): Failed to load cache from file (${this.nodeCachePath}):`, error);
+          this.cache = {}; // Reset cache on other errors
         }
       }
     }
@@ -72,14 +99,17 @@ export class CacheManager {
       try {
         window.localStorage.setItem(this.cacheKey, JSON.stringify(this.cache));
       } catch (error) {
-        console.error("Failed to save cache to localStorage:", error);
+        console.error(`CacheManager (Browser): Failed to save cache to localStorage (key: ${this.cacheKey}):`, error);
       }
-    } else if (isNode && nodeCachePath) {
+    } else if (isNode && this.nodeCachePath) { // Use the instance path
       try {
+        // Ensure directory exists before writing
+        const dir = path.dirname(this.nodeCachePath);
+        await fs.mkdir(dir, { recursive: true });
         // Save detailed latency map
-        await fs.writeFile(nodeCachePath, JSON.stringify(this.cache, null, 2));
+        await fs.writeFile(this.nodeCachePath, JSON.stringify(this.cache, null, 2));
       } catch (error) {
-        console.error("Failed to save cache to file:", error);
+        console.error(`CacheManager (Node.js): Failed to save cache to file (${this.nodeCachePath}):`, error);
       }
     }
   }
