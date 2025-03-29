@@ -1,3 +1,6 @@
 [submodule "lib/chainlist"]
 	path = lib/chainlist
 	url = https://github.com/DefiLlama/chainlist.git
+[submodule "lib/pay.ubq.fi"]
+	path = lib/pay.ubq.fi
+	url = https://github.com/0x4007/pay.ubq.fi.git

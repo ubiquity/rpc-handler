@@ -1,18 +1,17 @@
-import type { Address } from "viem"; // Import viem types for example
-import { CacheManager } from "./cache-manager.ts"; // Revert to .ts extension
-import { ChainlistDataSource } from "./chainlist-data-source.ts"; // Revert to .ts extension
-import { readContract } from "./contract-utils.ts"; // Revert to .ts extension
-import { LatencyTester } from "./latency-tester.ts"; // Revert to .ts extension
-import { RpcSelector } from "./rpc-selector.ts"; // Revert to .ts extension
+import type { Address } from "viem";
+import { CacheManager } from "./cache-manager.ts";
+import { ChainlistDataSource } from "./chainlist-data-source.ts";
+import { readContract } from "./contract-utils.ts";
+import { LatencyTester } from "./latency-tester.ts";
+import { RpcSelector } from "./rpc-selector.ts";
 
-// Re-define JSON-RPC request/response interfaces (or import if modularized later)
+// Uncommented JSON-RPC interfaces
 interface JsonRpcRequest {
   jsonrpc: "2.0";
   method: string;
   params?: any[];
   id: number | string;
 }
-
 interface JsonRpcResponse {
   jsonrpc: "2.0";
   id: number | string;
@@ -23,80 +22,61 @@ interface JsonRpcResponse {
   };
 }
 
-// Update options to include CacheManager options
 export interface Permit2RpcManagerOptions {
   cacheTtlMs?: number;
   latencyTimeoutMs?: number;
-  requestTimeoutMs?: number; // Timeout for the actual RPC call
-  nodeCachePath?: string; // Path for Node.js cache file
-  localStorageKey?: string; // Key for browser localStorage
-  logLevel?: "debug" | "info" | "warn" | "error" | "none"; // Add log level option
+  requestTimeoutMs?: number;
+  nodeCachePath?: string;
+  localStorageKey?: string;
+  logLevel?: "debug" | "info" | "warn" | "error" | "none";
+  initialRpcData?: { rpcs: { [chainId: string]: string[] } };
 }
 
-const DEFAULT_REQUEST_TIMEOUT_MS = 10000; // 10 seconds for RPC calls
-const DEFAULT_LOG_LEVEL = "warn"; // Default log level
+const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
+const DEFAULT_LOG_LEVEL = "warn";
 
-// Define log level hierarchy (higher number means higher priority)
 const LOG_LEVEL_HIERARCHY: Record<NonNullable<Permit2RpcManagerOptions["logLevel"]>, number> = {
-  debug: 0,
-  info: 1,
-  warn: 2,
-  error: 3,
-  none: 4,
+  debug: 0, info: 1, warn: 2, error: 3, none: 4,
 };
 
 export class Permit2RpcManager {
   private dataSource: ChainlistDataSource;
   private cacheManager: CacheManager;
   private latencyTester: LatencyTester;
-  private rpcSelector: RpcSelector;
+  public rpcSelector: RpcSelector;
   private requestTimeoutMs: number;
-  private logLevel: NonNullable<Permit2RpcManagerOptions["logLevel"]>; // Store the log level
-  private configuredLogLevelValue: number; // Store the numeric value for comparison
+  private logLevel: NonNullable<Permit2RpcManagerOptions["logLevel"]>;
+  private configuredLogLevelValue: number;
+  private rpcIndexMap = new Map<number, number>(); // Map to track next RPC index per chain
 
   constructor(options: Permit2RpcManagerOptions = {}) {
     this.logLevel = options.logLevel ?? DEFAULT_LOG_LEVEL;
     this.configuredLogLevelValue = LOG_LEVEL_HIERARCHY[this.logLevel];
-    const logger = this._log.bind(this); // Create bound logger once
+    const logger = this._log.bind(this);
 
-    // Instantiate dependencies in correct order, passing logger
-    this.dataSource = new ChainlistDataSource(logger);
+    this.dataSource = new ChainlistDataSource(logger, options.initialRpcData);
     this.cacheManager = new CacheManager({
       cacheTtlMs: options.cacheTtlMs,
-      nodeCachePath: options.nodeCachePath,
       localStorageKey: options.localStorageKey,
-      logger: logger, // Pass logger to CacheManager
+      logger: logger,
     });
-    this.latencyTester = new LatencyTester(options.latencyTimeoutMs, logger); // Pass logger to LatencyTester
-    this.rpcSelector = new RpcSelector(this.dataSource, this.cacheManager, this.latencyTester, logger); // Pass logger to RpcSelector
+    this.latencyTester = new LatencyTester(options.latencyTimeoutMs, logger);
+    this.rpcSelector = new RpcSelector(this.dataSource, this.cacheManager, this.latencyTester, logger);
     this.requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
   }
 
-  // Internal logger method
   private _log(level: "debug" | "info" | "warn" | "error", message: string, ...optionalParams: any[]): void {
-    if (this.logLevel === "none") {
-      return;
-    }
+    if (this.logLevel === "none") return;
     const messageLevelValue = LOG_LEVEL_HIERARCHY[level];
     if (messageLevelValue >= this.configuredLogLevelValue) {
-      switch (level) {
-        case "debug":
-        case "info":
-          console.log(`[Permit2RPC:${level}] ${message}`, ...optionalParams);
-          break;
-        case "warn":
-          console.warn(`[Permit2RPC:${level}] ${message}`, ...optionalParams);
-          break;
-        case "error":
-          console.error(`[Permit2RPC:${level}] ${message}`, ...optionalParams);
-          break;
-      }
+      const logFn = console[level] || console.log;
+      logFn(`[Permit2RPC:${level}] ${message}`, ...optionalParams);
     }
   }
 
   /**
-   * Sends a JSON-RPC request to the fastest available RPC for the given chain.
-   * Handles fallback by iterating through a ranked list of available RPCs.
+   * Sends a JSON-RPC request, trying available RPCs in a round-robin fashion based on the ranked list.
+   * Handles fallback by iterating through the list.
    */
   async send<T = any>(chainId: number, method: string, params: any[] = []): Promise<T> {
     const rankedRpcList = await this.rpcSelector.getRankedRpcList(chainId);
@@ -106,38 +86,50 @@ export class Permit2RpcManager {
       throw new Error(`No available RPC endpoints found for chainId ${chainId}.`);
     }
 
+    // --- Round-Robin Start Index ---
+    const currentIndex = this.rpcIndexMap.get(chainId) || 0;
+    const startIndex = currentIndex % rankedRpcList.length; // Ensure start index is valid
+    // Immediately update the index for the *next* concurrent call
+    this.rpcIndexMap.set(chainId, (currentIndex + 1) % rankedRpcList.length);
+    this._log("debug", `Starting RPC attempt loop for chain ${chainId} at index ${startIndex} (of ${rankedRpcList.length}). Next call starts at index ${this.rpcIndexMap.get(chainId)}.`);
+    // --- End Round-Robin ---
+
     let lastError: any = null;
 
-    for (const rpcUrl of rankedRpcList) {
+    // Iterate through the ranked list, starting from startIndex, wrapping around once
+    for (let i = 0; i < rankedRpcList.length; i++) {
+      const listIndex = (startIndex + i) % rankedRpcList.length;
+      const rpcUrl = rankedRpcList[listIndex];
+
+      if (!rpcUrl) continue; // Should not happen, but safety check
+
       try {
-        this._log("debug", `Attempting RPC call to ${rpcUrl} for chain ${chainId}: ${method}`);
+        this._log("debug", `Attempt #${i + 1}: Trying RPC call to ${rpcUrl} for chain ${chainId}: ${method}`);
         const result = await this.executeRpcCall<T>(rpcUrl, method, params);
         this._log("debug", `RPC call successful for ${rpcUrl}`);
         return result; // Success! Return the result.
       } catch (error: any) {
-        lastError = error; // Store the error in case all attempts fail
+        lastError = error;
         this._log("warn", `RPC call attempt failed for ${rpcUrl} (chain ${chainId}): ${error.message}. Trying next RPC...`);
         // Continue to the next RPC in the list
       }
     }
 
     // If the loop finishes, all RPCs failed.
-    this._log("error", `All available RPC endpoints failed for chainId ${chainId}. Last error: ${lastError?.message}`);
+    this._log("error", `All available RPC endpoints failed for chainId ${chainId} after ${rankedRpcList.length} attempts. Last error: ${lastError?.message}`);
     throw new Error(`All available RPC endpoints failed for chainId ${chainId}. Last error: ${lastError?.message}`);
   }
 
   /**
    * Executes a single JSON-RPC call to the specified URL.
+   * Made public temporarily FOR TESTING PURPOSES ONLY.
    */
-  private async executeRpcCall<T>(url: string, method: string, params: any[]): Promise<T> {
+  public async executeRpcCall<T>(url: string, method: string, params: any[]): Promise<T> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.requestTimeoutMs);
 
     const requestBody: JsonRpcRequest = {
-      jsonrpc: "2.0",
-      method,
-      params,
-      id: `rpc-call-${Date.now()}`,
+      jsonrpc: "2.0", method, params, id: `rpc-call-${Date.now()}`,
     };
 
     try {
@@ -150,8 +142,16 @@ export class Permit2RpcManager {
       clearTimeout(timeoutId);
       if (!response.ok) throw new Error(`HTTP error ${response.status} ${response.statusText}`);
       const responseData: JsonRpcResponse = await response.json();
-      if (responseData.error) throw new Error(`RPC error ${responseData.error.code}: ${responseData.error.message}`);
-      if (responseData.result === undefined) this._log("warn", `RPC response for ${method} had undefined result.`);
+      // Check if error exists before accessing its properties
+      if (responseData.error) {
+           throw new Error(`RPC error ${responseData.error.code}: ${responseData.error.message}`);
+      }
+      // Check if result is explicitly undefined (it could be null which is valid JSON-RPC)
+      if (responseData.result === undefined) {
+          this._log("warn", `RPC response for ${method} had undefined result.`);
+          // Depending on expected behavior, might need to throw or return differently
+      }
+      // Cast should be safe now if no error was thrown
       return responseData.result as T;
     } catch (error: any) {
       clearTimeout(timeoutId);
@@ -162,6 +162,7 @@ export class Permit2RpcManager {
 }
 
 // --- Example Usage ---
+// ... (rest of the file remains the same) ...
 
 // Standard ERC20 ABI subset
 const erc20Abi = [
@@ -224,26 +225,19 @@ const gnosisChainId = 100;
 
 async function main() {
   console.log("--- Starting Permit2RpcManager Example for Gnosis COW Token ---");
-  // Use slightly longer timeouts for real network calls
-  // Example: Provide a custom Node.js cache path
   const manager = new Permit2RpcManager({
     latencyTimeoutMs: 7000,
     requestTimeoutMs: 15000,
-    // nodeCachePath: '/path/to/your/app/cache/rpc-manager.cache.json' // Example custom path
   });
 
   try {
     console.log(`\n--- Testing Chain ID: ${gnosisChainId} (Gnosis) ---`);
-    // Optional: Fetch block number first to ensure basic connectivity
-    // const blockNumber = await manager.send<string>(gnosisChainId, 'eth_blockNumber');
-    // console.log(`Gnosis Chain - Latest Block Number: ${parseInt(blockNumber, 16)} (${blockNumber})`);
-
     console.log(`\n--- Fetching COW Token Symbol on Gnosis ---`);
     const symbol = await readContract<string>({
       manager,
       chainId: gnosisChainId,
       address: cowTokenAddressGnosis,
-      abi: erc20Abi, // Using the standard ERC20 ABI subset
+      abi: erc20Abi,
       functionName: "symbol",
     });
 

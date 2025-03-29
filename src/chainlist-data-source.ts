@@ -1,8 +1,8 @@
-// Directly import the JSON data using an import attribute.
-import whitelistJson from "./rpc-whitelist.json" with { type: "json" };
-// Remove fs and path imports as they are Node.js specific
-// import * as fs from "fs/promises";
-// import * as path from "path";
+// Directly import the JSON data as a fallback.
+import fallbackWhitelistJson from "./rpc-whitelist.json" with { type: "json" };
+
+// Define a logger type
+type LoggerFn = (level: "debug" | "info" | "warn" | "error", message: string, ...optionalParams: any[]) => void;
 
 // Interface for the structure of rpc-whitelist.json
 interface RpcWhitelist {
@@ -11,32 +11,32 @@ interface RpcWhitelist {
   };
 }
 
-// Define a logger type
-type LoggerFn = (level: "debug" | "info" | "warn" | "error", message: string, ...optionalParams: any[]) => void;
-
 // Cast the imported JSON to the defined interface
-const jsonData = whitelistJson as RpcWhitelist;
+const fallbackJsonData = fallbackWhitelistJson as RpcWhitelist;
 
 export class ChainlistDataSource {
-  // Store data in the format { chainId: number, rpcUrls: string[] }
   private whitelistData: { chainId: number; rpcUrls: string[] }[] = [];
   private initialized = false;
   private log: LoggerFn;
 
-  constructor(logger?: LoggerFn) {
-    // Use provided logger or a no-op function if none is given
+  // Accept optional initial data and logger
+  constructor(logger?: LoggerFn, initialData?: RpcWhitelist) {
     this.log = logger || (() => {});
-    // Initialize data directly in the constructor since import is synchronous
-    this.loadData();
+    // Use initialData if provided, otherwise use the imported fallback
+    const sourceData = initialData || fallbackJsonData;
+    this.loadData(sourceData); // Pass the data source to loadData
   }
 
-  // Make loadData synchronous as file reading is removed
-  private loadData(): void {
+  // Modify loadData to accept the data source
+  private loadData(jsonData: RpcWhitelist): void {
     if (this.initialized) {
       return;
     }
+    this.log("info", "Initializing whitelist data...");
     try {
-      // Transform the imported data directly
+      // Ensure rpcs object exists
+      jsonData.rpcs = jsonData.rpcs || {};
+      // Transform the provided data directly
       this.whitelistData = Object.entries(jsonData.rpcs).map(([chainIdStr, urls]) => ({
         chainId: parseInt(chainIdStr, 10),
         rpcUrls: urls.filter((url) => typeof url === "string" && url.startsWith("https://") && !url.includes("${")), // Pre-filter valid URLs
@@ -45,7 +45,7 @@ export class ChainlistDataSource {
       this.initialized = true;
       this.log("info", `Successfully initialized whitelist data for ${this.whitelistData.length} chains.`);
     } catch (error) {
-      this.log("error", "Failed to process imported RPC whitelist data:", error);
+      this.log("error", "Failed to process RPC whitelist data:", error);
       this.whitelistData = [];
       this.initialized = true; // Prevent retries on error
     }
@@ -53,24 +53,16 @@ export class ChainlistDataSource {
 
   // Make getRpcUrls synchronous
   getRpcUrls(chainId: number): string[] {
-    // Data is loaded in constructor, no need for await
-    // await this.loadData();
-
     const chainEntry = this.whitelistData.find((c) => c.chainId === chainId);
-
     if (!chainEntry) {
       this.log("warn", `No whitelisted RPCs found for chainId: ${chainId}`);
       return [];
     }
-
-    // Return the pre-filtered URLs
     return chainEntry.rpcUrls;
   }
 
   // Make getAllChainIds synchronous
   getAllChainIds(): number[] {
-    // Data is loaded in constructor, no need for await
-    // await this.loadData();
     return this.whitelistData.map((chain) => chain.chainId);
   }
 }

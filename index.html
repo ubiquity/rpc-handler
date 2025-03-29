@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permit2 RPC Manager - Browser Test</title>
+    <style>
+        body { font-family: sans-serif; padding: 1em; display: flex; gap: 1em;}
+        #controls, #output-area { flex: 1; }
+        textarea { width: 95%; min-height: 200px; font-family: monospace; margin-bottom: 10px;}
+        pre { background-color: #eee; padding: 1em; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; max-height: 600px; overflow-y: auto;}
+        button { margin: 5px 5px 5px 0; padding: 8px 12px; }
+        .error { color: red; }
+        .success { color: green; }
+        .info { color: blue; }
+        .log-entry { margin-bottom: 5px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <h1>Permit2 RPC Manager - Browser Test</h1>
+        <p>Open the browser's developer console to see detailed logs.</p>
+
+        <div>
+            <label for="rpcWhitelistText">RPC Whitelist Data (Edit to test failover by removing primary RPCs):</label><br>
+            <textarea id="rpcWhitelistText"></textarea><br>
+            <button id="initButton">Initialize/Re-Initialize Manager</button>
+        </div>
+        <hr>
+        <div>
+            <label for="chainIdInput">Chain ID:</label>
+            <input type="number" id="chainIdInput" value="100">
+            <button id="testButton" disabled>Test Latency & Get Fastest RPC</button>
+            <button id="chainIdButton" disabled>Call eth_chainId</button>
+            <button id="wxdaiButton" disabled>Check WXDAI Balances (Gnosis)</button>
+        </div>
+    </div>
+
+    <div id="output-area">
+        <h2>Result / Status Log:</h2>
+        <pre id="output">Initialize Manager first...</pre>
+    </div>
+
+    <script type="module">
+        // Import from the built distribution file
+        import { Permit2RpcManager, readContract } from './dist/index.js';
+
+        const outputEl = document.getElementById('output');
+        const initButton = document.getElementById('initButton');
+        const testButton = document.getElementById('testButton');
+        const chainIdButton = document.getElementById('chainIdButton');
+        const wxdaiButton = document.getElementById('wxdaiButton');
+        const chainIdInput = document.getElementById('chainIdInput');
+        const rpcWhitelistText = document.getElementById('rpcWhitelistText');
+
+        // Constants for WXDAI test
+        const GNOSIS_CHAIN_ID = 100;
+        const WXDAI_ADDRESS = '0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d';
+        const ADDRESS_ZERO_BALANCE = '0xd9530F3fbBEa11beD01DC09E79318f2f20223716';
+        const ADDRESS_100_BALANCE = '0x054Ec26398549588F3c958719bD17CC1e6E97c3C';
+        const EXPECTED_BALANCE_100 = 100001000000000000000n; // 100.001 * 10^18
+
+        const erc20AbiBalanceOf = [
+          {
+            constant: true,
+            inputs: [{ name: "_owner", type: "address" }],
+            name: "balanceOf",
+            outputs: [{ name: "balance", type: "uint256" }],
+            payable: false,
+            stateMutability: "view",
+            type: "function",
+          },
+        ];
+
+        let manager = null; // Initialize manager as null
+
+        // Keep track of logs to display on page
+        let logs = [];
+        function logOutput(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}][${type.toUpperCase()}] ${typeof message === 'string' ? message : JSON.stringify(message)}`;
+            logs.unshift(logEntry); // Add to beginning
+            logs = logs.slice(0, 100); // Keep max 100 logs
+            outputEl.textContent = logs.join('\n');
+            outputEl.className = type; // Style based on last message type
+            // Also log to console
+            console[type === 'error' ? 'error' : 'log'](message);
+        }
+
+        // Function to fetch and load default whitelist
+        async function loadDefaultWhitelist() {
+            try {
+                const response = await fetch('./src/rpc-whitelist.json'); // Fetch relative to HTML
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                rpcWhitelistText.value = JSON.stringify(data, null, 2);
+                logOutput("Default rpc-whitelist.json loaded into textarea.", "info");
+            } catch (e) {
+                logOutput(`Error loading default rpc-whitelist.json: ${e.message}`, "error");
+                rpcWhitelistText.value = '{\n  "rpcs": {}\n}'; // Default empty structure
+            }
+        }
+
+        // Initialize Manager Function
+        function initializeManager() {
+             logOutput('Initializing Permit2RpcManager with logLevel: debug...');
+             let initialRpcData;
+             try {
+                 initialRpcData = JSON.parse(rpcWhitelistText.value);
+                 if (!initialRpcData || typeof initialRpcData !== 'object' || !initialRpcData.rpcs) {
+                     throw new Error("Invalid JSON structure. Must have a top-level 'rpcs' object.");
+                 }
+             } catch (e) {
+                  logOutput(`Error parsing JSON from textarea: ${e.message}`, 'error');
+                  manager = null; // Ensure manager is null on error
+                  testButton.disabled = true;
+                  chainIdButton.disabled = true;
+                  wxdaiButton.disabled = true;
+                  return;
+             }
+
+             try {
+                 manager = new Permit2RpcManager({
+                     logLevel: 'debug',
+                     latencyTimeoutMs: 7000,
+                     requestTimeoutMs: 10000,
+                     initialRpcData: initialRpcData // Pass data from textarea
+                 });
+                 logOutput('Manager initialized successfully with data from textarea.', 'success');
+                 testButton.disabled = false;
+                 chainIdButton.disabled = false;
+                 wxdaiButton.disabled = false;
+             } catch (err) {
+                 logOutput(`Error initializing manager: ${err.message}`, 'error');
+                 manager = null;
+                 testButton.disabled = true;
+                 chainIdButton.disabled = true;
+                 wxdaiButton.disabled = true;
+             }
+        }
+
+        // --- Event Listeners ---
+        initButton.addEventListener('click', initializeManager);
+
+        testButton.addEventListener('click', async () => {
+            if (!manager) return logOutput('Manager not initialized. Click "Initialize Manager" first.', 'error');
+            const chainId = parseInt(chainIdInput.value, 10);
+            logOutput(`Testing latency for Chain ID: ${chainId}...`);
+            try {
+                const rankedList = await manager.rpcSelector.getRankedRpcList(chainId);
+                if (rankedList.length > 0) {
+                    logOutput(`Latency test complete. Fastest usable RPC found: ${rankedList[0]}\nFull ranked list:\n${rankedList.join('\n')}`, 'success');
+                } else {
+                    logOutput(`Latency test complete. No usable RPCs found for chain ${chainId}. Check console for CORS/network errors or whitelist content.`, 'error');
+                }
+            } catch (err) {
+                logOutput(`Error during latency test: ${err.message}`, 'error');
+            }
+        });
+
+         chainIdButton.addEventListener('click', async () => {
+            if (!manager) return logOutput('Manager not initialized. Click "Initialize Manager" first.', 'error');
+             const chainId = parseInt(chainIdInput.value, 10);
+            logOutput(`Calling eth_chainId for Chain ID: ${chainId}...`);
+            try {
+                const result = await manager.send(chainId, 'eth_chainId');
+                logOutput(`eth_chainId successful. Result: ${result} (Chain ID: ${parseInt(result, 16)})`, 'success');
+            } catch (err) {
+                logOutput(`Error calling eth_chainId: ${err.message}`, 'error');
+            }
+        });
+
+        wxdaiButton.addEventListener('click', async () => {
+             if (!manager) return logOutput('Manager not initialized. Click "Initialize Manager" first.', 'error');
+             logOutput(`Checking WXDAI balances on Gnosis (Chain ${GNOSIS_CHAIN_ID})...`);
+
+             try {
+                const results = await Promise.allSettled([
+                    readContract({
+                        manager,
+                        chainId: GNOSIS_CHAIN_ID,
+                        address: WXDAI_ADDRESS,
+                        abi: erc20AbiBalanceOf,
+                        functionName: 'balanceOf',
+                        args: [ADDRESS_ZERO_BALANCE],
+                        logger: (level, msg, ...params) => logOutput(`[ReadContract:${level}] ${msg} ${params.join(' ')}`, level) // Pass logger
+                    }),
+                     readContract({
+                        manager,
+                        chainId: GNOSIS_CHAIN_ID,
+                        address: WXDAI_ADDRESS,
+                        abi: erc20AbiBalanceOf,
+                        functionName: 'balanceOf',
+                        args: [ADDRESS_100_BALANCE],
+                        logger: (level, msg, ...params) => logOutput(`[ReadContract:${level}] ${msg} ${params.join(' ')}`, level) // Pass logger
+                    })
+                ]);
+
+                let success = true;
+                let summary = 'WXDAI Balance Check Results:\n';
+
+                // Check result for ADDRESS_ZERO_BALANCE
+                if (results[0].status === 'fulfilled') {
+                    const balance = BigInt(results[0].value);
+                    summary += ` - Address ...${ADDRESS_ZERO_BALANCE.slice(-4)}: ${balance === 0n ? 'OK (0)' : `FAIL (Expected 0, Got ${balance})`}\n`;
+                    if (balance !== 0n) success = false;
+                } else {
+                    summary += ` - Address ...${ADDRESS_ZERO_BALANCE.slice(-4)}: FAILED (${results[0].reason?.message || 'Unknown error'})\n`;
+                    success = false;
+                }
+
+                 // Check result for ADDRESS_100_BALANCE
+                if (results[1].status === 'fulfilled') {
+                    const balance = BigInt(results[1].value);
+                     summary += ` - Address ...${ADDRESS_100_BALANCE.slice(-4)}: ${balance === EXPECTED_BALANCE_100 ? `OK (${balance})` : `FAIL (Expected ${EXPECTED_BALANCE_100}, Got ${balance})`}\n`;
+                     if (balance !== EXPECTED_BALANCE_100) success = false;
+                } else {
+                    summary += ` - Address ...${ADDRESS_100_BALANCE.slice(-4)}: FAILED (${results[1].reason?.message || 'Unknown error'})\n`;
+                    success = false;
+                }
+
+                logOutput(summary, success ? 'success' : 'error');
+
+             } catch (err) {
+                 logOutput(`Error during WXDAI balance check: ${err.message}`, 'error');
+             }
+        });
+
+        // Load default whitelist on page load
+        loadDefaultWhitelist();
+
+    </script>
+</body>
+</html>
