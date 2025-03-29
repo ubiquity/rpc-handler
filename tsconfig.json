@@ -22,6 +22,7 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "declarationMap": true,
+    "sourceMap": true, // Add this to generate source maps for declaration files
     "outDir": "dist",
 
     /* Lib */

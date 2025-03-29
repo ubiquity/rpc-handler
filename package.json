@@ -28,7 +28,7 @@
     "src/rpc-whitelist.json"
   ],
   "scripts": {
-    "build": "bun build ./src/index.ts --outdir ./dist --target node && tsc --emitDeclarationOnly --outDir dist",
+    "build": "bun build ./src/index.ts --outdir ./dist --target node --sourcemap && tsc --emitDeclarationOnly --outDir dist",
     "start": "bun run src/index.ts",
     "test": "bun test",
     "prepublishOnly": "bun run build",
