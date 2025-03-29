@@ -115,10 +115,10 @@ describe("Client Integration Tests - Failover Simulation", () => {
     // Assert that all calls succeeded by falling back
     expect(fulfilledCount).toBe(addressesToTest.length);
     expect(rejectedCount).toBe(0);
-    // Check that the primary RPC was indeed called and failed multiple times
-    expect(primaryFailCount).toBe(addressesToTest.length); // Should be exactly 5 failures
-    // The fallbackSuccessCount check is removed as the *specific* fallback URL might also fail,
-    // but the test passes if *any* subsequent RPC in the list succeeds for all calls.
+    // With round-robin start index, we don't expect primaryFailCount or fallbackSuccessCount to be 5.
+    // The important part is that all calls succeeded despite the simulated failure of the primary RPC
+    // when it was encountered. We can check that *at least one* primary failure was simulated.
+    expect(primaryFailCount).toBeGreaterThanOrEqual(1);
 
     // Restore original method (though typically handled by beforeEach)
     manager.executeRpcCall = originalExecuteRpcCall;

@@ -1,6 +1,6 @@
 {
   "name": "@pavlovcik/permit2-rpc-manager",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "author": "0x4007",
   "description": "Intelligent RPC manager with Permit2 validation and advanced fallback strategy",
   "keywords": [
