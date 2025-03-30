@@ -16,9 +16,9 @@
 - `RpcSelector` ranks RPCs (`ok` > `wrong_bytecode` > `syncing` > latency), prevents concurrent latency tests per chain.
 - `Permit2RpcManager` main class:
     - Integrates all components.
-    - Provides `send` method with robust iterative fallback and round-robin starting point.
+    - Provides `send` method with robust iterative fallback, round-robin starting point, and runtime failure cooldown (`runtimeFailureCooldownMs`).
     - Provides `readContract` helper (via `contract-utils.ts`).
-    - Offers configurable options (`cacheTtlMs`, `latencyTimeoutMs`, `requestTimeoutMs`, `logLevel`, `initialRpcData`, `localStorageKey`).
+    - Offers configurable options (`cacheTtlMs`, `latencyTimeoutMs`, `requestTimeoutMs`, `logLevel`, `initialRpcData`, `localStorageKey`, `runtimeFailureCooldownMs`).
 - `src/index.ts` exports main components.
 - Unit tests (`bun test`) updated and passing.
 - Integration test (`tests/client-integration.test.ts`) added to simulate concurrent load and verify failover.
@@ -35,7 +35,8 @@
 - ✅ **Test Suite:** Fixed unit tests, added integration test for failover, added browser test page.
 - ✅ **Development Workflow:** Added `dev:browser` script with `live-server`.
 - ✅ **Release Workflow:** Added automated `release:*` scripts.
-- ✅ **Documentation:** Updated `README.md` and `docs/*` files.
+- ✅ **Runtime Cooldown:** Added runtime failure tracking and cooldown to `send` method.
+- ✅ **Documentation:** Updated `README.md` and `docs/*` files (including runtime cooldown).
 
 ## 4. Known Issues / Blockers
 

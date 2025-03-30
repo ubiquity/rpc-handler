@@ -12,6 +12,7 @@ The library has undergone significant refinement to improve reliability, cross-e
     - Fixed Deno import issues by reverting internal `src/` imports to use the `.ts` extension.
 - **Failover Enhancement:**
     - Refactored `Permit2RpcManager.send` to use an iterative fallback loop, trying all available RPCs from the ranked list before failing.
+    - **Added runtime failure tracking and cooldown:** Implemented `runtimeFailureCooldownMs` option and logic in `send` to temporarily skip RPCs that fail during runtime, preventing repeated attempts on faulty endpoints.
     - Implemented round-robin starting point selection in `send` to distribute load across RPCs during concurrent requests.
     - Added locking in `RpcSelector` to prevent concurrent latency tests for the same chain, resolving browser `ERR_INSUFFICIENT_RESOURCES` issues under load.
     - Validated the improved failover logic with a new integration test (`tests/client-integration.test.ts`) simulating concurrent calls and primary RPC failure.
@@ -43,7 +44,7 @@ The library has undergone significant refinement to improve reliability, cross-e
 
 - **Architecture:** Maintained the core architecture (separate components, latency testing, ranked selection) but significantly improved the fallback mechanism and environment compatibility. Did *not* switch to dependency injection for the RPC client to preserve core features.
 - **Browser Compatibility:** Achieved via build-time defines and physical separation of Node-specific code (`cache-manager.node.ts`). Relies on a CORS-friendly `rpc-whitelist.json` for optimal browser function.
-- **Failover:** Moved from single fallback to iterative round-robin approach for better resilience and load distribution.
+- **Failover:** Moved from single fallback to iterative round-robin approach with runtime cooldown for better resilience and load distribution.
 - **Logging:** Made configurable via `logLevel` option.
 - **Caching:** Default `CacheManager` uses `localStorage`. Node file caching is opt-in/separate.
 - **Whitelist Management:** Added scripts to automate updates and basic testing from the Chainlist submodule.

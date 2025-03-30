@@ -9,7 +9,7 @@ An intelligent RPC manager for EVM-compatible chains that automatically selects 
   - For Permit2-related operations: Only uses RPCs with correct Permit2 bytecode
 - **Whitelisting:** Uses a configurable `src/rpc-whitelist.json` to manage the pool of RPCs to test.
 - **Caching:** Caches detailed latency test results (including status/errors) in `.rpc-cache.json` (Node.js) or `localStorage` (browser) to speed up subsequent requests (default 1-hour TTL).
-- **Robust Fallback:** Automatically iterates through the ranked list of available RPCs if the initial attempt fails, ensuring higher resilience. Uses round-robin selection for initial attempts across concurrent requests to distribute load.
+- **Robust Fallback:** Automatically iterates through the ranked list of available RPCs if the initial attempt fails. Uses round-robin selection for initial attempts across concurrent requests to distribute load. Includes a runtime cooldown mechanism (`runtimeFailureCooldownMs`) to temporarily skip RPCs that fail during operation, preventing repeated attempts on temporarily faulty endpoints.
 - **Contract Interaction:** Includes a `readContract` helper function (using `viem`) for easy read-only smart contract calls (requires user-provided ABI).
 - **Configurable Logging:** Control log verbosity (`debug`, `info`, `warn`, `error`, `none`) via constructor options. Default is `warn`.
 - **Isomorphic:** Designed for both Node.js/Bun backend and browser/worker environments. Uses `localStorage` for caching in browsers and defaults to a temporary file in Node.js (configurable path).
@@ -35,6 +35,7 @@ async function example() {
     requestTimeoutMs: 10000, // Timeout for actual RPC calls
     // cacheTtlMs: 60 * 60 * 1000, // Default is 1 hour
     // logLevel: 'info', // Default is 'warn'
+    // runtimeFailureCooldownMs: 60000, // Default is 60s. Temporarily skip RPCs that fail during runtime.
     // nodeCachePath: '/path/to/my/cache.json', // Optional: Specify cache file path for Node.js
     // initialRpcData: { rpcs: { '1': ['https://my-custom-rpc.com'] } } // Optional: Override default whitelist
   });
@@ -154,7 +155,7 @@ This prioritization ensures:
 - Basic operations (like `eth_call` for token symbol) work reliably by using any responsive RPC
 - Permit2-related operations only use RPCs with exact bytecode match
 - Performance is optimized by selecting the fastest RPC within each priority level.
-- Maximum availability through iterative fallback across the entire ranked list of usable RPCs.
+- Maximum availability through iterative fallback across the entire ranked list of usable RPCs, **including skipping RPCs that have recently failed during runtime** (within the `runtimeFailureCooldownMs`).
 - Load distribution across RPCs for concurrent requests via round-robin starting point selection.
 
 Note: For browser usage, the effectiveness relies on the `rpc-whitelist.json` containing RPCs with permissive CORS headers. The library will filter out non-CORS-friendly RPCs during latency testing.

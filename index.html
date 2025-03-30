@@ -13,6 +13,7 @@
         .error { color: red; }
         .success { color: green; }
         .info { color: blue; }
+        .debug { color: grey; }
         .log-entry { margin-bottom: 5px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
     </style>
 </head>
@@ -33,6 +34,7 @@
             <button id="testButton" disabled>Test Latency & Get Fastest RPC</button>
             <button id="chainIdButton" disabled>Call eth_chainId</button>
             <button id="wxdaiButton" disabled>Check WXDAI Balances (Gnosis)</button>
+            <button id="permitSimButton" disabled>Simulate Real Permit Checks (Gnosis)</button> <!-- Updated Button Text -->
         </div>
     </div>
 
@@ -44,32 +46,58 @@
     <script type="module">
         // Import from the built distribution file
         import { Permit2RpcManager, readContract } from './dist/index.js';
+        // Removed direct viem import - define ABIs inline
 
         const outputEl = document.getElementById('output');
         const initButton = document.getElementById('initButton');
         const testButton = document.getElementById('testButton');
         const chainIdButton = document.getElementById('chainIdButton');
         const wxdaiButton = document.getElementById('wxdaiButton');
+        const permitSimButton = document.getElementById('permitSimButton');
         const chainIdInput = document.getElementById('chainIdInput');
         const rpcWhitelistText = document.getElementById('rpcWhitelistText');
 
-        // Constants for WXDAI test
+        // Constants
         const GNOSIS_CHAIN_ID = 100;
         const WXDAI_ADDRESS = '0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d';
-        const ADDRESS_ZERO_BALANCE = '0xd9530F3fbBEa11beD01DC09E79318f2f20223716';
-        const ADDRESS_100_BALANCE = '0x054Ec26398549588F3c958719bD17CC1e6E97c3C';
+        const ADDRESS_ZERO_BALANCE = '0xd9530F3fbBEa11beD01DC09E79318f2f20223716'; // Example address with likely 0 balance
+        const ADDRESS_100_BALANCE = '0x054Ec26398549588F3c958719bD17CC1e6E97c3C'; // Example address with known balance
         const EXPECTED_BALANCE_100 = 100001000000000000000n; // 100.001 * 10^18
+        const PERMIT2_ADDRESS = '0x000000000022D473030F116dDEE9F6B43aC78BA3';
 
+        // ABIs (Defined inline)
         const erc20AbiBalanceOf = [
           {
-            constant: true,
-            inputs: [{ name: "_owner", type: "address" }],
-            name: "balanceOf",
-            outputs: [{ name: "balance", type: "uint256" }],
-            payable: false,
-            stateMutability: "view",
-            type: "function",
-          },
+            "inputs": [{ "internalType": "address", "name": "owner", "type": "address" }],
+            "name": "balanceOf",
+            "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+            "stateMutability": "view",
+            "type": "function"
+          }
+        ];
+        const erc20AbiAllowance = [
+          {
+            "inputs": [
+              { "internalType": "address", "name": "owner", "type": "address" },
+              { "internalType": "address", "name": "spender", "type": "address" }
+            ],
+            "name": "allowance",
+            "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+            "stateMutability": "view",
+            "type": "function"
+          }
+        ];
+        const permit2AbiNonceBitmap = [
+          {
+            "inputs": [
+              { "internalType": "address", "name": "owner", "type": "address" },
+              { "internalType": "uint256", "name": "wordPos", "type": "uint256" }
+            ],
+            "name": "nonceBitmap",
+            "outputs": [{ "internalType": "uint256", "name": "bitmap", "type": "uint256" }],
+            "stateMutability": "view",
+            "type": "function"
+          }
         ];
 
         let manager = null; // Initialize manager as null
@@ -80,11 +108,12 @@
             const timestamp = new Date().toLocaleTimeString();
             const logEntry = `[${timestamp}][${type.toUpperCase()}] ${typeof message === 'string' ? message : JSON.stringify(message)}`;
             logs.unshift(logEntry); // Add to beginning
-            logs = logs.slice(0, 100); // Keep max 100 logs
+            logs = logs.slice(0, 150); // Keep max 150 logs
             outputEl.textContent = logs.join('\n');
             outputEl.className = type; // Style based on last message type
             // Also log to console
-            console[type === 'error' ? 'error' : 'log'](message);
+            const consoleMethod = type === 'error' ? 'error' : (type === 'warn' ? 'warn' : 'log');
+            console[consoleMethod](message);
         }
 
         // Function to fetch and load default whitelist
@@ -118,26 +147,31 @@
                   testButton.disabled = true;
                   chainIdButton.disabled = true;
                   wxdaiButton.disabled = true;
+                  permitSimButton.disabled = true;
                   return;
              }
 
              try {
+                 // Initialize with a shorter cooldown for easier testing observation
                  manager = new Permit2RpcManager({
                      logLevel: 'debug',
                      latencyTimeoutMs: 7000,
                      requestTimeoutMs: 10000,
+                     runtimeFailureCooldownMs: 15000, // 15 seconds cooldown for testing
                      initialRpcData: initialRpcData // Pass data from textarea
                  });
-                 logOutput('Manager initialized successfully with data from textarea.', 'success');
+                 logOutput('Manager initialized successfully with data from textarea (15s runtime cooldown).', 'success');
                  testButton.disabled = false;
                  chainIdButton.disabled = false;
                  wxdaiButton.disabled = false;
+                 permitSimButton.disabled = false;
              } catch (err) {
                  logOutput(`Error initializing manager: ${err.message}`, 'error');
-                 manager = null;
-                 testButton.disabled = true;
-                 chainIdButton.disabled = true;
-                 wxdaiButton.disabled = true;
+                  manager = null;
+                  testButton.disabled = true;
+                  chainIdButton.disabled = true;
+                  wxdaiButton.disabled = true;
+                  permitSimButton.disabled = true;
              }
         }
 
@@ -149,6 +183,10 @@
             const chainId = parseInt(chainIdInput.value, 10);
             logOutput(`Testing latency for Chain ID: ${chainId}...`);
             try {
+                // Clear runtime failures before latency test for clean results
+                manager.runtimeFailedRpcMap?.delete(chainId);
+                logOutput(`Cleared runtime failure map for chain ${chainId}.`, 'debug');
+
                 const rankedList = await manager.rpcSelector.getRankedRpcList(chainId);
                 if (rankedList.length > 0) {
                     logOutput(`Latency test complete. Fastest usable RPC found: ${rankedList[0]}\nFull ranked list:\n${rankedList.join('\n')}`, 'success');
@@ -185,7 +223,7 @@
                         abi: erc20AbiBalanceOf,
                         functionName: 'balanceOf',
                         args: [ADDRESS_ZERO_BALANCE],
-                        logger: (level, msg, ...params) => logOutput(`[ReadContract:${level}] ${msg} ${params.join(' ')}`, level) // Pass logger
+                        logger: (level, msg, ...params) => logOutput(`[WXDAI:${level}] ${msg} ${params.join(' ')}`, level)
                     }),
                      readContract({
                         manager,
@@ -194,7 +232,7 @@
                         abi: erc20AbiBalanceOf,
                         functionName: 'balanceOf',
                         args: [ADDRESS_100_BALANCE],
-                        logger: (level, msg, ...params) => logOutput(`[ReadContract:${level}] ${msg} ${params.join(' ')}`, level) // Pass logger
+                        logger: (level, msg, ...params) => logOutput(`[WXDAI:${level}] ${msg} ${params.join(' ')}`, level)
                     })
                 ]);
 
@@ -227,6 +265,98 @@
                  logOutput(`Error during WXDAI balance check: ${err.message}`, 'error');
              }
         });
+
+        // --- Real Permit Check Simulation ---
+        permitSimButton.addEventListener('click', async () => {
+            if (!manager) return logOutput('Manager not initialized. Click "Initialize Manager" first.', 'error');
+
+            const permitChainId = 100; // Gnosis
+            // Mock Permit Data (structure inferred, values are examples)
+            const mockPermits = [
+                 { id: 'permit-1', nonce: 0n, owner: ADDRESS_100_BALANCE, tokenAddress: WXDAI_ADDRESS, amount: 50n * (10n**18n) }, // Should have balance/allowance, nonce 0 likely unused
+                 { id: 'permit-2', nonce: 1n, owner: ADDRESS_100_BALANCE, tokenAddress: WXDAI_ADDRESS, amount: 60n * (10n**18n) }, // Should have balance/allowance, nonce 1 likely unused
+                 { id: 'permit-3', nonce: 256n, owner: ADDRESS_100_BALANCE, tokenAddress: WXDAI_ADDRESS, amount: 10n * (10n**18n) }, // Different wordPos, likely unused
+                 { id: 'permit-4', nonce: 0n, owner: ADDRESS_ZERO_BALANCE, tokenAddress: WXDAI_ADDRESS, amount: 1n * (10n**18n) }, // Zero balance owner, nonce 0
+                 { id: 'permit-5', nonce: 5n, owner: ADDRESS_100_BALANCE, tokenAddress: WXDAI_ADDRESS, amount: 1000n * (10n**18n) }, // Insufficient balance/allowance likely
+                 { id: 'permit-6', nonce: 6n, owner: ADDRESS_100_BALANCE, tokenAddress: WXDAI_ADDRESS, amount: 1n * (10n**18n) },
+                 { id: 'permit-7', nonce: 7n, owner: ADDRESS_100_BALANCE, tokenAddress: WXDAI_ADDRESS, amount: 1n * (10n**18n) },
+                 { id: 'permit-8', nonce: 8n, owner: ADDRESS_100_BALANCE, tokenAddress: WXDAI_ADDRESS, amount: 1n * (10n**18n) },
+            ];
+
+            logOutput(`Simulating ${mockPermits.length} real permit checks on Gnosis (Chain ${permitChainId})...`, 'info');
+            logOutput(`(Checking nonceBitmap, balanceOf, allowance)`, 'info');
+            logOutput(`(Manager configured with runtimeFailureCooldownMs: ${manager.runtimeFailureCooldownMs || 'Default'})`, 'info');
+            logOutput(`(If an RPC fails repeatedly, check console logs for '[Permit2RPC:debug] Skipping recently failed RPC...' messages)`, 'info');
+
+            let overallSuccess = true;
+            const summaryLines = [`Permit Check Simulation Results (${mockPermits.length} permits):`];
+
+            // Process permits sequentially to better simulate potential load/failure patterns
+            for (const permit of mockPermits) {
+                logOutput(`[Sim] >>> Checking ${permit.id} (Nonce: ${permit.nonce})...`, 'debug');
+                let permitStatus = 'OK';
+                let checkDetails = [];
+
+                try {
+                    // 1. Nonce Check
+                    const wordPos = BigInt(permit.nonce) >> 8n;
+                    const bitPos = 1n << (BigInt(permit.nonce) & 255n);
+                    const bitmap = await readContract({
+                        manager, chainId: permitChainId, address: PERMIT2_ADDRESS,
+                        abi: permit2AbiNonceBitmap, functionName: 'nonceBitmap',
+                        args: [permit.owner, wordPos],
+                        logger: (level, msg, ...params) => logOutput(`[Sim:${permit.id}:Nonce:${level}] ${msg} ${params.join(' ')}`, level)
+                    });
+                    const isNonceUsed = (BigInt(bitmap) & bitPos) !== 0n;
+                    checkDetails.push(`Nonce Used: ${isNonceUsed}`);
+                    if (isNonceUsed) {
+                        permitStatus = 'FAIL (Nonce Used)';
+                        logOutput(`[Sim:${permit.id}] Nonce ${permit.nonce} already used.`, 'warn');
+                        // Continue checking balance/allowance for completeness, but mark as failed
+                    }
+
+                    // 2. Balance Check
+                    const balance = await readContract({
+                        manager, chainId: permitChainId, address: permit.tokenAddress,
+                        abi: erc20AbiBalanceOf, functionName: 'balanceOf',
+                        args: [permit.owner],
+                        logger: (level, msg, ...params) => logOutput(`[Sim:${permit.id}:Balance:${level}] ${msg} ${params.join(' ')}`, level)
+                    });
+                    const hasEnoughBalance = BigInt(balance) >= BigInt(permit.amount);
+                    checkDetails.push(`Balance Sufficient: ${hasEnoughBalance} (Has: ${balance}, Needs: ${permit.amount})`);
+                    if (!hasEnoughBalance && permitStatus === 'OK') {
+                        permitStatus = 'FAIL (Insufficient Balance)';
+                    }
+
+                    // 3. Allowance Check
+                    const allowance = await readContract({
+                        manager, chainId: permitChainId, address: permit.tokenAddress,
+                        abi: erc20AbiAllowance, functionName: 'allowance',
+                        args: [permit.owner, PERMIT2_ADDRESS],
+                        logger: (level, msg, ...params) => logOutput(`[Sim:${permit.id}:Allowance:${level}] ${msg} ${params.join(' ')}`, level)
+                    });
+                    const hasEnoughAllowance = BigInt(allowance) >= BigInt(permit.amount);
+                    checkDetails.push(`Allowance Sufficient: ${hasEnoughAllowance} (Has: ${allowance}, Needs: ${permit.amount})`);
+                     if (!hasEnoughAllowance && permitStatus === 'OK') {
+                        permitStatus = 'FAIL (Insufficient Allowance)';
+                    }
+
+                } catch (error) {
+                    logOutput(`[Sim:${permit.id}] Error during checks: ${error.message}`, 'error');
+                    permitStatus = `ERROR (${error.message.substring(0, 50)}...)`; // Mark as error
+                }
+
+                summaryLines.push(` - ${permit.id}: ${permitStatus} [${checkDetails.join(', ')}]`);
+                if (permitStatus !== 'OK') {
+                    overallSuccess = false;
+                }
+            } // End loop
+
+            logOutput(summaryLines.join('\n'), overallSuccess ? 'success' : 'error');
+
+        });
+        // --- End Real Permit Check Simulation ---
+
 
         // Load default whitelist on page load
         loadDefaultWhitelist();

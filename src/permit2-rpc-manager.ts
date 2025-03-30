@@ -30,10 +30,12 @@ export interface Permit2RpcManagerOptions {
   localStorageKey?: string;
   logLevel?: "debug" | "info" | "warn" | "error" | "none";
   initialRpcData?: { rpcs: { [chainId: string]: string[] } };
+  runtimeFailureCooldownMs?: number; // Cooldown period for runtime failures
 }
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 const DEFAULT_LOG_LEVEL = "warn";
+const DEFAULT_RUNTIME_FAILURE_COOLDOWN_MS = 60000; // 60 seconds
 
 const LOG_LEVEL_HIERARCHY: Record<NonNullable<Permit2RpcManagerOptions["logLevel"]>, number> = {
   debug: 0, info: 1, warn: 2, error: 3, none: 4,
@@ -47,10 +49,13 @@ export class Permit2RpcManager {
   private requestTimeoutMs: number;
   private logLevel: NonNullable<Permit2RpcManagerOptions["logLevel"]>;
   private configuredLogLevelValue: number;
+  private runtimeFailureCooldownMs: number;
   private rpcIndexMap = new Map<number, number>(); // Map to track next RPC index per chain
+  private runtimeFailedRpcMap = new Map<number, Map<string, number>>(); // chainId -> { rpcUrl -> failureTimestamp }
 
   constructor(options: Permit2RpcManagerOptions = {}) {
     this.logLevel = options.logLevel ?? DEFAULT_LOG_LEVEL;
+    this.runtimeFailureCooldownMs = options.runtimeFailureCooldownMs ?? DEFAULT_RUNTIME_FAILURE_COOLDOWN_MS;
     this.configuredLogLevelValue = LOG_LEVEL_HIERARCHY[this.logLevel];
     const logger = this._log.bind(this);
 
@@ -103,6 +108,15 @@ export class Permit2RpcManager {
 
       if (!rpcUrl) continue; // Should not happen, but safety check
 
+      // --- Runtime Failure Cooldown Check ---
+      const chainFailures = this.runtimeFailedRpcMap.get(chainId);
+      const failureTimestamp = chainFailures?.get(rpcUrl);
+      if (failureTimestamp && (Date.now() - failureTimestamp < this.runtimeFailureCooldownMs)) {
+        this._log("debug", `Attempt #${i + 1}: Skipping recently failed RPC ${rpcUrl} for chain ${chainId} (failed at ${new Date(failureTimestamp).toISOString()})`);
+        continue; // Skip this RPC as it failed recently
+      }
+      // --- End Runtime Failure Cooldown Check ---
+
       try {
         this._log("debug", `Attempt #${i + 1}: Trying RPC call to ${rpcUrl} for chain ${chainId}: ${method}`);
         const result = await this.executeRpcCall<T>(rpcUrl, method, params);
@@ -111,6 +125,15 @@ export class Permit2RpcManager {
       } catch (error: any) {
         lastError = error;
         this._log("warn", `RPC call attempt failed for ${rpcUrl} (chain ${chainId}): ${error.message}. Trying next RPC...`);
+
+        // --- Mark RPC as failed in runtime map ---
+        if (!this.runtimeFailedRpcMap.has(chainId)) {
+          this.runtimeFailedRpcMap.set(chainId, new Map<string, number>());
+        }
+        this.runtimeFailedRpcMap.get(chainId)!.set(rpcUrl, Date.now());
+        this._log("debug", `Marked ${rpcUrl} as failed at runtime for chain ${chainId}.`);
+        // --- End Mark RPC ---
+
         // Continue to the next RPC in the list
       }
     }

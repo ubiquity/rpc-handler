@@ -44,7 +44,7 @@
 - **RPC Selection & Fallback:**
   - `RpcSelector` ranks usable RPCs by status (`ok` > `wrong_bytecode` > `syncing`) then latency.
   - `Permit2RpcManager.send` uses a round-robin starting index for concurrent requests to distribute load.
-  - `Permit2RpcManager.send` iterates through the full ranked list on failure, providing robust fallback.
+  - `Permit2RpcManager.send` iterates through the full ranked list on failure, providing robust fallback. It includes a runtime cooldown mechanism (configurable via `runtimeFailureCooldownMs`, default 60s) to temporarily skip RPCs that fail during execution, preventing repeated attempts on temporarily faulty endpoints.
 - **Browser Compatibility:**
   - Designed to run in browsers/workers without requiring Node.js built-ins (using build-time defines and separated Node logic).
   - Relies on RPCs in `rpc-whitelist.json` having permissive CORS headers for successful operation in the browser.

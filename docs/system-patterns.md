@@ -26,7 +26,7 @@ flowchart TD
 
 ## 2. Component Descriptions
 
-- **API Interface (`Permit2RpcManager`):** The main class. Exposes the `send` method for making RPC calls and integrates other components. Implements round-robin starting point selection for concurrent requests and iterative fallback logic across available RPCs. Accepts configuration options (timeouts, logging, cache settings, initial RPC data).
+- **API Interface (`Permit2RpcManager`):** The main class. Exposes the `send` method for making RPC calls and integrates other components. Implements round-robin starting point selection for concurrent requests and iterative fallback logic across available RPCs. Includes runtime failure tracking with a configurable cooldown (`runtimeFailureCooldownMs`) to temporarily skip recently failed RPCs during the fallback process. Accepts configuration options (timeouts, logging, cache settings, initial RPC data, runtime cooldown).
 - **Chainlist Data Source (`ChainlistDataSource`):** Loads the curated list of RPC endpoints from `src/rpc-whitelist.json` (or accepts initial data). Provides the list of URLs for a given chain to the `RpcSelector`. Now browser-safe by default.
 - **Latency Tester (`LatencyTester`):** Tests the response time and validity of whitelisted RPC endpoints when triggered by the `RpcSelector` (typically on cache miss/expiry).
     - *Optimization:* Now performs a single `eth_chainId` call first. If successful and fast, *then* performs `eth_getCode` (for Permit2 bytecode) and `eth_syncing`.
@@ -49,7 +49,7 @@ flowchart TD
 
 - **Ranking Strategy:** The `RpcSelector` ranks usable RPCs using a compound strategy (status priority then latency).
 - **Round-Robin Load Distribution:** The `Permit2RpcManager` selects the *starting* RPC for each new request in a round-robin fashion from the ranked list to distribute load across healthy endpoints during concurrent calls.
-- **Iterative Fallback:** The `Permit2RpcManager.send` method iterates through the entire ranked list upon failure, retrying the request on the next available RPC until success or exhaustion.
+- **Iterative Fallback with Runtime Cooldown:** The `Permit2RpcManager.send` method iterates through the entire ranked list upon failure. Before attempting a call, it checks if the target RPC has failed within the configured `runtimeFailureCooldownMs`. If so, it skips that RPC and moves to the next. If a call fails, the RPC is marked with a failure timestamp.
 - **Caching:** Used by `RpcSelector` to store latency test results and avoid redundant tests.
 - **Environment-Specific Logic:** Uses build-time defines (`process.env.BUILD_ENV`) and runtime checks (`typeof window`) to separate browser (`localStorage`) and Node.js (file system via `cache-manager.node.ts`) concerns, particularly for caching.
 - **Modular Design:** Components remain focused on distinct responsibilities.
@@ -68,7 +68,8 @@ flowchart TD
         - The ranked list is returned to all waiting `send` calls.
 4.  Each `send` call determines its *starting* RPC from the ranked list using the round-robin index for that `chainId`.
 5.  Each `send` call enters its *own* iterative loop, starting from its determined index:
-    - It attempts `executeRpcCall` with the current RPC URL.
+    - It checks if the current RPC URL is within its runtime cooldown period (using the internal `runtimeFailedRpcMap`). If yes, it skips to the next RPC.
+    - If not on cooldown, it attempts `executeRpcCall` with the current RPC URL.
     - If successful, the loop breaks, and the result is returned.
-    - If it fails (network error, RPC error, timeout), it logs a warning and proceeds to the *next* RPC in the ranked list (wrapping around).
+    - If it fails (network error, RPC error, timeout), it logs a warning, marks the RPC URL with the current timestamp in the `runtimeFailedRpcMap`, and proceeds to the *next* RPC in the ranked list (wrapping around).
 6.  If a `send` call's loop completes without any success, a final error is thrown for that specific call.
