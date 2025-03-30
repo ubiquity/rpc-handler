@@ -18,5 +18,5 @@ This file captures key patterns, preferences, and insights for this project.
 - **RPC Source:** Use the curated `src/rpc-whitelist.json` as the primary source for RPC endpoints, not the full Chainlist data.
 - **Latency Testing:** Testing involves `eth_getCode` (Permit2 bytecode, first 13995 bytes), `eth_syncing`, and basic latency checks. Detailed status (`ok`, `wrong_bytecode`, `syncing`, errors) is crucial.
 - **RPC Selection:** Prioritize RPCs in this order: `ok` > `wrong_bytecode` > `syncing`. Within each tier, select the fastest based on latency. RPCs with other error statuses are excluded.
-- **Caching:** Use `.rpc-cache.json` for Node.js persistence of detailed latency results and selected RPCs.
-- **Dependencies:** Key dependencies include `viem` (used in `readContract`), potentially `ethers` or `axios`/`fetch` for raw calls/testing.
+- **Caching:** Uses **Deno KV** for server-side persistence of detailed latency test results and selected RPCs via `CacheManager`.
+- **Dependencies:** Key dependencies include `viem` (used internally for `readContract` if exposed), native `fetch` for RPC calls.

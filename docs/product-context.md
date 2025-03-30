@@ -1,78 +1,41 @@
-# Product Context: Permit2 RPC Manager Rewrite
+# Product Context: Permit2 RPC Proxy Service (Deno Deploy)
 
 ## 1. Problem Statement
 
-Developers building decentralized applications (dApps) often need to interact with various blockchain networks via RPC (Remote Procedure Call) endpoints. Managing these endpoints presents several challenges:
+Developers building decentralized applications (dApps) often need to interact with various blockchain networks via RPC (Remote Procedure Call) endpoints directly from the browser. This presents several challenges:
 
-- **Reliability:** Public RPC endpoints can be unreliable, experiencing downtime, rate limiting, or performance degradation. Manually switching endpoints is cumbersome and reactive.
-- **Performance:** The latency of RPC endpoints varies significantly based on geographic location, server load, and network conditions. Choosing a suboptimal endpoint leads to slower application performance and a poor user experience.
-- **Complexity:** Finding, configuring, and managing multiple RPC URLs for different chains adds complexity to dApp development. Developers need to handle fallback logic and endpoint selection themselves.
-- **Cost:** While many free public RPCs exist, identifying and prioritizing them requires effort. Some high-performance RPCs are paid services, which might not be suitable for all projects or users.
+- **CORS Issues:** Browsers enforce Cross-Origin Resource Sharing (CORS) policies, preventing frontend applications from directly calling many public RPC endpoints that lack permissive CORS headers. This forces developers to route requests through their own backend, adding complexity.
+- **Reliability:** Public RPC endpoints can be unreliable, experiencing downtime, rate limiting, or performance degradation. Building robust fallback logic on the frontend is difficult.
+- **Performance:** The latency of RPC endpoints varies significantly. Frontend applications often cannot easily determine the fastest available endpoint for the user.
+- **Complexity:** Managing multiple RPC URLs per chain and implementing selection/fallback logic directly in the frontend increases bundle size and development effort.
 
 ## 2. Proposed Solution
 
-The rewritten `permit2-rpc-manager` solves these problems by providing an intelligent, automated RPC management layer:
+The Permit2 RPC Proxy Service, deployed on Deno Deploy, solves these problems by providing an intelligent, CORS-friendly intermediary:
 
-- **Abstract Complexity:**
-
-  - Simple interface (`Permit2RpcManager.send`) for making raw RPC calls
-  - Helper function (`readContract`) for easy read-only contract interactions
-  - Hides complex endpoint selection and validation logic
-  - Transparent fallback system that adapts to operation requirements
-
-- **Smart Selection:**
-
-  - Tests RPCs for latency, sync status, and Permit2 bytecode
-  - Priority-based selection system:
-    1. Fastest fully compliant RPC (synced + correct bytecode)
-    2. Fastest synced RPC with incorrect bytecode (for basic operations)
-    3. Fastest syncing RPC (as last resort)
-  - Different selection criteria based on operation needs
-  - Detailed status tracking and error reporting
-
-- **Enhanced Reliability:**
-
-  - Automatically routes through optimal endpoint
-  - Intelligent fallback between different RPC tiers
-  - Caches test results for quick recovery
-  - Handles chain upgrades and reorgs gracefully
-
-- **Curated Sources:**
-  - Uses maintained whitelist of reliable RPCs
-  - Integrates with Chainlist data
-  - Focus on free, public endpoints
-  - Supports easy addition of custom RPCs
+- **Solves CORS:** Acts as a backend proxy, eliminating browser CORS restrictions by handling the upstream RPC calls server-side and returning responses with appropriate CORS headers.
+- **Abstracts Complexity:** Frontend applications only need to know the single proxy service URL (`https://<project>.deno.dev/rpc/{chainId}`). The service handles all the underlying RPC selection, testing, and fallback.
+- **Smart Selection:** Internally uses the proven `Permit2RpcManager` logic:
+    - Tests RPCs from `src/rpc-whitelist.json` for latency, sync status, and Permit2 bytecode.
+    - Prioritizes selection: `ok` > `wrong_bytecode` > `syncing`.
+    - Selects the fastest within each priority tier.
+- **Enhanced Reliability:** Automatically routes requests through the optimal available endpoint and transparently handles fallback if an endpoint fails.
+- **Server-Side Caching:** Uses Deno KV to cache test results, improving performance for subsequent requests without relying on browser storage.
 
 ## 3. Target Users
 
-- Developers building dApps who need reliable and performant access to blockchain networks.
-- Backend services interacting with blockchains.
-- Libraries or frameworks that require blockchain connectivity.
+- **Frontend dApp Developers:** Primarily benefits developers building browser-based applications who need reliable, performant, and CORS-compliant access to EVM chains.
+- **Developers needing a simple RPC proxy:** Anyone who wants to abstract away RPC management behind a simple HTTP endpoint.
 
-## 4. User Experience Goals
+## 4. User Experience Goals (for the *end-user* of the dApp using this proxy)
 
-- **Simplicity:**
+- **Responsiveness:** Faster dApp interactions due to optimized RPC selection and server-side caching.
+- **Reliability:** Fewer transaction failures or errors caused by unreliable public RPCs.
+- **Seamlessness:** Users are unaware of the underlying RPC complexity; the dApp simply works.
 
-  - Minimal configuration required
-  - Works out of the box for basic operations
-  - Clear error messages and status reporting
+## 5. User Experience Goals (for the *developer* using this proxy)
 
-- **Transparency:**
-
-  - Optional inspection of RPC status and selection
-  - Detailed logging for debugging
-  - Performance metrics and error tracking
-  - Visibility into fallback behavior
-
-- **Performance:**
-
-  - Optimized RPC routing based on operation type
-  - Quick response times through caching
-  - Efficient handling of node state changes
-  - Minimal overhead from validation checks
-
-- **Reliability:**
-  - Reduced errors from RPC issues
-  - Graceful handling of node sync states
-  - Smart fallback between RPC tiers
-  - Stable operation during chain events
+- **Simplicity:** Easy integration via a single HTTP endpoint format. No complex library setup needed on the frontend.
+- **Reduced Boilerplate:** Eliminates the need for frontend CORS workarounds and RPC management logic.
+- **Improved Performance:** Leverages server-side intelligence for optimal RPC routing.
+- **Reliability:** Offloads RPC fallback complexity to the service.

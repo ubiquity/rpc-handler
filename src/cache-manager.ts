@@ -1,4 +1,4 @@
-// Node imports removed
+/// <reference lib="deno.ns" />
 import type { LatencyTestResult } from "./latency-tester.ts";
 
 // Define a logger type
@@ -14,10 +14,7 @@ interface ChainCache {
 // Define the overall cache structure
 type CacheData = Record<number, ChainCache>;
 
-// --- Environment Check (Runtime for Browser) ---
-// We assume if this module is loaded, it's likely in a browser context
-// or a Node context where file caching isn't the default.
-const isBrowser = typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+// Environment check removed, assuming Deno environment with KV access
 
 const DEFAULT_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 const DEFAULT_LOCAL_STORAGE_KEY = "permit2RpcManagerCache";
@@ -37,40 +34,60 @@ interface CacheManagerOptions {
 export class CacheManager {
   private cache: CacheData = {};
   private cacheLoaded = false;
-  private cacheKey: string;
+  private cacheKey: string; // Used as KV key prefix/identifier
   // nodeCachePath removed
   private cacheTtlMs: number;
   private log: LoggerFn;
+  // Deno KV instance placeholder
+  private kv: Deno.Kv | null = null;
 
   constructor(options: CacheManagerOptions = {}) {
     this.cacheTtlMs = options.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
+    // Keep option name localStorageKey for now, but use it as KV key
     this.cacheKey = options.localStorageKey ?? DEFAULT_LOCAL_STORAGE_KEY;
     this.log = options.logger || (() => {});
     // No Node path determination needed here
   }
 
+  // Helper to ensure KV is open
+  private async ensureKvOpen(): Promise<Deno.Kv> {
+    if (!this.kv) {
+      this.log("debug", "CacheManager (Deno): Opening Deno KV store...");
+      try {
+        // Deno Deploy automatically provides the path. For local dev, it uses default.
+        this.kv = await Deno.openKv();
+        this.log("debug", "CacheManager (Deno): Deno KV store opened.");
+      } catch (error) {
+        this.log("error", "CacheManager (Deno): Failed to open Deno KV store:", error);
+        throw new Error(`Failed to open Deno KV store: ${error.message}`);
+      }
+    }
+    return this.kv;
+  }
+
   private async loadCache(): Promise<void> {
     if (this.cacheLoaded) return;
 
-    // Only implement browser logic here
-    if (isBrowser) {
-      try {
-        const storedCache = window.localStorage.getItem(this.cacheKey);
-        if (storedCache) {
-          this.cache = JSON.parse(storedCache);
-          this.log("debug", `CacheManager (Browser): Loaded cache from localStorage (key: ${this.cacheKey})`);
-        } else {
-          this.log("debug", `CacheManager (Browser): No cache found in localStorage (key: ${this.cacheKey})`);
-        }
-      } catch (error) {
-        this.log("error", `CacheManager (Browser): Failed to load cache from localStorage (key: ${this.cacheKey}):`, error);
-        this.cache = {};
+    // --- Deno KV Implementation ---
+    this.log("debug", `CacheManager (Deno): Attempting to load cache from Deno KV (key: ${this.cacheKey})`);
+    try {
+      const kv = await this.ensureKvOpen();
+      // Use a single key to store the entire cache object
+      const result = await kv.get<CacheData>([this.cacheKey]);
+
+      if (result.value !== null) {
+        this.cache = result.value;
+        this.log("debug", `CacheManager (Deno): Loaded cache from Deno KV (key: ${this.cacheKey})`);
+      } else {
+        this.log("debug", `CacheManager (Deno): No cache found in Deno KV (key: ${this.cacheKey})`);
+        this.cache = {}; // Initialize empty if not found
       }
-    } else {
-      // In non-browser environments, this default manager won't load from files
-      this.log("warn", "CacheManager: Not in a browser environment, skipping localStorage cache load. File caching requires explicit use of NodeCacheHandler.");
-      this.cache = {};
+    } catch (error) {
+      this.log("error", `CacheManager (Deno): Failed to load cache from Deno KV (key: ${this.cacheKey}):`, error);
+      this.cache = {}; // Initialize empty on error
     }
+    // --- End Deno KV ---
+
     this.cacheLoaded = true;
   }
 
@@ -80,18 +97,16 @@ export class CacheManager {
       return;
     }
 
-    // Only implement browser logic here
-    if (isBrowser) {
-      try {
-        window.localStorage.setItem(this.cacheKey, JSON.stringify(this.cache));
-        this.log("debug", `CacheManager (Browser): Saved cache to localStorage (key: ${this.cacheKey})`);
-      } catch (error) {
-        this.log("error", `CacheManager (Browser): Failed to save cache to localStorage (key: ${this.cacheKey}):`, error);
-      }
-    } else {
-       // In non-browser environments, this default manager won't save to files
-       this.log("warn", "CacheManager: Not in a browser environment, skipping localStorage cache save.");
+    // --- Deno KV Implementation ---
+    this.log("debug", `CacheManager (Deno): Attempting to save cache to Deno KV (key: ${this.cacheKey})`);
+    try {
+      const kv = await this.ensureKvOpen();
+      await kv.set([this.cacheKey], this.cache);
+      this.log("debug", `CacheManager (Deno): Saved cache to Deno KV (key: ${this.cacheKey})`);
+    } catch (error) {
+      this.log("error", `CacheManager (Deno): Failed to save cache to Deno KV (key: ${this.cacheKey}):`, error);
     }
+    // --- End Deno KV ---
   }
 
   // Internal helper remains largely the same, relies on loadCache

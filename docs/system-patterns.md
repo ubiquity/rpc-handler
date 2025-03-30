@@ -2,22 +2,22 @@
 
 ## 1. High-Level Architecture
 
-The rewritten RPC manager will consist of several key components working together:
+The Deno Deploy service acts as a proxy, utilizing the core RPC manager logic:
 
 ```mermaid
 flowchart TD
-    subgraph Permit2 RPC Manager Core
-        A[API Interface] --> B(Chain Manager)
+    subgraph Deno Deploy Service
+        A[HTTP Server (deno-server.ts)] --> B{Permit2RpcManager}
         B --> C{RPC Selector}
         C --> D[Latency Tester]
-        C --> E[Cache Manager]
+        C --> E[Cache Manager (Deno KV)]
         D --> E
         B --> F[Chainlist Data Source]
         F --> C
         E --> C
     end
 
-    User --> A
+    User[Browser/Client] -- POST /rpc/{chainId} --> A
     C --> Network[(External RPC Endpoints)]
 
     style User fill:#D6EAF8,stroke:#333,stroke-width:2px
@@ -26,49 +26,49 @@ flowchart TD
 
 ## 2. Component Descriptions
 
-- **API Interface (`Permit2RpcManager`):** The main class. Exposes the `send` method for making RPC calls and integrates other components. Implements round-robin starting point selection for concurrent requests and iterative fallback logic across available RPCs. Accepts configuration options (timeouts, logging, cache settings, initial RPC data).
-- **Chainlist Data Source (`ChainlistDataSource`):** Loads the curated list of RPC endpoints from `src/rpc-whitelist.json` (or accepts initial data). Provides the list of URLs for a given chain to the `RpcSelector`. Now browser-safe by default.
+- **HTTP Server (`deno-server.ts`):** The Deno entrypoint. Handles incoming HTTP requests (`POST /rpc/{chainId}`), parses JSON-RPC payloads, sets CORS headers, interacts with `Permit2RpcManager`, and proxies responses back to the client.
+- **Permit2RpcManager:** The main logic class. Integrates other components. Exposes the `send` method (used internally by the server) for making RPC calls. Implements round-robin starting point selection and iterative fallback logic. Accepts configuration options (timeouts, logging, cache settings, initial RPC data). Instantiates internal components like `CacheManager` and `ChainlistDataSource`.
+- **Chainlist Data Source (`ChainlistDataSource`):** Loads the curated list of RPC endpoints from `src/rpc-whitelist.json` (or accepts initial data passed via `Permit2RpcManager` options). Provides the list of URLs for a given chain to the `RpcSelector`.
 - **Latency Tester (`LatencyTester`):** Tests the response time and validity of whitelisted RPC endpoints when triggered by the `RpcSelector` (typically on cache miss/expiry).
-    - *Optimization:* Now performs a single `eth_chainId` call first. If successful and fast, *then* performs `eth_getCode` (for Permit2 bytecode) and `eth_syncing`.
-    - Returns detailed results including:
-      - `ok`: Fully synced with correct bytecode
-      - `wrong_bytecode`: Synced but incorrect Permit2 bytecode
-      - `syncing`: Node is still syncing
-      - Error states: `timeout`, `http_error`, `rpc_error`, `network_error` (includes CORS failures in browser). Logs expected browser fetch failures at 'debug' level.
-- **Cache Manager (`CacheManager`):** Stores the detailed `LatencyTestResult` map for each chain. Uses `localStorage` in browser environments. Node.js file caching is separated into `cache-manager.node.ts` and requires explicit configuration/use. Accepts configuration for TTL and storage keys/paths.
+    - *Optimization:* Performs `eth_chainId` first, then `eth_getCode` (Permit2) and `eth_syncing`.
+    - Returns detailed results (`ok`, `wrong_bytecode`, `syncing`, `timeout`, `http_error`, `rpc_error`, `network_error`).
+- **Cache Manager (`CacheManager`):** Stores the detailed `LatencyTestResult` map for each chain using **Deno KV** for persistence. Accepts configuration for TTL and the KV key prefix.
 - **RPC Selector (`RpcSelector`):** The core ranking logic unit.
   1.  Provides `getRankedRpcList(chainId)` method.
-  2.  Checks `CacheManager` for fresh latency data.
-  3.  If cache is stale/invalid, triggers `LatencyTester` (using a locking mechanism to prevent concurrent tests for the same chain).
-  4.  Updates cache with new test results and identifies the overall fastest usable RPC.
-  5.  Filters out RPCs with error statuses (`timeout`, `network_error`, etc.).
-  6.  Sorts the remaining usable RPCs based on status priority (`ok` > `wrong_bytecode` > `syncing`) and then by latency.
+  2.  Checks `CacheManager` (Deno KV) for fresh latency data.
+  3.  If cache is stale/invalid, triggers `LatencyTester` (using a locking mechanism).
+  4.  Updates cache with new test results.
+  5.  Filters out RPCs with error statuses.
+  6.  Sorts usable RPCs based on status priority (`ok` > `wrong_bytecode` > `syncing`) then latency.
   7.  Returns the final sorted list of usable RPC URLs to `Permit2RpcManager`.
 
 ## 3. Key Design Patterns
 
+- **Proxy Pattern:** The Deno server acts as a proxy, forwarding requests to the best available upstream RPC.
 - **Ranking Strategy:** The `RpcSelector` ranks usable RPCs using a compound strategy (status priority then latency).
-- **Round-Robin Load Distribution:** The `Permit2RpcManager` selects the *starting* RPC for each new request in a round-robin fashion from the ranked list to distribute load across healthy endpoints during concurrent calls.
-- **Iterative Fallback:** The `Permit2RpcManager.send` method iterates through the entire ranked list upon failure, retrying the request on the next available RPC until success or exhaustion.
-- **Caching:** Used by `RpcSelector` to store latency test results and avoid redundant tests.
-- **Environment-Specific Logic:** Uses build-time defines (`process.env.BUILD_ENV`) and runtime checks (`typeof window`) to separate browser (`localStorage`) and Node.js (file system via `cache-manager.node.ts`) concerns, particularly for caching.
-- **Modular Design:** Components remain focused on distinct responsibilities.
+- **Round-Robin Load Distribution:** The `Permit2RpcManager` selects the *starting* RPC for each new request in a round-robin fashion to distribute load.
+- **Iterative Fallback:** The `Permit2RpcManager.send` method iterates through the entire ranked list upon failure.
+- **Caching:** Uses Deno KV via `CacheManager` to store latency test results.
+- **Modular Design:** Core logic components remain focused on distinct responsibilities.
 
-## 4. Data Flow (Simplified Request with Failover)
+## 4. Data Flow (Simplified Request via Proxy)
 
-1.  Multiple concurrent calls to `manager.send(chainId, method, params)` are made.
-2.  Each `send` call asks `rpcSelector.getRankedRpcList(chainId)`.
-3.  `RpcSelector` checks `CacheManager`.
+1.  Client sends `POST /rpc/{chainId}` request with JSON-RPC payload to the Deno Deploy service URL.
+2.  `deno-server.ts` receives the request, parses `chainId` and the payload.
+3.  It calls `manager.send(chainId, method, params)`.
+4.  `Permit2RpcManager` asks `rpcSelector.getRankedRpcList(chainId)`.
+5.  `RpcSelector` checks `CacheManager` (Deno KV).
     - If cache is valid, returns cached ranked list.
     - If cache is invalid:
-        - Only the *first* call triggers `LatencyTester.testRpcUrls` (due to locking). Other calls wait.
-        - `LatencyTester` performs optimized checks (e.g., `eth_chainId` first).
-        - Results are used to rank usable RPCs (filtering errors like CORS/timeout).
-        - `CacheManager` is updated.
-        - The ranked list is returned to all waiting `send` calls.
-4.  Each `send` call determines its *starting* RPC from the ranked list using the round-robin index for that `chainId`.
-5.  Each `send` call enters its *own* iterative loop, starting from its determined index:
-    - It attempts `executeRpcCall` with the current RPC URL.
-    - If successful, the loop breaks, and the result is returned.
-    - If it fails (network error, RPC error, timeout), it logs a warning and proceeds to the *next* RPC in the ranked list (wrapping around).
-6.  If a `send` call's loop completes without any success, a final error is thrown for that specific call.
+        - Triggers `LatencyTester.testRpcUrls` (with locking).
+        - `LatencyTester` performs checks.
+        - Results are used to rank usable RPCs.
+        - `CacheManager` (Deno KV) is updated.
+        - The ranked list is returned.
+6.  `Permit2RpcManager` determines its *starting* RPC using round-robin.
+7.  It enters its iterative loop:
+    - Attempts `executeRpcCall` with the current RPC URL.
+    - If successful, returns the result to `deno-server.ts`.
+    - If it fails, tries the next RPC.
+8.  If successful, `deno-server.ts` constructs a JSON-RPC response and sends it back to the client with CORS headers.
+9.  If all RPCs fail, `Permit2RpcManager` throws an error, which `deno-server.ts` catches and returns as a JSON-RPC error response to the client.

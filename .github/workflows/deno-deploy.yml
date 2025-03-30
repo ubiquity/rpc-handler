@@ -1,0 +1,56 @@
+name: Deno Deploy
+
+on:
+  push:
+    branches:
+      - main # Trigger on pushes to main
+  pull_request:
+    branches:
+      - main # Trigger on PRs targeting main (for preview deployments)
+
+jobs:
+  deploy:
+    name: Deploy to Deno Deploy
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write # Needed for auth with Deno Deploy
+      contents: read # Needed to checkout the repository
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x # Use the latest stable Deno version
+
+      # Uncomment if you have dependencies that need caching
+      # - name: Cache Deno dependencies
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ~/.cache/deno
+      #     key: ${{ runner.os }}-deno-${{ hashFiles('**/lock.json') }} # Adjust if using a different lock file
+      #     restore-keys: |
+      #       ${{ runner.os }}-deno-
+
+      # Optional: Check formatting
+      - name: Check formatting
+        run: deno fmt --check
+
+      # Optional: Lint code
+      - name: Lint code
+        run: deno lint
+
+      # Optional: Run tests
+      # - name: Run tests
+      #   run: deno test --allow-net --allow-read --allow-env # Add necessary permissions
+
+      - name: Deploy to Deno Deploy
+        uses: denoland/deployctl@v1
+        with:
+          project: "permit2-rpc-proxy" # Replace with your Deno Deploy project name
+          entrypoint: "src/deno-server.ts"
+          root: "." # Root of the repository
+          # The action automatically determines production vs preview based on the ref
