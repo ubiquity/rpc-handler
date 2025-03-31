@@ -51,6 +51,6 @@ jobs:
         uses: denoland/deployctl@v1
         with:
           project: "permit2-rpc-proxy" # Replace with your Deno Deploy project name
-          entrypoint: "src/deno-server.ts"
-          root: "." # Root of the repository
+          entrypoint: "packages/permit2-rpc-server/src/deno-server.ts" # Updated entrypoint path
+          root: "packages/permit2-rpc-server" # Set root to the server package directory
           # The action automatically determines production vs preview based on the ref

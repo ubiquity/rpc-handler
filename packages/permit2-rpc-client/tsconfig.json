@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2020", // Target modern JavaScript features
+    "module": "ESNext", // Use modern module system
+    "lib": ["ES2020", "DOM", "DOM.Iterable"], // Include DOM types for browser compatibility
+    "declaration": true, // Generate .d.ts files
+    "declarationMap": true, // Generate source maps for declarations
+    "sourceMap": true, // Generate .js.map files
+    "outDir": "./dist", // Output directory for compiled files
+    "rootDir": "./src", // Root directory of source files
+    "strict": true, // Enable all strict type-checking options
+    "esModuleInterop": true, // Enables compatibility with CommonJS modules
+    "skipLibCheck": true, // Skip type checking of declaration files
+    "forceConsistentCasingInFileNames": true, // Disallow inconsistently-cased references
+    "moduleResolution": "node", // Use Node.js style module resolution
+    "allowSyntheticDefaultImports": true, // Allow default imports from modules with no default export
+    "resolveJsonModule": true, // Allow importing JSON files
+    "isolatedModules": true // Ensure modules can be transpiled independently
+  },
+  "include": ["src/**/*"], // Include all files in the src directory
+  "exclude": ["node_modules", "dist"] // Exclude build and dependency directories
+}

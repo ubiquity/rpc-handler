@@ -1,0 +1,52 @@
+{
+  "name": "@pavlovcik/permit2-rpc-client",
+  "version": "0.1.0",
+  "description": "Client SDK for interacting with the Permit2 RPC Proxy service",
+  "keywords": [
+    "rpc",
+    "blockchain",
+    "ethereum",
+    "web3",
+    "proxy",
+    "client"
+  ],
+  "author": "0x4007",
+  "license": "MIT",
+  "private": false,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist --format=esm,cjs --target=browser --sourcemap && tsc --emitDeclarationOnly --outDir dist",
+    "dev": "bun run build --watch",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "echo \"Lint not configured\" && exit 0",
+    "format": "prettier --write .",
+    "prepublishOnly": "bun run build"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "bun-types": "latest",
+    "prettier": "^3.5.3",
+    "typescript": "^5.4.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pavlovcik/permit2-rpc-manager.git",
+    "directory": "packages/permit2-rpc-client"
+  }
+}

@@ -2,7 +2,7 @@
   "name": "@pavlovcik/permit2-rpc-manager",
   "version": "0.6.0",
   "author": "0x4007",
-  "description": "Intelligent RPC manager with Permit2 validation and advanced fallback strategy",
+  "description": "Monorepo for Permit2 RPC Proxy Service and Client SDK",
   "keywords": [
     "rpc",
     "blockchain",
@@ -12,39 +12,20 @@
     "web3"
   ],
   "license": "MIT",
-  "private": false,
+  "private": true,
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    }
-  },
-  "files": [
-    "dist",
-    "src/rpc-whitelist.json"
+  "workspaces": [
+    "packages/*"
   ],
   "scripts": {
-    "start": "deno run --allow-net --allow-read --allow-env src/deno-server.ts",
-    "test": "deno test --allow-net --allow-read --allow-env",
     "submodule:update": "git submodule update --remote --merge lib/chainlist",
     "chainlist:generate": "cd lib/chainlist && bun run generate-json.js",
     "whitelist:update": "bun run scripts/update-whitelist.mjs",
     "whitelist:test": "bun run scripts/test-whitelist.mjs",
-    "format": "prettier --write .",
-    "deno:fmt": "deno fmt",
-    "deno:lint": "deno lint"
-  },
-  "dependencies": {
-    "viem": "^2.24.1"
+    "format:root": "prettier --write ."
   },
   "devDependencies": {
-    "knip": "^5.46.3",
-    "prettier": "^3.5.3",
-    "typescript": "^5.4.2"
+    "prettier": "^3.5.3"
   },
   "engines": {
     "node": ">=20.10.0"
@@ -52,8 +33,5 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pavlovcik/permit2-rpc-manager.git"
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }
