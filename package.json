@@ -22,7 +22,11 @@
     "chainlist:generate": "cd lib/chainlist && bun run generate-json.js",
     "whitelist:update": "bun run scripts/update-whitelist.mjs",
     "whitelist:test": "bun run scripts/test-whitelist.mjs",
-    "format:root": "prettier --write ."
+    "format:root": "prettier --write .",
+    "test:client:remote": "cd packages/permit2-rpc-client && bun test",
+    "test:client:local": "cd packages/permit2-rpc-client && DISABLE_RPC_CACHE=true TEST_TARGET_URL=http://localhost:8000 bun test",
+    "test": "bun run test:client:remote",
+    "deploy:manual": "bash ./scripts/manual-deploy.sh"
   },
   "devDependencies": {
     "prettier": "^3.5.3"

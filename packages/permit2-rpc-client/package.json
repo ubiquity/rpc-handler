@@ -30,7 +30,7 @@
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist --format=esm,cjs --target=browser --sourcemap && tsc --emitDeclarationOnly --outDir dist",
     "dev": "bun run build --watch",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "bun test",
     "lint": "echo \"Lint not configured\" && exit 0",
     "format": "prettier --write .",
     "prepublishOnly": "bun run build"

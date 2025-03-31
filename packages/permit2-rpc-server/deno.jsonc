@@ -1,10 +1,10 @@
 {
   "tasks": {
-    "start": "deno run --allow-net --allow-read --allow-env --allow-sys=loadavg src/deno-server.ts",
-    "dev": "deno run --watch --allow-net --allow-read --allow-env --allow-sys=loadavg src/deno-server.ts",
+    "start": "deno run --unstable-kv --allow-net --allow-read --allow-env --allow-sys=loadavg src/deno-server.ts", // Use --unstable-kv
+    "dev": "deno run --unstable-kv --watch --allow-net --allow-read --allow-env --allow-sys=loadavg src/deno-server.ts", // Use --unstable-kv
     "lint": "deno lint",
     "fmt": "deno fmt",
-    "test": "deno test --allow-net --allow-read --allow-env" // Assuming tests will be added/adapted here
+    "test": "deno test --unstable-kv --allow-net --allow-read --allow-env" // Use --unstable-kv
   },
   "lint": {
     "files": {

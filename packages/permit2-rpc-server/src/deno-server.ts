@@ -5,7 +5,8 @@
 // ChainlistDataSource is instantiated internally by Permit2RpcManager
 // import { ChainlistDataSource } from './chainlist-data-source.ts';
 import { Permit2RpcManager } from './permit2-rpc-manager.ts';
-import rpcWhitelist from './rpc-whitelist.json' with { type: 'json' };
+// Adjust path to point one level up from src/
+import rpcWhitelist from '../rpc-whitelist.json' with { type: 'json' };
 
 // Simple interface for JSON-RPC request structure
 interface JsonRpcRequest {
@@ -52,10 +53,19 @@ const PORT = parseInt(Deno.env.get('PORT') ?? '8000');
 
 console.log('Initializing Permit2 RPC Manager Proxy...');
 
-// Instantiate Permit2RpcManager, passing initial data.
+// Check environment variable to potentially disable cache
+const disableCacheEnv = Deno.env.get('DISABLE_RPC_CACHE');
+const shouldDisableCache = disableCacheEnv === 'true' || disableCacheEnv === '1';
+
+if (shouldDisableCache) {
+  console.warn("RPC Caching is DISABLED via DISABLE_RPC_CACHE environment variable.");
+}
+
+// Instantiate Permit2RpcManager, passing initial data and cache option.
 const manager = new Permit2RpcManager({
   initialRpcData: rpcWhitelist,
-  // TODO: Configure CacheManager options for Deno KV once adapted
+  disableCache: shouldDisableCache,
+  // TODO: Configure other CacheManager options like TTL if needed
 });
 
 const handler = async (request: Request): Promise<Response> => {

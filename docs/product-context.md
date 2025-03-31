@@ -35,7 +35,7 @@ The Permit2 RPC Proxy Service, deployed on Deno Deploy, solves these problems by
 
 ## 5. User Experience Goals (for the *developer* using this proxy)
 
-- **Simplicity:** Easy integration via a single HTTP endpoint format. No complex library setup needed on the frontend.
-- **Reduced Boilerplate:** Eliminates the need for frontend CORS workarounds and RPC management logic.
-- **Improved Performance:** Leverages server-side intelligence for optimal RPC routing.
+- **Simplicity:** Easy integration via a single HTTP endpoint format or the optional client SDK (`@pavlovcik/permit2-rpc-client`).
+- **Reduced Boilerplate:** Eliminates the need for frontend CORS workarounds, RPC management logic, and manual `fetch` calls (when using the SDK).
+- **Improved Performance:** Leverages server-side intelligence for optimal RPC routing and supports batch requests.
 - **Reliability:** Offloads RPC fallback complexity to the service.

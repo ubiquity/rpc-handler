@@ -26,8 +26,8 @@ flowchart TD
 
 ## 2. Component Descriptions
 
-- **HTTP Server (`deno-server.ts`):** The Deno entrypoint. Handles incoming HTTP requests (`POST /rpc/{chainId}`), parses JSON-RPC payloads, sets CORS headers, interacts with `Permit2RpcManager`, and proxies responses back to the client.
-- **Permit2RpcManager:** The main logic class. Integrates other components. Exposes the `send` method (used internally by the server) for making RPC calls. Implements round-robin starting point selection and iterative fallback logic. Accepts configuration options (timeouts, logging, cache settings, initial RPC data). Instantiates internal components like `CacheManager` and `ChainlistDataSource`.
+- **HTTP Server (`deno-server.ts`):** The Deno entrypoint. Handles incoming HTTP requests (`POST /rpc/{chainId}`), parses single or batch JSON-RPC payloads, sets CORS headers, interacts with `Permit2RpcManager`, and proxies responses back to the client.
+- **Permit2RpcManager:** The main logic class. Integrates other components. Exposes the `send` method (used internally by the server) for making RPC calls. Implements round-robin starting point selection and iterative fallback logic. Accepts configuration options (timeouts, logging, cache settings, initial RPC data, disableCache). Instantiates internal components like `CacheManager` and `ChainlistDataSource`.
 - **Chainlist Data Source (`ChainlistDataSource`):** Loads the curated list of RPC endpoints from `src/rpc-whitelist.json` (or accepts initial data passed via `Permit2RpcManager` options). Provides the list of URLs for a given chain to the `RpcSelector`.
 - **Latency Tester (`LatencyTester`):** Tests the response time and validity of whitelisted RPC endpoints when triggered by the `RpcSelector` (typically on cache miss/expiry).
     - *Optimization:* Performs `eth_chainId` first, then `eth_getCode` (Permit2) and `eth_syncing`.
@@ -53,10 +53,10 @@ flowchart TD
 
 ## 4. Data Flow (Simplified Request via Proxy)
 
-1.  Client sends `POST /rpc/{chainId}` request with JSON-RPC payload to the Deno Deploy service URL.
-2.  `deno-server.ts` receives the request, parses `chainId` and the payload.
-3.  It calls `manager.send(chainId, method, params)`.
-4.  `Permit2RpcManager` asks `rpcSelector.getRankedRpcList(chainId)`.
+1.  Client sends `POST /rpc/{chainId}` request with a single or batch JSON-RPC payload to the Deno Deploy service URL.
+2.  `deno-server.ts` receives the request, parses `chainId` and the payload (detecting single vs. batch).
+3.  For each request in the payload (or the single request), it calls `manager.send(chainId, method, params)`. Batch requests are typically processed concurrently using `Promise.allSettled` or similar.
+4.  For each `send` call, `Permit2RpcManager` asks `rpcSelector.getRankedRpcList(chainId)`.
 5.  `RpcSelector` checks `CacheManager` (Deno KV).
     - If cache is valid, returns cached ranked list.
     - If cache is invalid:
@@ -68,7 +68,7 @@ flowchart TD
 6.  `Permit2RpcManager` determines its *starting* RPC using round-robin.
 7.  It enters its iterative loop:
     - Attempts `executeRpcCall` with the current RPC URL.
-    - If successful, returns the result to `deno-server.ts`.
+    - If successful, returns the result.
     - If it fails, tries the next RPC.
-8.  If successful, `deno-server.ts` constructs a JSON-RPC response and sends it back to the client with CORS headers.
-9.  If all RPCs fail, `Permit2RpcManager` throws an error, which `deno-server.ts` catches and returns as a JSON-RPC error response to the client.
+8.  `deno-server.ts` collects the result(s) or error(s) for each request.
+9.  `deno-server.ts` constructs a single or batch JSON-RPC response and sends it back to the client with CORS headers.

@@ -6,7 +6,7 @@
 
 # --- Configuration ---
 PROJECT_NAME="permit2-rpc-proxy" # Replace with your Deno Deploy project name
-ENTRYPOINT="src/deno-server.ts"
+ENTRYPOINT="packages/permit2-rpc-server/src/deno-server.ts" # Updated entrypoint path
 # --- End Configuration ---
 
 # Check if DENO_DEPLOY_TOKEN is set
@@ -20,6 +20,7 @@ echo "Deploying project '$PROJECT_NAME' from entrypoint '$ENTRYPOINT'..."
 
 # Execute deployctl
 # Exclude directories not needed for the deployment runtime
+# Note: deployctl usually runs from the root, so paths are relative to root
 deployctl deploy --project="$PROJECT_NAME" "$ENTRYPOINT" \
   --exclude=node_modules \
   --exclude=lib \

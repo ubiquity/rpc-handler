@@ -1,56 +1,63 @@
-# Progress: Permit2 RPC Proxy Service (Deno Deploy)
+# Progress: Permit2 RPC Monorepo (Server + Client)
 
-## 1. Current Status (March 30, 2025)
+## 1. Current Status (April 1, 2025)
 
-- **Phase:** Migration Complete / Documentation Finalization
-- **Overall Progress:** ~100% (Core migration to Deno Deploy service complete, deployment workflow added, documentation updated)
+- **Phase:** Monorepo Refactor & Client SDK Implementation Complete / Documentation Finalization
+- **Overall Progress:** ~100% (Monorepo structure established, Deno server migrated and enhanced, client SDK created and tested locally, documentation updated)
 
 ## 2. What Works
 
-- **Deno Server (`src/deno-server.ts`):**
-    - Runs using `Deno.serve`.
-    - Handles `POST /rpc/{chainId}` requests.
-    - Parses JSON-RPC payloads.
-    - Implements CORS handling (preflight and response headers).
-    - Uses `Permit2RpcManager` to select and proxy requests.
-- **Core Logic (`Permit2RpcManager`, `RpcSelector`, `LatencyTester`, `ChainlistDataSource`):**
-    - Functions within the Deno runtime.
-    - Selects RPCs based on latency, sync status, and Permit2 bytecode.
-    - Implements robust fallback and round-robin distribution.
-- **Caching (`CacheManager`):**
-    - Uses Deno KV for persistent server-side caching.
-    - Loads and saves cache data correctly.
-    - Respects TTL.
-- **Data Source:**
-    - Loads RPC URLs from `src/rpc-whitelist.json`.
-- **Deployment:**
-    - GitHub Actions workflow (`.github/workflows/deno-deploy.yml`) configured for automated deployment to Deno Deploy (production for `main`, preview for PRs).
-- **Project Structure:**
-    - Cleaned up Node.js build/dev dependencies and scripts.
-    - Removed obsolete files (`index.html`, `cache-manager.node.ts`).
+- **Monorepo Structure:**
+    - Project organized into `packages/permit2-rpc-server` and `packages/permit2-rpc-client`.
+    - Root `package.json` configured for workspaces.
+- **Server Package (`packages/permit2-rpc-server`):**
+    - Deno server (`src/deno-server.ts`) runs locally (`deno task start --unstable-kv`).
+    - Handles single and batch JSON-RPC requests via `POST /rpc/{chainId}`.
+    - Implements CORS.
+    - Uses core logic (`Permit2RpcManager`, `RpcSelector`, etc.) for RPC selection/fallback.
+    - Uses Deno KV for caching (`src/cache-manager.ts`), respecting `--unstable-kv` flag.
+    - Caching can be disabled via `DISABLE_RPC_CACHE` env var for testing.
+    - Loads whitelist from `rpc-whitelist.json`.
+    - `deno.jsonc` provides tasks for start, dev, lint, fmt, test (test needs implementation).
+    - Unused `viem` dependency and `contract-utils.ts` removed.
+- **Client SDK Package (`packages/permit2-rpc-client`):**
+    - Basic SDK implemented (`src/client.ts`) with `createRpcClient` and `request` method.
+    - Builds successfully using `bun run build`.
+    - Integration tests (`src/client.test.ts`) using `bun test` pass when run against the local server (`bun run test:client:local` from root).
+    - `package.json` configured for publishing to npm.
+- **Deployment (Server):**
+    - GitHub Actions workflow (`.github/workflows/deno-deploy.yml`) configured for Deno Deploy, pointing to the server package.
+    - Manual deployment script (`scripts/manual-deploy.sh`) available and optimized.
+- **Root Configuration:**
+    - Scripts available for managing submodules and whitelist (`submodule:*`, `chainlist:*`, `whitelist:*`).
+    - Scripts available for running client tests (`test`, `test:client:local`, `test:client:remote`) and manual deployment (`deploy:manual`).
 - **Documentation:**
-    - `README.md`, `docs/tech-context.md`, `docs/system-patterns.md`, `docs/active-context.md` updated to reflect the Deno service architecture.
+    - Root `README.md` explains monorepo.
+    - Package `README.md` files created.
+    - `docs/*` files updated to reflect current architecture.
 
-## 3. Completed Tasks (Migration)
+## 3. Completed Tasks (Recent)
 
-- ✅ **Created Deno Server:** Implemented `src/deno-server.ts`.
-- ✅ **Adapted Caching:** Migrated `CacheManager` to use Deno KV.
-- ✅ **Removed Node Cache:** Deleted `src/cache-manager.node.ts`.
-- ✅ **Setup Deployment:** Created `.github/workflows/deno-deploy.yml`.
-- ✅ **Cleaned Project:** Updated `package.json`, removed `index.html`.
-- ✅ **Updated Documentation:** Updated `README.md` and key `docs/*` files.
+- ✅ **Monorepo Restructure:** Created `packages/` structure, moved server, created client package skeleton.
+- ✅ **Server Batch Support:** Implemented batch request handling in `deno-server.ts`.
+- ✅ **Deno KV Fix:** Added `--unstable-kv` flag to server tasks.
+- ✅ **Server Import Fixes:** Corrected `rpc-whitelist.json` import paths.
+- ✅ **Server Cleanup:** Removed unused `viem` dependency and `contract-utils.ts`.
+- ✅ **Client SDK Implementation:** Created basic client code and build setup.
+- ✅ **Client SDK Testing:** Added integration tests using `bun test`.
+- ✅ **Local Testing Workflow:** Configured server and client scripts to allow local testing (`test:client:local`), including option to disable cache.
+- ✅ **Documentation Update:** Updated all `docs/*` files and `.clinerules`.
 
 ## 4. Known Issues / Blockers
 
-- **TypeScript Errors:** Persistent TS errors related to Deno globals in the editor environment (likely config issue, doesn't necessarily block Deno execution).
-- **Testing:** Existing tests (`tests/*`) are likely incompatible with Deno and `deno test`. They need adaptation or replacement.
-- **`viem` Compatibility:** `viem`'s full compatibility in Deno is unverified. The core proxy (`send`) works, but `readContract` usage might require checks.
+- **Server Tests:** No automated tests implemented for the Deno server package itself (`deno task test` is a placeholder).
+- **Client Tests:** Integration tests currently rely on specific results (like WXDAI balance) which might change; could be made more robust. Test coverage could be expanded.
+- **TypeScript Errors (Editor):** Persistent TS errors related to Deno globals may appear in some editor environments but don't block execution.
 
 ## 5. Next Steps / Future Considerations
 
-- **Final Documentation:** Update remaining docs (`project-brief.md`, `product-context.md`, `.clinerules`).
-- **Testing:** Adapt or write tests for `deno test`.
-- **Deno Configuration:** Add `deno.jsonc` for tasks/config.
-- **Error Handling/Logging:** Refine server error responses and logging.
-- **Whitelist Curation:** Still important to maintain `src/rpc-whitelist.json`.
-- **Feature Expansion:** Consider exposing `readContract` or adding write support (`eth_sendRawTransaction`) via the proxy if needed and `viem` is compatible.
+- **Server Testing:** Implement Deno tests for the server logic.
+- **Client SDK Refinement:** Add features like automatic batching, typed helpers, more tests.
+- **Publishing:** Publish `@pavlovcik/permit2-rpc-client` to npm.
+- **Abuse Prevention:** Implement CORS origin restrictions or API keys on the deployed server.
+- **Whitelist Curation:** Ongoing maintenance of `rpc-whitelist.json` is important.

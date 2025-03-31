@@ -23,8 +23,9 @@ const DEFAULT_LOCAL_STORAGE_KEY = "permit2RpcManagerCache";
 interface CacheManagerOptions {
   cacheTtlMs?: number;
   // nodeCachePath is no longer used in this base class
-  localStorageKey?: string;
+  localStorageKey?: string; // Used as KV key prefix
   logger?: LoggerFn;
+  disableCache?: boolean; // Option to disable caching for testing
 }
 
 /**
@@ -40,12 +41,17 @@ export class CacheManager {
   private log: LoggerFn;
   // Deno KV instance placeholder
   private kv: Deno.Kv | null = null;
+  private disabled: boolean; // Cache disabled flag
 
   constructor(options: CacheManagerOptions = {}) {
     this.cacheTtlMs = options.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
     // Keep option name localStorageKey for now, but use it as KV key
     this.cacheKey = options.localStorageKey ?? DEFAULT_LOCAL_STORAGE_KEY;
     this.log = options.logger || (() => {});
+    this.disabled = options.disableCache ?? false;
+    if (this.disabled) {
+      this.log("warn", "CacheManager: Caching is DISABLED via options.");
+    }
     // No Node path determination needed here
   }
 
@@ -66,7 +72,7 @@ export class CacheManager {
   }
 
   private async loadCache(): Promise<void> {
-    if (this.cacheLoaded) return;
+    if (this.disabled || this.cacheLoaded) return; // Skip if disabled
 
     // --- Deno KV Implementation ---
     this.log("debug", `CacheManager (Deno): Attempting to load cache from Deno KV (key: ${this.cacheKey})`);
@@ -92,8 +98,10 @@ export class CacheManager {
   }
 
   private async saveCache(): Promise<void> {
-    if (!this.cacheLoaded) {
-      this.log("warn", "CacheManager: Attempted to save cache before loading.");
+    if (this.disabled || !this.cacheLoaded) { // Skip if disabled
+      // Log if attempting to save while disabled, but don't warn if just not loaded yet
+      if (this.disabled) this.log("debug", "CacheManager: Caching disabled, skipping save.");
+      else this.log("warn", "CacheManager: Attempted to save cache before loading.");
       return;
     }
 
@@ -115,8 +123,12 @@ export class CacheManager {
     return this.cache[chainId] ?? null;
   }
 
-  // Public methods remain the same
+  // Public methods need to check the disabled flag
   async getChainCache(chainId: number): Promise<ChainCache | null> {
+    if (this.disabled) {
+      this.log("debug", `CacheManager: Caching disabled, forcing cache miss for chainId ${chainId}`);
+      return null; // Always return null (cache miss) if disabled
+    }
     const chainCache = await this.getRawChainCache(chainId);
     if (chainCache && Date.now() - chainCache.lastTested < this.cacheTtlMs) {
       return chainCache;
@@ -126,6 +138,10 @@ export class CacheManager {
   }
 
   async updateChainCache(chainId: number, latencyMap: Record<string, LatencyTestResult>, fastestRpc: string | null): Promise<void> {
+    if (this.disabled) {
+       this.log("debug", `CacheManager: Caching disabled, skipping cache update for chainId ${chainId}`);
+       return; // Do nothing if disabled
+    }
     await this.loadCache(); // Ensure loaded before update
     this.log("debug", `CacheManager: Updating cache for chainId ${chainId}`, { fastestRpc, latencyMapCount: Object.keys(latencyMap || {}).length });
     this.cache[chainId] = {
