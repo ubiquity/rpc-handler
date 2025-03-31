@@ -20,8 +20,6 @@ const PORT = parseInt(Deno.env.get('PORT') ?? '8000');
 console.log('Initializing Permit2 RPC Manager Proxy...');
 
 // Instantiate Permit2RpcManager, passing initial data.
-// It will create its own CacheManager and ChainlistDataSource internally.
-// We still need to adapt CacheManager for Deno KV later.
 const manager = new Permit2RpcManager({
   initialRpcData: rpcWhitelist,
   // TODO: Configure CacheManager options for Deno KV once adapted
