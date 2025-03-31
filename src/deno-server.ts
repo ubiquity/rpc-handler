@@ -12,7 +12,40 @@ interface JsonRpcRequest {
   jsonrpc: '2.0';
   method: string;
   params: unknown[];
-  id: number | string;
+  id: number | string | null; // Allow null ID for notifications, though we might not process them specially
+}
+
+// Define the structure for a JSON-RPC response
+interface JsonRpcResponse {
+  jsonrpc: '2.0';
+  id: number | string | null;
+  result?: unknown;
+  error?: {
+    code: number;
+    message: string;
+    data?: unknown;
+  };
+}
+
+// Type guard to check for valid JSON-RPC request object structure
+function isValidJsonRpcRequest(obj: any): obj is JsonRpcRequest {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    obj.jsonrpc === '2.0' &&
+    typeof obj.method === 'string' &&
+    (obj.params === undefined || Array.isArray(obj.params)) &&
+    (typeof obj.id === 'string' || typeof obj.id === 'number' || obj.id === null)
+  );
+}
+
+// Helper to create a JSON-RPC error response
+function createJsonRpcError(id: number | string | null, code: number, message: string): JsonRpcResponse {
+  return {
+    jsonrpc: '2.0',
+    id,
+    error: { code, message },
+  };
 }
 
 const PORT = parseInt(Deno.env.get('PORT') ?? '8000');
@@ -62,52 +95,88 @@ const handler = async (request: Request): Promise<Response> => {
     return new Response('Bad Request: Invalid chainId', { status: 400, headers: corsHeaders });
   }
 
-  let rpcRequest: JsonRpcRequest;
+  let requestBody: unknown;
   try {
-    // Explicitly type the parsed JSON
-    rpcRequest = await request.json() as JsonRpcRequest;
-    if (rpcRequest.jsonrpc !== '2.0' || !rpcRequest.method || !Array.isArray(rpcRequest.params) || rpcRequest.id === undefined || rpcRequest.id === null) {
-      throw new Error('Invalid JSON-RPC request structure');
-    }
+    requestBody = await request.json();
   } catch (e) {
     const error = e instanceof Error ? e : new Error(String(e));
     console.error('Failed to parse request body:', error);
-    return new Response(`Bad Request: Invalid JSON body or structure. ${error.message}`, { status: 400, headers: corsHeaders });
+    // Return JSON-RPC error for parse error
+    const errorResponse = createJsonRpcError(null, -32700, `Parse error: ${error.message}`);
+    return new Response(JSON.stringify(errorResponse), {
+      status: 400, // Bad Request for parse errors
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
-  console.log(`Received request for chain ${chainId}: ${rpcRequest.method}`);
+  // --- Handle Batch Request ---
+  if (Array.isArray(requestBody)) {
+    console.log(`Received batch request for chain ${chainId} with ${requestBody.length} calls.`);
 
-  try {
-    // Use the actual manager instance
-    const result = await manager.send(chainId, rpcRequest.method, rpcRequest.params);
+    if (requestBody.length === 0) {
+      const errorResponse = createJsonRpcError(null, -32600, 'Invalid Request: Received empty batch.');
+      return new Response(JSON.stringify(errorResponse), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    // Construct valid JSON-RPC response
-    const rpcResponse = { jsonrpc: '2.0', id: rpcRequest.id, result };
+    // Validate all requests in the batch first
+    if (!requestBody.every(isValidJsonRpcRequest)) {
+      const errorResponse = createJsonRpcError(null, -32600, 'Invalid Request: Batch contains invalid JSON-RPC object(s).');
+      return new Response(JSON.stringify(errorResponse), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    return new Response(JSON.stringify(rpcResponse), {
-      status: 200,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json',
-      },
+    // Process batch requests concurrently
+    const promises = requestBody.map(async (req) => {
+      try {
+        const result = await manager.send(chainId, req.method, req.params ?? []);
+        return { jsonrpc: '2.0', id: req.id, result } as JsonRpcResponse;
+      } catch (e) {
+        const error = e instanceof Error ? e : new Error(String(e));
+        console.error(`Error processing batch item (id: ${req.id}, method: ${req.method}) for chain ${chainId}:`, error);
+        // Return individual error for this specific request in the batch
+        return createJsonRpcError(req.id, -32000, `Internal Server Error: ${error.message}`);
+      }
     });
-  } catch (e) {
-    const error = e instanceof Error ? e : new Error(String(e));
-    console.error(`Error processing RPC request for chain ${chainId}:`, error);
-    const errorResponse = {
-      jsonrpc: '2.0',
-      id: rpcRequest.id,
-      error: {
-        code: -32000, // Generic server error
-        message: `Internal Server Error: ${error.message}`,
-      },
-    };
+
+    const responses = await Promise.all(promises);
+
+    return new Response(JSON.stringify(responses), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+  // --- Handle Single Request ---
+  else if (isValidJsonRpcRequest(requestBody)) {
+    console.log(`Received single request for chain ${chainId}: ${requestBody.method}`);
+    try {
+      const result = await manager.send(chainId, requestBody.method, requestBody.params ?? []);
+      const rpcResponse: JsonRpcResponse = { jsonrpc: '2.0', id: requestBody.id, result };
+      return new Response(JSON.stringify(rpcResponse), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (e) {
+      const error = e instanceof Error ? e : new Error(String(e));
+      console.error(`Error processing single request (id: ${requestBody.id}, method: ${requestBody.method}) for chain ${chainId}:`, error);
+      const errorResponse = createJsonRpcError(requestBody.id, -32000, `Internal Server Error: ${error.message}`);
+      return new Response(JSON.stringify(errorResponse), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
+  // --- Handle Invalid Request Structure ---
+  else {
+    console.error('Invalid request body structure:', requestBody);
+    const errorResponse = createJsonRpcError(null, -32600, 'Invalid Request: Not a valid JSON-RPC object or batch.');
     return new Response(JSON.stringify(errorResponse), {
-      status: 500,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json',
-      },
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 };
