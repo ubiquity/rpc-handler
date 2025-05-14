@@ -1,3 +1,13 @@
+# This Package Has Been Deprecated
+
+Use [@ubiquity-dao/permit2-rpc-client](https://github.com/ubiquity/permit2-rpc-manager/blob/main/packages/permit2-rpc-client/README.md)
+
+```sh
+bun add @ubiquity-dao/permit2-rpc-client
+```
+
+---
+
 # Permit2 RPC Manager
 
 An intelligent RPC manager for EVM-compatible chains that automatically selects the fastest, valid RPC endpoint from a curated whitelist.
